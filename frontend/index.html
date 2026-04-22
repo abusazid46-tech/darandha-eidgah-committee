@@ -382,198 +382,7 @@
 <section id="home" class="hero">
   <!-- Layered background -->
   <div class="hero-bg">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;">
-      <defs>
-        <radialGradient id="sky" cx="50%" cy="30%" r="70%">
-          <stop offset="0%" stop-color="#0a1628"/>
-          <stop offset="40%" stop-color="#0d2240"/>
-          <stop offset="100%" stop-color="#010a14"/>
-        </radialGradient>
-        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#c9a03d" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#c9a03d" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fffbe6" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#c9a03d" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="groundGrad" cx="50%" cy="0%" r="100%">
-          <stop offset="0%" stop-color="#1a5f3e"/>
-          <stop offset="100%" stop-color="#0a2e1c"/>
-        </radialGradient>
-        <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
-        <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
-        <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
-        <filter id="starGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-
-      <!-- Sky -->
-      <rect width="1440" height="900" fill="url(#sky)"/>
-
-      <!-- Nebula clouds -->
-      <ellipse cx="300" cy="200" rx="350" ry="120" fill="#1a2a4a" opacity="0.4" filter="url(#blur12)"/>
-      <ellipse cx="1100" cy="150" rx="280" ry="100" fill="#1a2a5a" opacity="0.35" filter="url(#blur12)"/>
-      <ellipse cx="720" cy="320" rx="400" ry="80" fill="#0d1f3a" opacity="0.3" filter="url(#blur12)"/>
-
-      <!-- Stars -->
-      <g filter="url(#starGlow)" fill="white">
-        <circle cx="45" cy="60" r="1.2" opacity="0.9"/><circle cx="112" cy="28" r="0.8" opacity="0.7"/>
-        <circle cx="178" cy="85" r="1.5" opacity="1"/><circle cx="234" cy="45" r="0.9" opacity="0.8"/>
-        <circle cx="289" cy="110" r="1.1" opacity="0.85"/><circle cx="345" cy="30" r="0.7" opacity="0.6"/>
-        <circle cx="412" cy="75" r="1.3" opacity="0.95"/><circle cx="467" cy="20" r="0.9" opacity="0.75"/>
-        <circle cx="523" cy="95" r="1.0" opacity="0.8"/><circle cx="578" cy="50" r="1.4" opacity="0.9"/>
-        <circle cx="634" cy="130" r="0.8" opacity="0.7"/><circle cx="689" cy="15" r="1.2" opacity="1"/>
-        <circle cx="745" cy="80" r="0.9" opacity="0.85"/><circle cx="800" cy="40" r="1.1" opacity="0.8"/>
-        <circle cx="856" cy="105" r="1.5" opacity="0.95"/><circle cx="911" cy="25" r="0.8" opacity="0.7"/>
-        <circle cx="967" cy="70" r="1.0" opacity="0.75"/><circle cx="1022" cy="120" r="1.3" opacity="0.9"/>
-        <circle cx="1078" cy="35" r="0.7" opacity="0.65"/><circle cx="1134" cy="90" r="1.2" opacity="0.85"/>
-        <circle cx="1189" cy="18" r="1.0" opacity="0.8"/><circle cx="1245" cy="65" r="1.4" opacity="0.95"/>
-        <circle cx="1300" cy="140" r="0.9" opacity="0.7"/><circle cx="1356" cy="45" r="1.1" opacity="0.85"/>
-        <circle cx="1400" cy="100" r="0.8" opacity="0.75"/><circle cx="60" cy="160" r="0.9" opacity="0.7"/>
-        <circle cx="150" cy="200" r="1.1" opacity="0.8"/><circle cx="260" cy="175" r="0.8" opacity="0.65"/>
-        <circle cx="380" cy="210" r="1.3" opacity="0.9"/><circle cx="490" cy="185" r="0.7" opacity="0.7"/>
-        <circle cx="600" cy="230" r="1.0" opacity="0.75"/><circle cx="710" cy="190" r="1.2" opacity="0.85"/>
-        <circle cx="820" cy="215" r="0.9" opacity="0.8"/><circle cx="930" cy="170" r="1.1" opacity="0.9"/>
-        <circle cx="1040" cy="240" r="0.8" opacity="0.7"/><circle cx="1150" cy="195" r="1.4" opacity="0.95"/>
-        <circle cx="1260" cy="220" r="0.9" opacity="0.75"/><circle cx="1370" cy="180" r="1.0" opacity="0.8"/>
-        <!-- Twinkling bright stars -->
-        <circle cx="200" cy="55" r="2" opacity="0.95"><animate attributeName="opacity" values="0.95;0.3;0.95" dur="3s" repeatCount="indefinite"/></circle>
-        <circle cx="650" cy="35" r="2.2" opacity="1"><animate attributeName="opacity" values="1;0.2;1" dur="4.5s" repeatCount="indefinite"/></circle>
-        <circle cx="1050" cy="60" r="1.8" opacity="0.9"><animate attributeName="opacity" values="0.9;0.25;0.9" dur="2.8s" repeatCount="indefinite"/></circle>
-        <circle cx="400" cy="140" r="2" opacity="0.85"><animate attributeName="opacity" values="0.85;0.2;0.85" dur="3.8s" repeatCount="indefinite"/></circle>
-        <circle cx="1300" cy="90" r="1.9" opacity="0.9"><animate attributeName="opacity" values="0.9;0.3;0.9" dur="5s" repeatCount="indefinite"/></circle>
-      </g>
-
-      <!-- Moon glow halo -->
-      <circle cx="1150" cy="130" r="80" fill="url(#moonGlow)" filter="url(#blur6)"/>
-
-      <!-- Crescent Moon -->
-      <g transform="translate(1150,130)">
-        <circle r="48" fill="#fffbe6" opacity="0.97"/>
-        <circle cx="18" cy="-8" r="40" fill="#0d1828"/>
-      </g>
-
-      <!-- Distant city glow on horizon -->
-      <ellipse cx="720" cy="600" rx="600" ry="60" fill="#c9a03d" opacity="0.06" filter="url(#blur12)"/>
-      <ellipse cx="720" cy="590" rx="400" ry="30" fill="#1a5f3e" opacity="0.12" filter="url(#blur6)"/>
-
-      <!-- Ground -->
-      <rect x="0" y="720" width="1440" height="180" fill="url(#groundGrad)"/>
-      <rect x="0" y="700" width="1440" height="30" fill="#1a5f3e" opacity="0.6" filter="url(#blur2)"/>
-
-      <!-- === MOSQUE COMPLEX === -->
-
-      <!-- Far background minarets (small) -->
-      <rect x="180" y="540" width="22" height="160" fill="#0f2d1e" opacity="0.6"/>
-      <ellipse cx="191" cy="538" rx="13" ry="20" fill="#0f2d1e" opacity="0.6"/>
-      <rect x="1238" y="540" width="22" height="160" fill="#0f2d1e" opacity="0.6"/>
-      <ellipse cx="1249" cy="538" rx="13" ry="20" fill="#0f2d1e" opacity="0.6"/>
-
-      <!-- Main building base -->
-      <rect x="320" y="580" width="800" height="160" fill="#0d3b26"/>
-      <!-- Arched windows row -->
-      <g fill="#c9a03d" opacity="0.18">
-        <rect x="360" y="620" width="30" height="60" rx="15"/>
-        <rect x="420" y="620" width="30" height="60" rx="15"/>
-        <rect x="480" y="620" width="30" height="60" rx="15"/>
-        <rect x="540" y="620" width="30" height="60" rx="15"/>
-        <rect x="600" y="620" width="30" height="60" rx="15"/>
-        <rect x="660" y="620" width="30" height="60" rx="15"/>
-        <rect x="780" y="620" width="30" height="60" rx="15"/>
-        <rect x="840" y="620" width="30" height="60" rx="15"/>
-        <rect x="900" y="620" width="30" height="60" rx="15"/>
-        <rect x="960" y="620" width="30" height="60" rx="15"/>
-        <rect x="1020" y="620" width="30" height="60" rx="15"/>
-      </g>
-
-      <!-- Left minaret -->
-      <rect x="370" y="400" width="38" height="200" fill="#112b1a"/>
-      <rect x="362" y="488" width="54" height="12" fill="#1a5f3e"/>
-      <rect x="358" y="510" width="62" height="10" fill="#1a5f3e"/>
-      <!-- Minaret top bulb -->
-      <ellipse cx="389" cy="398" rx="22" ry="32" fill="#143d23"/>
-      <ellipse cx="389" cy="374" rx="12" ry="18" fill="#1a5f3e"/>
-      <!-- Minaret finial -->
-      <line x1="389" y1="356" x2="389" y2="330" stroke="#c9a03d" stroke-width="3"/>
-      <path d="M384,340 Q389,325 394,340 Z" fill="#c9a03d"/>
-
-      <!-- Right minaret -->
-      <rect x="1032" y="400" width="38" height="200" fill="#112b1a"/>
-      <rect x="1024" y="488" width="54" height="12" fill="#1a5f3e"/>
-      <rect x="1020" y="510" width="62" height="10" fill="#1a5f3e"/>
-      <ellipse cx="1051" cy="398" rx="22" ry="32" fill="#143d23"/>
-      <ellipse cx="1051" cy="374" rx="12" ry="18" fill="#1a5f3e"/>
-      <line x1="1051" y1="356" x2="1051" y2="330" stroke="#c9a03d" stroke-width="3"/>
-      <path d="M1046,340 Q1051,325 1056,340 Z" fill="#c9a03d"/>
-
-      <!-- Secondary left minaret -->
-      <rect x="480" y="460" width="28" height="140" fill="#0f2d1e"/>
-      <ellipse cx="494" cy="458" rx="16" ry="24" fill="#122b1c"/>
-      <ellipse cx="494" cy="440" rx="9" ry="13" fill="#1a5f3e"/>
-      <line x1="494" y1="427" x2="494" y2="408" stroke="#c9a03d" stroke-width="2"/>
-      <path d="M491,417 Q494,406 497,417 Z" fill="#c9a03d"/>
-
-      <!-- Secondary right minaret -->
-      <rect x="932" y="460" width="28" height="140" fill="#0f2d1e"/>
-      <ellipse cx="946" cy="458" rx="16" ry="24" fill="#122b1c"/>
-      <ellipse cx="946" cy="440" rx="9" ry="13" fill="#1a5f3e"/>
-      <line x1="946" y1="427" x2="946" y2="408" stroke="#c9a03d" stroke-width="2"/>
-      <path d="M943,417 Q946,406 949,417 Z" fill="#c9a03d"/>
-
-      <!-- Main central dome -->
-      <ellipse cx="720" cy="480" rx="160" ry="130" fill="#0f3320"/>
-      <ellipse cx="720" cy="480" rx="155" ry="125" fill="#112b1a"/>
-      <!-- Dome highlight -->
-      <ellipse cx="680" cy="430" rx="60" ry="40" fill="#1a5f3e" opacity="0.3" filter="url(#blur2)"/>
-      <!-- Dome finial -->
-      <rect x="716" y="345" width="8" height="50" fill="#c9a03d"/>
-      <path d="M710,362 Q720,340 730,362 Z" fill="#c9a03d"/>
-      <!-- Crescent on dome -->
-      <g transform="translate(720,348)">
-        <circle r="10" fill="#c9a03d"/>
-        <circle cx="5" cy="-3" r="8" fill="#112b1a"/>
-      </g>
-
-      <!-- Side domes -->
-      <ellipse cx="540" cy="555" rx="80" ry="60" fill="#112b1a"/>
-      <rect x="534" y="492" width="6" height="30" fill="#c9a03d"/>
-      <path d="M529,505 Q537,490 545,505 Z" fill="#c9a03d"/>
-
-      <ellipse cx="900" cy="555" rx="80" ry="60" fill="#112b1a"/>
-      <rect x="894" y="492" width="6" height="30" fill="#c9a03d"/>
-      <path d="M889,505 Q897,490 905,505 Z" fill="#c9a03d"/>
-
-      <!-- Main gate / entrance arch -->
-      <rect x="660" y="620" width="120" height="120" fill="#091f12"/>
-      <path d="M660,620 Q720,570 780,620 Z" fill="#091f12"/>
-      <!-- Gate glow -->
-      <path d="M665,620 Q720,575 775,620" fill="none" stroke="#c9a03d" stroke-width="2" opacity="0.5"/>
-      <!-- Gate light spill -->
-      <ellipse cx="720" cy="740" rx="40" ry="8" fill="#c9a03d" opacity="0.12" filter="url(#blur2)"/>
-
-      <!-- Dome gold glow -->
-      <ellipse cx="720" cy="490" rx="170" ry="140" fill="#c9a03d" opacity="0.04" filter="url(#blur12)"/>
-
-      <!-- Reflective pool -->
-      <ellipse cx="720" cy="760" rx="280" ry="25" fill="#1a5f3e" opacity="0.35"/>
-      <ellipse cx="720" cy="760" rx="200" ry="15" fill="#0d3b26" opacity="0.5"/>
-      <!-- Pool reflection of dome -->
-      <ellipse cx="720" cy="775" rx="60" ry="18" fill="#c9a03d" opacity="0.08" filter="url(#blur2)"/>
-
-      <!-- Lantern lights along path -->
-      <g fill="#c9a03d" opacity="0.7">
-        <circle cx="500" cy="718" r="4" filter="url(#blur2)"/>
-        <circle cx="580" cy="718" r="4" filter="url(#blur2)"/>
-        <circle cx="860" cy="718" r="4" filter="url(#blur2)"/>
-        <circle cx="940" cy="718" r="4" filter="url(#blur2)"/>
-      </g>
-
-      <!-- Atmospheric ground mist -->
-      <rect x="0" y="690" width="1440" height="40" fill="#1a5f3e" opacity="0.15" filter="url(#blur6)"/>
-
-      <!-- Overall warm vignette at bottom -->
-      <rect x="0" y="600" width="1440" height="300" fill="url(#groundGrad)" opacity="0.5"/>
-    </svg>
+    <canvas id="heroCanvas" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
   </div>
   <div class="hero-overlay"></div>
   <div class="orb orb-1"></div>
@@ -750,6 +559,381 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="script.js"></script>
+<script>
+(function(){
+  var canvas = document.getElementById('heroCanvas');
+  var ctx = canvas.getContext('2d');
+  var W, H, stars=[], fireflies=[], shootingStars=[], cloudLayers=[];
+  var t = 0;
+
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    initScene();
+  }
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function initScene(){
+    // Stars
+    stars = [];
+    var count = Math.floor(W*H/1800);
+    for(var i=0;i<count;i++){
+      stars.push({
+        x: rand(0,W), y: rand(0, H*0.72),
+        r: rand(0.3,1.8),
+        base: rand(0.2,1),
+        speed: rand(0.4,2.2),
+        phase: rand(0,Math.PI*2)
+      });
+    }
+    // Fireflies
+    fireflies = [];
+    for(var i=0;i<18;i++){
+      fireflies.push({
+        x: rand(W*0.1, W*0.9),
+        y: rand(H*0.6, H*0.9),
+        r: rand(1.5,3),
+        vx: rand(-0.3,0.3),
+        vy: rand(-0.25,0.25),
+        phase: rand(0,Math.PI*2),
+        speed: rand(1.5,3.5)
+      });
+    }
+    // Cloud layers
+    cloudLayers = [
+      {x:0, y:H*0.08, w:W*0.6, h:80, alpha:0.06, speed:0.12},
+      {x:W*0.4, y:H*0.14, w:W*0.55, h:60, alpha:0.05, speed:0.08},
+      {x:W*0.1, y:H*0.22, w:W*0.4, h:50, alpha:0.04, speed:0.18}
+    ];
+  }
+
+  function spawnShootingStar(){
+    if(Math.random()<0.004 && shootingStars.length<3){
+      var sx = rand(W*0.1, W*0.8);
+      var sy = rand(H*0.02, H*0.18);
+      var angle = rand(0.3, 0.7);
+      shootingStars.push({
+        x:sx, y:sy,
+        vx: Math.cos(angle)*rand(8,14),
+        vy: Math.sin(angle)*rand(4,8),
+        life:1, decay: rand(0.012,0.022),
+        len: rand(80,160)
+      });
+    }
+  }
+
+  function drawSky(){
+    var grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#010a14');
+    grad.addColorStop(0.35,'#0a1628');
+    grad.addColorStop(0.65,'#0d2a1a');
+    grad.addColorStop(1,'#0a2e1c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  function drawClouds(){
+    cloudLayers.forEach(function(c){
+      c.x -= c.speed;
+      if(c.x + c.w < 0) c.x = W;
+      var cg = ctx.createRadialGradient(c.x+c.w/2, c.y+c.h/2, 0, c.x+c.w/2, c.y+c.h/2, c.w*0.6);
+      cg.addColorStop(0, 'rgba(26,42,74,'+c.alpha+')');
+      cg.addColorStop(1, 'rgba(26,42,74,0)');
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.ellipse(c.x+c.w/2, c.y+c.h/2, c.w/2, c.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  function drawMoon(){
+    var mx = W*0.82, my = H*0.14, mr = Math.min(W,H)*0.055;
+    // Outer glow rings
+    for(var i=3;i>0;i--){
+      var rg = ctx.createRadialGradient(mx,my,mr*0.3,mx,my,mr*(1+i*0.7));
+      rg.addColorStop(0,'rgba(201,160,61,0.12)');
+      rg.addColorStop(1,'rgba(201,160,61,0)');
+      ctx.fillStyle=rg;
+      ctx.beginPath();
+      ctx.arc(mx,my,mr*(1+i*0.7),0,Math.PI*2);
+      ctx.fill();
+    }
+    // Moon body
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(mx,my,mr,0,Math.PI*2);
+    ctx.fillStyle='#fffbe6';
+    ctx.fill();
+    // Crescent shadow
+    ctx.beginPath();
+    ctx.arc(mx+mr*0.35, my-mr*0.15, mr*0.82, 0, Math.PI*2);
+    ctx.fillStyle='#0a1628';
+    ctx.fill();
+    ctx.restore();
+    // Subtle surface shimmer
+    var sg = ctx.createRadialGradient(mx-mr*0.3,my-mr*0.3,0,mx,my,mr);
+    sg.addColorStop(0,'rgba(255,251,230,0.22)');
+    sg.addColorStop(1,'rgba(255,251,230,0)');
+    ctx.fillStyle=sg;
+    ctx.beginPath();
+    ctx.arc(mx,my,mr,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawStars(){
+    stars.forEach(function(s){
+      var twinkle = s.base * (0.5 + 0.5*Math.sin(t*s.speed + s.phase));
+      // Glow
+      var sg = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
+      sg.addColorStop(0,'rgba(255,255,240,'+twinkle*0.6+')');
+      sg.addColorStop(1,'rgba(255,255,240,0)');
+      ctx.fillStyle=sg;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);
+      ctx.fill();
+      // Core
+      ctx.fillStyle='rgba(255,255,240,'+twinkle+')';
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  function drawShootingStars(){
+    spawnShootingStar();
+    shootingStars = shootingStars.filter(function(s){ return s.life>0; });
+    shootingStars.forEach(function(s){
+      var tx = s.x - s.vx*(s.len/14);
+      var ty = s.y - s.vy*(s.len/14);
+      var sg = ctx.createLinearGradient(tx,ty,s.x,s.y);
+      sg.addColorStop(0,'rgba(255,255,220,0)');
+      sg.addColorStop(1,'rgba(255,255,220,'+s.life+')');
+      ctx.strokeStyle=sg;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(tx,ty);
+      ctx.lineTo(s.x,s.y);
+      ctx.stroke();
+      s.x+=s.vx; s.y+=s.vy; s.life-=s.decay;
+    });
+  }
+
+  function drawMosque(){
+    var cx = W/2, base = H*0.78, scale = Math.min(W,H)/900;
+    ctx.save();
+
+    // Horizon glow
+    var hg = ctx.createRadialGradient(cx, base, 0, cx, base, W*0.4);
+    hg.addColorStop(0,'rgba(26,95,62,0.18)');
+    hg.addColorStop(1,'rgba(26,95,62,0)');
+    ctx.fillStyle=hg;
+    ctx.fillRect(0, base-80, W, 160);
+
+    // Ground
+    var gg = ctx.createLinearGradient(0,base,0,H);
+    gg.addColorStop(0,'#0f3320');
+    gg.addColorStop(1,'#071a0f');
+    ctx.fillStyle=gg;
+    ctx.fillRect(0,base,W,H-base);
+
+    // Ground mist
+    var mg = ctx.createLinearGradient(0,base-30,0,base+40);
+    mg.addColorStop(0,'rgba(26,95,62,0)');
+    mg.addColorStop(0.5,'rgba(26,95,62,0.12)');
+    mg.addColorStop(1,'rgba(26,95,62,0)');
+    ctx.fillStyle=mg;
+    ctx.fillRect(0,base-30,W,70);
+
+    var s=scale*1.1;
+
+    // Helper: draw minaret
+    function drawMinaret(x, btm, w, h, bulbR){
+      ctx.fillStyle='#0d2e1c';
+      ctx.fillRect(x-w/2, btm-h, w, h);
+      // Collar rings
+      ctx.fillStyle='#1a5f3e';
+      ctx.fillRect(x-w/2-4, btm-h*0.45, w+8, 5*s);
+      ctx.fillRect(x-w/2-6, btm-h*0.55, w+12, 4*s);
+      // Bulb
+      ctx.fillStyle='#112b1a';
+      ctx.beginPath();
+      ctx.ellipse(x, btm-h, bulbR*1.1, bulbR*1.6, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#1a5f3e';
+      ctx.beginPath();
+      ctx.ellipse(x, btm-h-bulbR*0.8, bulbR*0.6, bulbR*0.9, 0, 0, Math.PI*2);
+      ctx.fill();
+      // Spire
+      ctx.strokeStyle='#c9a03d';
+      ctx.lineWidth=2*s;
+      ctx.beginPath();
+      ctx.moveTo(x, btm-h-bulbR*1.7);
+      ctx.lineTo(x, btm-h-bulbR*2.8);
+      ctx.stroke();
+      // Crescent
+      ctx.fillStyle='#c9a03d';
+      ctx.beginPath();
+      ctx.arc(x, btm-h-bulbR*2.85, 5*s, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#0d2e1c';
+      ctx.beginPath();
+      ctx.arc(x+3*s, btm-h-bulbR*2.85-2*s, 4*s, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Far bg minarets
+    ctx.globalAlpha=0.35;
+    drawMinaret(cx-320*s, base, 14*s, 160*s, 10*s);
+    drawMinaret(cx+320*s, base, 14*s, 160*s, 10*s);
+    ctx.globalAlpha=1;
+
+    // Main mosque body
+    ctx.fillStyle='#0d2e1c';
+    ctx.fillRect(cx-280*s, base-100*s, 560*s, 100*s);
+
+    // Arched windows with warm glow
+    var winPositions=[-200,-150,-100,-50,50,100,150,200];
+    winPositions.forEach(function(wp){
+      var wx=cx+wp*s, wy=base-70*s, ww=20*s, wh=50*s;
+      // Window glow
+      var wg=ctx.createRadialGradient(wx,wy+wh/2,0,wx,wy+wh/2,30*s);
+      wg.addColorStop(0,'rgba(201,160,61,0.18)');
+      wg.addColorStop(1,'rgba(201,160,61,0)');
+      ctx.fillStyle=wg;
+      ctx.fillRect(wx-30*s,wy-10*s,60*s,80*s);
+      // Window arch
+      ctx.fillStyle='rgba(201,160,61,0.22)';
+      ctx.beginPath();
+      ctx.roundRect(wx-ww/2, wy, ww, wh, [ww/2, ww/2, 2, 2]);
+      ctx.fill();
+    });
+
+    // Main entrance arch glow
+    var eg=ctx.createRadialGradient(cx,base,0,cx,base,60*s);
+    eg.addColorStop(0,'rgba(201,160,61,0.25)');
+    eg.addColorStop(1,'rgba(201,160,61,0)');
+    ctx.fillStyle=eg;
+    ctx.beginPath();
+    ctx.arc(cx,base,60*s,Math.PI,0);
+    ctx.fill();
+    ctx.fillStyle='#091f12';
+    ctx.fillRect(cx-40*s, base-90*s, 80*s, 92*s);
+    ctx.beginPath();
+    ctx.arc(cx, base-90*s, 40*s, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle='rgba(201,160,61,0.5)';
+    ctx.lineWidth=1.5*s;
+    ctx.beginPath();
+    ctx.arc(cx, base-90*s, 40*s, Math.PI, 0);
+    ctx.stroke();
+
+    // Side domes
+    function drawDome(dx, dy, rx, ry){
+      ctx.fillStyle='#0d2e1c';
+      ctx.beginPath();
+      ctx.ellipse(dx, dy, rx, ry, 0, Math.PI, 0);
+      ctx.fill();
+      // Highlight
+      var dh=ctx.createRadialGradient(dx-rx*0.3, dy-ry*0.3, 0, dx, dy, rx);
+      dh.addColorStop(0,'rgba(26,95,62,0.25)');
+      dh.addColorStop(1,'rgba(26,95,62,0)');
+      ctx.fillStyle=dh;
+      ctx.beginPath();
+      ctx.ellipse(dx, dy, rx, ry, 0, Math.PI, 0);
+      ctx.fill();
+    }
+    drawDome(cx-180*s, base-100*s, 70*s, 55*s);
+    drawDome(cx+180*s, base-100*s, 70*s, 55*s);
+
+    // Main dome
+    drawDome(cx, base-100*s, 120*s, 95*s);
+    // Dome spire
+    ctx.strokeStyle='#c9a03d';
+    ctx.lineWidth=3*s;
+    ctx.beginPath();
+    ctx.moveTo(cx, base-195*s);
+    ctx.lineTo(cx, base-230*s);
+    ctx.stroke();
+    // Main crescent
+    ctx.fillStyle='#c9a03d';
+    ctx.beginPath();
+    ctx.arc(cx, base-234*s, 9*s, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#0d2e1c';
+    ctx.beginPath();
+    ctx.arc(cx+5*s, base-237*s, 7.5*s, 0, Math.PI*2);
+    ctx.fill();
+
+    // Main minarets
+    drawMinaret(cx-240*s, base, 28*s, 220*s, 18*s);
+    drawMinaret(cx+240*s, base, 28*s, 220*s, 18*s);
+    drawMinaret(cx-150*s, base, 20*s, 170*s, 13*s);
+    drawMinaret(cx+150*s, base, 20*s, 170*s, 13*s);
+
+    // Reflective pool
+    var pool_y = base + 18*s;
+    var pg=ctx.createLinearGradient(0,pool_y,0,pool_y+30*s);
+    pg.addColorStop(0,'rgba(13,59,38,0.7)');
+    pg.addColorStop(1,'rgba(13,59,38,0.1)');
+    ctx.fillStyle=pg;
+    ctx.beginPath();
+    ctx.ellipse(cx, pool_y, 200*s, 14*s, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Pool shimmer
+    var shimmer = 0.04 + 0.02*Math.sin(t*2.5);
+    ctx.strokeStyle='rgba(201,160,61,'+shimmer+')';
+    ctx.lineWidth=1;
+    for(var pi=0;pi<3;pi++){
+      ctx.beginPath();
+      ctx.moveTo(cx-120*s+pi*40*s, pool_y+4*s+pi*3*s);
+      ctx.lineTo(cx-60*s+pi*40*s, pool_y+4*s+pi*3*s);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawFireflies(){
+    fireflies.forEach(function(f){
+      f.x += f.vx;
+      f.y += f.vy + Math.sin(t*0.8+f.phase)*0.15;
+      if(f.x<W*0.05||f.x>W*0.95){f.vx*=-1;}
+      if(f.y<H*0.55||f.y>H*0.96){f.vy*=-1;}
+      var glow = 0.4 + 0.6*Math.abs(Math.sin(t*f.speed+f.phase));
+      var fg=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*6);
+      fg.addColorStop(0,'rgba(201,200,100,'+glow*0.9+')');
+      fg.addColorStop(0.4,'rgba(180,200,80,'+glow*0.4+')');
+      fg.addColorStop(1,'rgba(180,200,80,0)');
+      ctx.fillStyle=fg;
+      ctx.beginPath();
+      ctx.arc(f.x,f.y,f.r*6,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='rgba(240,255,180,'+glow+')';
+      ctx.beginPath();
+      ctx.arc(f.x,f.y,f.r*0.8,0,Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawSky();
+    drawClouds();
+    drawStars();
+    drawShootingStars();
+    drawMoon();
+    drawMosque();
+    drawFireflies();
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+</script>
 
 </body>
 </html>
