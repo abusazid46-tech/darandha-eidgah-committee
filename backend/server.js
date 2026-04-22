@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -18,7 +19,8 @@ app.use(cors({
         'http://localhost:3000',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
-        'https://darandha-eidgah-committee.vercel.app'
+        'https://darandha-eidgah-committee.vercel.app',
+        'https://darandha-eidgah-admin.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -27,18 +29,18 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Ensure uploads directory exists
+if (!fs.existsSync('./uploads')) {
+    fs.mkdirSync('./uploads');
+}
+
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/darandha_eidgah';
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ MongoDB connected successfully'))
+    .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // ========== SCHEMAS ==========
-
-// Member Schema
 const memberSchema = new mongoose.Schema({
     name: { type: String, required: true },
     nameAs: String,
@@ -49,26 +51,23 @@ const memberSchema = new mongoose.Schema({
     status: { type: String, default: 'active' },
 });
 
-// Event Schema
 const eventSchema = new mongoose.Schema({
     title: { type: String, required: true },
     titleAs: String,
     description: String,
     descriptionAs: String,
-    date: Date,
+    date: { type: Date, default: Date.now },
     image: String,
     type: { type: String, default: 'event' },
     createdAt: { type: Date, default: Date.now },
 });
 
-// Setting Schema
 const settingSchema = new mongoose.Schema({
     key: { type: String, unique: true },
     value: String,
     valueAs: String,
 });
 
-// Donation Schema
 const donationSchema = new mongoose.Schema({
     name: String,
     amount: Number,
@@ -77,12 +76,11 @@ const donationSchema = new mongoose.Schema({
     status: { type: String, default: 'pending' },
 });
 
-// Admin Schema with refresh token support
 const adminSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     email: String,
-    role: { type: String, default: 'admin', enum: ['super_admin', 'admin', 'editor'] },
+    role: { type: String, default: 'admin' },
     refreshToken: String,
     lastLogin: Date,
     isActive: { type: Boolean, default: true },
@@ -96,13 +94,7 @@ const Setting = mongoose.model('Setting', settingSchema);
 const Donation = mongoose.model('Donation', donationSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
-// ========== MULTER SETUP FOR IMAGE UPLOADS ==========
-// Ensure uploads directory exists
-const fs = require('fs');
-if (!fs.existsSync('./uploads')) {
-    fs.mkdirSync('./uploads');
-}
-
+// ========== MULTER SETUP ==========
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './uploads/');
@@ -112,22 +104,9 @@ const storage = multer.diskStorage({
     },
 });
 
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb(new Error('Only images are allowed'));
-    }
-};
-
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: fileFilter
+    limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // ========== AUTH MIDDLEWARE ==========
@@ -136,10 +115,7 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
     
     if (!token) {
-        return res.status(401).json({ 
-            error: 'Access denied. No token provided.',
-            message: 'Please login to access this resource'
-        });
+        return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
     
     try {
@@ -147,23 +123,13 @@ const authMiddleware = (req, res, next) => {
         req.admin = decoded;
         next();
     } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ 
-                error: 'Token expired',
-                message: 'Please login again'
-            });
-        }
-        return res.status(403).json({ 
-            error: 'Invalid token',
-            message: 'Authentication failed'
-        });
+        return res.status(403).json({ error: 'Invalid or expired token.' });
     }
 };
 
 // ========== DATABASE INITIALIZATION ==========
 async function initDatabase() {
     try {
-        // Create default admin if not exists
         const adminExists = await Admin.findOne({ username: 'admin' });
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -172,24 +138,20 @@ async function initDatabase() {
                 password: hashedPassword,
                 role: 'super_admin'
             });
-            console.log('✅ Default admin created (username: admin, password: admin123)');
+            console.log('✅ Default admin created (admin/admin123)');
         }
 
-        // Create default settings if not exists
         const defaultSettings = [
             { key: 'whatsapp_number', value: '+919876543210' },
             { key: 'contact_email', value: 'info@darandhaeidgah.org' },
             { key: 'contact_phone', value: '+91 98765 43210' },
-            { key: 'about_content', value: 'Darandha Eidgah Committee is dedicated to serving the Muslim community by maintaining the graveyard with dignity and respect. We provide funeral services, maintain records, and support bereaved families.' },
-            { key: 'about_content_as', value: 'দৰংদহ ঈদগাহ কমিটিয়ে মুছলমান সমাজক মৰ্যাদা আৰু সন্মানেৰে কবৰস্থান পৰিচালনা কৰি সেৱা আগবঢ়োৱাত নিয়োজিত। আমি জানাজা সেৱা প্ৰদান কৰো, অভিলেখ ৰাখো, আৰু শোকাহত পৰিয়ালবোৰক সহায় কৰো।' },
+            { key: 'about_content', value: 'Darandha Eidgah Committee is dedicated to serving the Muslim community.' },
+            { key: 'about_content_as', value: 'দৰংদহ ঈদগাহ কমিটিয়ে মুছলমান সমাজক সেৱা আগবঢ়োৱাত নিয়োজিত।' },
         ];
 
         for (const setting of defaultSettings) {
             const exists = await Setting.findOne({ key: setting.key });
-            if (!exists) {
-                await Setting.create(setting);
-                console.log(`✅ Default setting created: ${setting.key}`);
-            }
+            if (!exists) await Setting.create(setting);
         }
         
         console.log('✅ Database initialization complete');
@@ -198,40 +160,23 @@ async function initDatabase() {
     }
 }
 
-// Call initialization
 initDatabase();
 
 // ========== API ROUTES ==========
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        message: 'Darandha Eidgah API is running',
-        timestamp: new Date().toISOString()
-    });
+    res.json({ status: 'OK', message: 'API is running', timestamp: new Date().toISOString() });
 });
 
-// ========== AUTHENTICATION ROUTES ==========
-
-// Login
+// Auth
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        if (!username || !password) {
-            return res.status(400).json({ 
-                error: 'Username and password required' 
-            });
-        }
-        
         const admin = await Admin.findOne({ username });
         if (!admin) {
             return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        
-        if (!admin.isActive) {
-            return res.status(401).json({ error: 'Account is deactivated' });
         }
         
         const valid = await bcrypt.compare(password, admin.password);
@@ -239,46 +184,24 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Update last login
-        admin.lastLogin = new Date();
-        await admin.save();
-        
-        // Generate token
         const token = jwt.sign(
             { id: admin._id, username: admin.username, role: admin.role }, 
             JWT_SECRET, 
             { expiresIn: '7d' }
         );
         
-        res.json({ 
-            success: true,
-            token, 
-            username: admin.username,
-            role: admin.role,
-            message: 'Login successful'
-        });
+        res.json({ token, username: admin.username, role: admin.role });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Login failed' });
     }
 });
 
-// Verify token endpoint
+// Verify token
 app.get('/api/auth/verify', authMiddleware, async (req, res) => {
-    try {
-        const admin = await Admin.findById(req.admin.id).select('-password');
-        res.json({ 
-            valid: true, 
-            user: admin 
-        });
-    } catch (error) {
-        res.json({ valid: false });
-    }
+    res.json({ valid: true, user: req.admin });
 });
 
 // ========== MEMBERS CRUD ==========
-
-// Get all members (public)
 app.get('/api/members', async (req, res) => {
     try {
         const members = await Member.find().sort({ name: 1 });
@@ -288,31 +211,35 @@ app.get('/api/members', async (req, res) => {
     }
 });
 
-// Get single member
-app.get('/api/members/:id', async (req, res) => {
-    try {
-        const member = await Member.findById(req.params.id);
-        if (!member) {
-            return res.status(404).json({ error: 'Member not found' });
-        }
-        res.json(member);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch member' });
-    }
-});
-
-// Create member (protected)
 app.post('/api/members', authMiddleware, async (req, res) => {
     try {
-        const member = new Member(req.body);
+        console.log('Received member data:', req.body);
+        
+        const { name, nameAs, phone, address, role } = req.body;
+        
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        
+        const member = new Member({
+            name,
+            nameAs: nameAs || '',
+            phone: phone || '',
+            address: address || '',
+            role: role || 'Member',
+            joinDate: new Date(),
+            status: 'active'
+        });
+        
         await member.save();
+        console.log('Member saved:', member);
         res.status(201).json(member);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to create member' });
+        console.error('Error creating member:', error);
+        res.status(500).json({ error: 'Failed to create member: ' + error.message });
     }
 });
 
-// Update member (protected)
 app.put('/api/members/:id', authMiddleware, async (req, res) => {
     try {
         const member = await Member.findByIdAndUpdate(
@@ -325,26 +252,23 @@ app.put('/api/members/:id', authMiddleware, async (req, res) => {
         }
         res.json(member);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update member' });
+        res.status(500).json({ error: 'Failed to update member' });
     }
 });
 
-// Delete member (protected)
 app.delete('/api/members/:id', authMiddleware, async (req, res) => {
     try {
         const member = await Member.findByIdAndDelete(req.params.id);
         if (!member) {
             return res.status(404).json({ error: 'Member not found' });
         }
-        res.json({ success: true, message: 'Member deleted successfully' });
+        res.json({ success: true, message: 'Member deleted' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete member' });
     }
 });
 
 // ========== EVENTS CRUD ==========
-
-// Get all events (public)
 app.get('/api/events', async (req, res) => {
     try {
         const events = await Event.find().sort({ date: -1 });
@@ -354,45 +278,40 @@ app.get('/api/events', async (req, res) => {
     }
 });
 
-// Get single event
-app.get('/api/events/:id', async (req, res) => {
+app.post('/api/events', authMiddleware, async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ error: 'Event not found' });
+        console.log('Received event data:', req.body);
+        
+        const { title, titleAs, description, descriptionAs, date, type } = req.body;
+        
+        if (!title) {
+            return res.status(400).json({ error: 'Title is required' });
         }
-        res.json(event);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch event' });
-    }
-});
-
-// Create event (protected)
-app.post('/api/events', authMiddleware, upload.single('image'), async (req, res) => {
-    try {
-        const eventData = JSON.parse(req.body.data);
-        if (req.file) {
-            eventData.image = `/uploads/${req.file.filename}`;
-        }
-        const event = new Event(eventData);
+        
+        const event = new Event({
+            title,
+            titleAs: titleAs || '',
+            description: description || '',
+            descriptionAs: descriptionAs || '',
+            date: date || new Date(),
+            type: type || 'event',
+            createdAt: new Date()
+        });
+        
         await event.save();
+        console.log('Event saved:', event);
         res.status(201).json(event);
     } catch (error) {
-        console.error('Event creation error:', error);
-        res.status(400).json({ error: 'Failed to create event' });
+        console.error('Error creating event:', error);
+        res.status(500).json({ error: 'Failed to create event: ' + error.message });
     }
 });
 
-// Update event (protected)
-app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, res) => {
+app.put('/api/events/:id', authMiddleware, async (req, res) => {
     try {
-        const eventData = JSON.parse(req.body.data);
-        if (req.file) {
-            eventData.image = `/uploads/${req.file.filename}`;
-        }
         const event = await Event.findByIdAndUpdate(
             req.params.id, 
-            eventData, 
+            req.body, 
             { new: true, runValidators: true }
         );
         if (!event) {
@@ -400,40 +319,34 @@ app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, r
         }
         res.json(event);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update event' });
+        res.status(500).json({ error: 'Failed to update event' });
     }
 });
 
-// Delete event (protected)
 app.delete('/api/events/:id', authMiddleware, async (req, res) => {
     try {
         const event = await Event.findByIdAndDelete(req.params.id);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        res.json({ success: true, message: 'Event deleted successfully' });
+        res.json({ success: true, message: 'Event deleted' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete event' });
     }
 });
 
-// ========== SETTINGS CRUD ==========
-
-// Get all settings (public)
+// ========== SETTINGS ==========
 app.get('/api/settings', async (req, res) => {
     try {
         const settings = await Setting.find();
         const settingsObj = {};
-        settings.forEach(s => { 
-            settingsObj[s.key] = { value: s.value, valueAs: s.valueAs }; 
-        });
+        settings.forEach(s => { settingsObj[s.key] = { value: s.value, valueAs: s.valueAs }; });
         res.json(settingsObj);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
 
-// Update setting (protected)
 app.put('/api/settings/:key', authMiddleware, async (req, res) => {
     try {
         const setting = await Setting.findOneAndUpdate(
@@ -443,13 +356,11 @@ app.put('/api/settings/:key', authMiddleware, async (req, res) => {
         );
         res.json(setting);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update setting' });
+        res.status(500).json({ error: 'Failed to update setting' });
     }
 });
 
 // ========== DONATIONS ==========
-
-// Get all donations (protected)
 app.get('/api/donations', authMiddleware, async (req, res) => {
     try {
         const donations = await Donation.find().sort({ date: -1 });
@@ -459,23 +370,17 @@ app.get('/api/donations', authMiddleware, async (req, res) => {
     }
 });
 
-// Create donation (public)
 app.post('/api/donations', async (req, res) => {
     try {
-        const donation = new Donation({
-            ...req.body,
-            status: 'completed'
-        });
+        const donation = new Donation(req.body);
         await donation.save();
         res.status(201).json(donation);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to record donation' });
+        res.status(500).json({ error: 'Failed to record donation' });
     }
 });
 
-// ========== STATISTICS ==========
-
-// Get dashboard stats (protected)
+// ========== STATS ==========
 app.get('/api/stats', authMiddleware, async (req, res) => {
     try {
         const memberCount = await Member.countDocuments();
@@ -485,37 +390,13 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
         ]);
         const totalDonations = donationResult[0]?.total || 0;
         
-        res.json({ 
-            memberCount, 
-            eventCount, 
-            totalDonations,
-            recentDonations: await Donation.find().sort({ date: -1 }).limit(5)
-        });
+        res.json({ memberCount, eventCount, totalDonations });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
 
-// ========== ERROR HANDLING MIDDLEWARE ==========
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ 
-        error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-});
-
-// ========== START SERVER ==========
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 API URL: http://localhost:${PORT}/api`);
-    console.log(`🔐 JWT Secret: ${JWT_SECRET ? 'Configured ✅' : 'Missing ❌'}`);
-    console.log(`💾 MongoDB: ${MONGODB_URI}`);
 });
