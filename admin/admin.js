@@ -2,61 +2,56 @@
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 
-// Check authentication on page load
-document.addEventListener('DOMContentLoaded', () => {
-    if (token) {
-        verifyToken();
-    } else {
-        showLogin();
-    }
-});
+// DOM Elements
+let currentSection = 'dashboard';
 
-// Show login screen
+// Check authentication
+async function checkAuth() {
+    if (!token) {
+        showLogin();
+        return false;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            showDashboard();
+            return true;
+        } else {
+            localStorage.removeItem('adminToken');
+            token = null;
+            showLogin();
+            return false;
+        }
+    } catch (error) {
+        showLogin();
+        return false;
+    }
+}
+
 function showLogin() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('dashboardContent').style.display = 'none';
 }
 
-// Show dashboard
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboardContent').style.display = 'block';
     loadDashboard();
-    loadMembersTable();
-    loadEventsTable();
-    loadDonationsTable();
+    loadMembers();
+    loadEvents();
+    loadDonations();
     loadSettings();
 }
 
-// Verify token
-async function verifyToken() {
-    try {
-        const res = await fetch(`${API_URL}/auth/verify`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.valid) {
-            showDashboard();
-        } else {
-            localStorage.removeItem('adminToken');
-            token = null;
-            showLogin();
-        }
-    } catch (error) {
-        localStorage.removeItem('adminToken');
-        token = null;
-        showLogin();
-    }
-}
-
-// Login handler
+// Login
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
-    
-    const errorDiv = document.getElementById('loginError');
-    errorDiv.style.display = 'none';
     
     try {
         const res = await fetch(`${API_URL}/auth/login`, {
@@ -72,12 +67,10 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             localStorage.setItem('adminToken', token);
             showDashboard();
         } else {
-            errorDiv.textContent = data.error || 'Login failed';
-            errorDiv.style.display = 'block';
+            alert('Login failed: ' + (data.error || 'Invalid credentials'));
         }
     } catch (error) {
-        errorDiv.textContent = 'Network error. Please check if backend is running.';
-        errorDiv.style.display = 'block';
+        alert('Network error: ' + error.message);
     }
 });
 
@@ -93,39 +86,41 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
         document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
+        
         const section = link.getAttribute('data-section');
+        currentSection = section;
+        
         document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
         document.getElementById('membersSection').style.display = section === 'members' ? 'block' : 'none';
         document.getElementById('eventsSection').style.display = section === 'events' ? 'block' : 'none';
         document.getElementById('donationsSection').style.display = section === 'donations' ? 'block' : 'none';
         document.getElementById('settingsSection').style.display = section === 'settings' ? 'block' : 'none';
-        if (section === 'members') loadMembersTable();
-        if (section === 'events') loadEventsTable();
-        if (section === 'donations') loadDonationsTable();
+        
+        if (section === 'members') loadMembers();
+        if (section === 'events') loadEvents();
+        if (section === 'donations') loadDonations();
         if (section === 'settings') loadSettings();
     });
 });
 
-// Dashboard stats
+// Dashboard Stats
 async function loadDashboard() {
     if (!token) return;
     try {
-        const res = await fetch(`${API_URL}/stats`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
+        const res = await fetch(`${API_URL}/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-            const stats = await res.json();
-            document.getElementById('statMembers').innerText = stats.memberCount || 0;
-            document.getElementById('statEvents').innerText = stats.eventCount || 0;
-            document.getElementById('statDonations').innerHTML = `₹${stats.totalDonations || 0}`;
-        }
+        const stats = await res.json();
+        document.getElementById('statMembers').innerText = stats.memberCount || 0;
+        document.getElementById('statEvents').innerText = stats.eventCount || 0;
+        document.getElementById('statDonations').innerHTML = `₹${stats.totalDonations || 0}`;
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
 
-// Members CRUD
-async function loadMembersTable() {
+// Members
+async function loadMembers() {
     try {
         const res = await fetch(`${API_URL}/members`);
         const members = await res.json();
@@ -135,9 +130,9 @@ async function loadMembersTable() {
                 <td>${m.name}</td>
                 <td>${m.phone || '-'}</td>
                 <td>${m.role || 'Member'}</td>
-                <td class="table-actions">
-                    <i class="fas fa-edit text-primary" onclick="editMember('${m._id}')" style="cursor:pointer"></i>
-                    <i class="fas fa-trash text-danger" onclick="deleteMember('${m._id}')" style="cursor:pointer"></i>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editMember('${m._id}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -146,15 +141,23 @@ async function loadMembersTable() {
     }
 }
 
+window.openMemberModal = () => {
+    document.getElementById('memberId').value = '';
+    document.getElementById('memberForm').reset();
+    new bootstrap.Modal(document.getElementById('memberModal')).show();
+};
+
 window.editMember = async (id) => {
     try {
         const res = await fetch(`${API_URL}/members`);
         const members = await res.json();
         const member = members.find(m => m._id === id);
+        
         document.getElementById('memberId').value = member._id;
         document.getElementById('memberName').value = member.name;
         document.getElementById('memberPhone').value = member.phone || '';
         document.getElementById('memberRole').value = member.role || 'Member';
+        
         new bootstrap.Modal(document.getElementById('memberModal')).show();
     } catch (error) {
         alert('Error loading member');
@@ -162,17 +165,22 @@ window.editMember = async (id) => {
 };
 
 window.deleteMember = async (id) => {
-    if (confirm('Delete this member?')) {
-        try {
-            await fetch(`${API_URL}/members/${id}`, { 
-                method: 'DELETE', 
-                headers: { 'Authorization': `Bearer ${token}` } 
-            });
-            loadMembersTable();
+    if (!confirm('Delete this member?')) return;
+    try {
+        const res = await fetch(`${API_URL}/members/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            alert('Member deleted successfully');
+            loadMembers();
             loadDashboard();
-        } catch (error) {
-            alert('Error deleting member');
+        } else {
+            alert('Failed to delete member');
         }
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 };
 
@@ -184,32 +192,36 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
         phone: document.getElementById('memberPhone').value,
         role: document.getElementById('memberRole').value
     };
+    
     try {
         const url = id ? `${API_URL}/members/${id}` : `${API_URL}/members`;
         const method = id ? 'PUT' : 'POST';
-        await fetch(url, { 
-            method, 
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            }, 
-            body: JSON.stringify(data) 
+        
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
         });
-        bootstrap.Modal.getInstance(document.getElementById('memberModal')).hide();
-        loadMembersTable();
-        loadDashboard();
+        
+        if (res.ok) {
+            alert(id ? 'Member updated successfully' : 'Member added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('memberModal')).hide();
+            loadMembers();
+            loadDashboard();
+        } else {
+            const error = await res.json();
+            alert('Failed to save member: ' + error.error);
+        }
     } catch (error) {
-        alert('Error saving member');
+        alert('Error: ' + error.message);
     }
 });
 
-window.openMemberModal = () => {
-    document.getElementById('memberForm').reset();
-    document.getElementById('memberId').value = '';
-};
-
-// Events CRUD
-async function loadEventsTable() {
+// Events
+async function loadEvents() {
     try {
         const res = await fetch(`${API_URL}/events`);
         const events = await res.json();
@@ -218,9 +230,9 @@ async function loadEventsTable() {
             <tr>
                 <td>${e.title}</td>
                 <td>${e.date ? new Date(e.date).toLocaleDateString() : '-'}</td>
-                <td class="table-actions">
-                    <i class="fas fa-edit text-primary" onclick="editEvent('${e._id}')" style="cursor:pointer"></i>
-                    <i class="fas fa-trash text-danger" onclick="deleteEvent('${e._id}')" style="cursor:pointer"></i>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editEvent('${e._id}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteEvent('${e._id}')">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -229,15 +241,23 @@ async function loadEventsTable() {
     }
 }
 
+window.openEventModal = () => {
+    document.getElementById('eventId').value = '';
+    document.getElementById('eventForm').reset();
+    new bootstrap.Modal(document.getElementById('eventModal')).show();
+};
+
 window.editEvent = async (id) => {
     try {
         const res = await fetch(`${API_URL}/events`);
         const events = await res.json();
         const event = events.find(e => e._id === id);
+        
         document.getElementById('eventId').value = event._id;
         document.getElementById('eventTitle').value = event.title;
         document.getElementById('eventDesc').value = event.description || '';
         document.getElementById('eventDate').value = event.date ? event.date.split('T')[0] : '';
+        
         new bootstrap.Modal(document.getElementById('eventModal')).show();
     } catch (error) {
         alert('Error loading event');
@@ -245,17 +265,22 @@ window.editEvent = async (id) => {
 };
 
 window.deleteEvent = async (id) => {
-    if (confirm('Delete this event?')) {
-        try {
-            await fetch(`${API_URL}/events/${id}`, { 
-                method: 'DELETE', 
-                headers: { 'Authorization': `Bearer ${token}` } 
-            });
-            loadEventsTable();
+    if (!confirm('Delete this event?')) return;
+    try {
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            alert('Event deleted successfully');
+            loadEvents();
             loadDashboard();
-        } catch (error) {
-            alert('Error deleting event');
+        } else {
+            alert('Failed to delete event');
         }
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 };
 
@@ -265,52 +290,53 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
     const data = {
         title: document.getElementById('eventTitle').value,
         description: document.getElementById('eventDesc').value,
-        date: document.getElementById('eventDate').value,
-        type: 'event'
+        date: document.getElementById('eventDate').value
     };
+    
     try {
         const url = id ? `${API_URL}/events/${id}` : `${API_URL}/events`;
         const method = id ? 'PUT' : 'POST';
-        await fetch(url, { 
-            method, 
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            }, 
-            body: JSON.stringify(data) 
+        
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
         });
-        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-        loadEventsTable();
-        loadDashboard();
+        
+        if (res.ok) {
+            alert(id ? 'Event updated successfully' : 'Event added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+            loadEvents();
+            loadDashboard();
+        } else {
+            const error = await res.json();
+            alert('Failed to save event: ' + error.error);
+        }
     } catch (error) {
-        alert('Error saving event');
+        alert('Error: ' + error.message);
     }
 });
 
-window.openEventModal = () => {
-    document.getElementById('eventForm').reset();
-    document.getElementById('eventId').value = '';
-};
-
 // Donations
-async function loadDonationsTable() {
+async function loadDonations() {
     if (!token) return;
     try {
-        const res = await fetch(`${API_URL}/donations`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
+        const res = await fetch(`${API_URL}/donations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-            const donations = await res.json();
-            const tbody = document.getElementById('donationsTable');
-            tbody.innerHTML = donations.map(d => `
-                <tr>
-                    <td>${d.name || 'Anonymous'}</td>
-                    <td>₹${d.amount || 0}</td>
-                    <td>${d.transactionId || '-'}</td>
-                    <td>${new Date(d.date).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        }
+        const donations = await res.json();
+        const tbody = document.getElementById('donationsTable');
+        tbody.innerHTML = donations.map(d => `
+            <tr>
+                <td>${d.name || 'Anonymous'}</td>
+                <td>₹${d.amount || 0}</td>
+                <td>${d.transactionId || '-'}</td>
+                <td>${new Date(d.date).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
     }
@@ -347,15 +373,18 @@ document.getElementById('settingsForm')?.addEventListener('submit', async (e) =>
         for (const up of updates) {
             await fetch(`${API_URL}/settings/${up.key}`, {
                 method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ value: up.value })
             });
         }
         alert('Settings saved successfully!');
     } catch (error) {
-        alert('Error saving settings');
+        alert('Error saving settings: ' + error.message);
     }
 });
+
+// Initialize
+checkAuth();
