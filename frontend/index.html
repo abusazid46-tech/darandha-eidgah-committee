@@ -78,7 +78,9 @@
     .hero-bg {
       position: absolute;
       inset: 0;
-      background: url('https://images.unsplash.com/photo-1584555619042-0716d6dfb0ff?w=1920&q=90') center/cover no-repeat;
+      background: linear-gradient(160deg, #0b3322 0%, #1a5f3e 45%, #0d3b26 100%);
+      background-size: cover;
+      background-position: center;
       transform: scale(1.06);
       animation: slowZoom 22s ease-in-out infinite alternate;
       z-index: 0;
@@ -93,8 +95,8 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse at 60% 40%, rgba(26,95,62,0.45) 0%, transparent 65%),
-        linear-gradient(160deg, rgba(13,59,38,0.82) 0%, rgba(26,95,62,0.55) 50%, rgba(13,59,38,0.88) 100%);
+        radial-gradient(ellipse at 60% 40%, rgba(26,95,62,0.15) 0%, transparent 65%),
+        linear-gradient(160deg, rgba(13,59,38,0.38) 0%, rgba(26,95,62,0.22) 50%, rgba(13,59,38,0.42) 100%);
       z-index: 1;
     }
 
@@ -103,7 +105,7 @@
       position: absolute;
       border-radius: 50%;
       filter: blur(80px);
-      opacity: 0.22;
+      opacity: 0.10;
       z-index: 1;
       animation: floatOrb 14s ease-in-out infinite alternate;
     }
@@ -120,9 +122,9 @@
       position: relative;
       z-index: 2;
       padding: 60px 50px;
-      background: rgba(255,255,255,0.07);
-      backdrop-filter: blur(28px) saturate(160%);
-      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
       border: 1px solid rgba(255,255,255,0.18);
       border-radius: 28px;
       box-shadow: 0 24px 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
@@ -379,7 +381,200 @@
 <!-- Hero Section -->
 <section id="home" class="hero">
   <!-- Layered background -->
-  <div class="hero-bg"></div>
+  <div class="hero-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;">
+      <defs>
+        <radialGradient id="sky" cx="50%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#0a1628"/>
+          <stop offset="40%" stop-color="#0d2240"/>
+          <stop offset="100%" stop-color="#010a14"/>
+        </radialGradient>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#c9a03d" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#c9a03d" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fffbe6" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#c9a03d" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="groundGrad" cx="50%" cy="0%" r="100%">
+          <stop offset="0%" stop-color="#1a5f3e"/>
+          <stop offset="100%" stop-color="#0a2e1c"/>
+        </radialGradient>
+        <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+        <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+        <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
+        <filter id="starGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- Sky -->
+      <rect width="1440" height="900" fill="url(#sky)"/>
+
+      <!-- Nebula clouds -->
+      <ellipse cx="300" cy="200" rx="350" ry="120" fill="#1a2a4a" opacity="0.4" filter="url(#blur12)"/>
+      <ellipse cx="1100" cy="150" rx="280" ry="100" fill="#1a2a5a" opacity="0.35" filter="url(#blur12)"/>
+      <ellipse cx="720" cy="320" rx="400" ry="80" fill="#0d1f3a" opacity="0.3" filter="url(#blur12)"/>
+
+      <!-- Stars -->
+      <g filter="url(#starGlow)" fill="white">
+        <circle cx="45" cy="60" r="1.2" opacity="0.9"/><circle cx="112" cy="28" r="0.8" opacity="0.7"/>
+        <circle cx="178" cy="85" r="1.5" opacity="1"/><circle cx="234" cy="45" r="0.9" opacity="0.8"/>
+        <circle cx="289" cy="110" r="1.1" opacity="0.85"/><circle cx="345" cy="30" r="0.7" opacity="0.6"/>
+        <circle cx="412" cy="75" r="1.3" opacity="0.95"/><circle cx="467" cy="20" r="0.9" opacity="0.75"/>
+        <circle cx="523" cy="95" r="1.0" opacity="0.8"/><circle cx="578" cy="50" r="1.4" opacity="0.9"/>
+        <circle cx="634" cy="130" r="0.8" opacity="0.7"/><circle cx="689" cy="15" r="1.2" opacity="1"/>
+        <circle cx="745" cy="80" r="0.9" opacity="0.85"/><circle cx="800" cy="40" r="1.1" opacity="0.8"/>
+        <circle cx="856" cy="105" r="1.5" opacity="0.95"/><circle cx="911" cy="25" r="0.8" opacity="0.7"/>
+        <circle cx="967" cy="70" r="1.0" opacity="0.75"/><circle cx="1022" cy="120" r="1.3" opacity="0.9"/>
+        <circle cx="1078" cy="35" r="0.7" opacity="0.65"/><circle cx="1134" cy="90" r="1.2" opacity="0.85"/>
+        <circle cx="1189" cy="18" r="1.0" opacity="0.8"/><circle cx="1245" cy="65" r="1.4" opacity="0.95"/>
+        <circle cx="1300" cy="140" r="0.9" opacity="0.7"/><circle cx="1356" cy="45" r="1.1" opacity="0.85"/>
+        <circle cx="1400" cy="100" r="0.8" opacity="0.75"/><circle cx="60" cy="160" r="0.9" opacity="0.7"/>
+        <circle cx="150" cy="200" r="1.1" opacity="0.8"/><circle cx="260" cy="175" r="0.8" opacity="0.65"/>
+        <circle cx="380" cy="210" r="1.3" opacity="0.9"/><circle cx="490" cy="185" r="0.7" opacity="0.7"/>
+        <circle cx="600" cy="230" r="1.0" opacity="0.75"/><circle cx="710" cy="190" r="1.2" opacity="0.85"/>
+        <circle cx="820" cy="215" r="0.9" opacity="0.8"/><circle cx="930" cy="170" r="1.1" opacity="0.9"/>
+        <circle cx="1040" cy="240" r="0.8" opacity="0.7"/><circle cx="1150" cy="195" r="1.4" opacity="0.95"/>
+        <circle cx="1260" cy="220" r="0.9" opacity="0.75"/><circle cx="1370" cy="180" r="1.0" opacity="0.8"/>
+        <!-- Twinkling bright stars -->
+        <circle cx="200" cy="55" r="2" opacity="0.95"><animate attributeName="opacity" values="0.95;0.3;0.95" dur="3s" repeatCount="indefinite"/></circle>
+        <circle cx="650" cy="35" r="2.2" opacity="1"><animate attributeName="opacity" values="1;0.2;1" dur="4.5s" repeatCount="indefinite"/></circle>
+        <circle cx="1050" cy="60" r="1.8" opacity="0.9"><animate attributeName="opacity" values="0.9;0.25;0.9" dur="2.8s" repeatCount="indefinite"/></circle>
+        <circle cx="400" cy="140" r="2" opacity="0.85"><animate attributeName="opacity" values="0.85;0.2;0.85" dur="3.8s" repeatCount="indefinite"/></circle>
+        <circle cx="1300" cy="90" r="1.9" opacity="0.9"><animate attributeName="opacity" values="0.9;0.3;0.9" dur="5s" repeatCount="indefinite"/></circle>
+      </g>
+
+      <!-- Moon glow halo -->
+      <circle cx="1150" cy="130" r="80" fill="url(#moonGlow)" filter="url(#blur6)"/>
+
+      <!-- Crescent Moon -->
+      <g transform="translate(1150,130)">
+        <circle r="48" fill="#fffbe6" opacity="0.97"/>
+        <circle cx="18" cy="-8" r="40" fill="#0d1828"/>
+      </g>
+
+      <!-- Distant city glow on horizon -->
+      <ellipse cx="720" cy="600" rx="600" ry="60" fill="#c9a03d" opacity="0.06" filter="url(#blur12)"/>
+      <ellipse cx="720" cy="590" rx="400" ry="30" fill="#1a5f3e" opacity="0.12" filter="url(#blur6)"/>
+
+      <!-- Ground -->
+      <rect x="0" y="720" width="1440" height="180" fill="url(#groundGrad)"/>
+      <rect x="0" y="700" width="1440" height="30" fill="#1a5f3e" opacity="0.6" filter="url(#blur2)"/>
+
+      <!-- === MOSQUE COMPLEX === -->
+
+      <!-- Far background minarets (small) -->
+      <rect x="180" y="540" width="22" height="160" fill="#0f2d1e" opacity="0.6"/>
+      <ellipse cx="191" cy="538" rx="13" ry="20" fill="#0f2d1e" opacity="0.6"/>
+      <rect x="1238" y="540" width="22" height="160" fill="#0f2d1e" opacity="0.6"/>
+      <ellipse cx="1249" cy="538" rx="13" ry="20" fill="#0f2d1e" opacity="0.6"/>
+
+      <!-- Main building base -->
+      <rect x="320" y="580" width="800" height="160" fill="#0d3b26"/>
+      <!-- Arched windows row -->
+      <g fill="#c9a03d" opacity="0.18">
+        <rect x="360" y="620" width="30" height="60" rx="15"/>
+        <rect x="420" y="620" width="30" height="60" rx="15"/>
+        <rect x="480" y="620" width="30" height="60" rx="15"/>
+        <rect x="540" y="620" width="30" height="60" rx="15"/>
+        <rect x="600" y="620" width="30" height="60" rx="15"/>
+        <rect x="660" y="620" width="30" height="60" rx="15"/>
+        <rect x="780" y="620" width="30" height="60" rx="15"/>
+        <rect x="840" y="620" width="30" height="60" rx="15"/>
+        <rect x="900" y="620" width="30" height="60" rx="15"/>
+        <rect x="960" y="620" width="30" height="60" rx="15"/>
+        <rect x="1020" y="620" width="30" height="60" rx="15"/>
+      </g>
+
+      <!-- Left minaret -->
+      <rect x="370" y="400" width="38" height="200" fill="#112b1a"/>
+      <rect x="362" y="488" width="54" height="12" fill="#1a5f3e"/>
+      <rect x="358" y="510" width="62" height="10" fill="#1a5f3e"/>
+      <!-- Minaret top bulb -->
+      <ellipse cx="389" cy="398" rx="22" ry="32" fill="#143d23"/>
+      <ellipse cx="389" cy="374" rx="12" ry="18" fill="#1a5f3e"/>
+      <!-- Minaret finial -->
+      <line x1="389" y1="356" x2="389" y2="330" stroke="#c9a03d" stroke-width="3"/>
+      <path d="M384,340 Q389,325 394,340 Z" fill="#c9a03d"/>
+
+      <!-- Right minaret -->
+      <rect x="1032" y="400" width="38" height="200" fill="#112b1a"/>
+      <rect x="1024" y="488" width="54" height="12" fill="#1a5f3e"/>
+      <rect x="1020" y="510" width="62" height="10" fill="#1a5f3e"/>
+      <ellipse cx="1051" cy="398" rx="22" ry="32" fill="#143d23"/>
+      <ellipse cx="1051" cy="374" rx="12" ry="18" fill="#1a5f3e"/>
+      <line x1="1051" y1="356" x2="1051" y2="330" stroke="#c9a03d" stroke-width="3"/>
+      <path d="M1046,340 Q1051,325 1056,340 Z" fill="#c9a03d"/>
+
+      <!-- Secondary left minaret -->
+      <rect x="480" y="460" width="28" height="140" fill="#0f2d1e"/>
+      <ellipse cx="494" cy="458" rx="16" ry="24" fill="#122b1c"/>
+      <ellipse cx="494" cy="440" rx="9" ry="13" fill="#1a5f3e"/>
+      <line x1="494" y1="427" x2="494" y2="408" stroke="#c9a03d" stroke-width="2"/>
+      <path d="M491,417 Q494,406 497,417 Z" fill="#c9a03d"/>
+
+      <!-- Secondary right minaret -->
+      <rect x="932" y="460" width="28" height="140" fill="#0f2d1e"/>
+      <ellipse cx="946" cy="458" rx="16" ry="24" fill="#122b1c"/>
+      <ellipse cx="946" cy="440" rx="9" ry="13" fill="#1a5f3e"/>
+      <line x1="946" y1="427" x2="946" y2="408" stroke="#c9a03d" stroke-width="2"/>
+      <path d="M943,417 Q946,406 949,417 Z" fill="#c9a03d"/>
+
+      <!-- Main central dome -->
+      <ellipse cx="720" cy="480" rx="160" ry="130" fill="#0f3320"/>
+      <ellipse cx="720" cy="480" rx="155" ry="125" fill="#112b1a"/>
+      <!-- Dome highlight -->
+      <ellipse cx="680" cy="430" rx="60" ry="40" fill="#1a5f3e" opacity="0.3" filter="url(#blur2)"/>
+      <!-- Dome finial -->
+      <rect x="716" y="345" width="8" height="50" fill="#c9a03d"/>
+      <path d="M710,362 Q720,340 730,362 Z" fill="#c9a03d"/>
+      <!-- Crescent on dome -->
+      <g transform="translate(720,348)">
+        <circle r="10" fill="#c9a03d"/>
+        <circle cx="5" cy="-3" r="8" fill="#112b1a"/>
+      </g>
+
+      <!-- Side domes -->
+      <ellipse cx="540" cy="555" rx="80" ry="60" fill="#112b1a"/>
+      <rect x="534" y="492" width="6" height="30" fill="#c9a03d"/>
+      <path d="M529,505 Q537,490 545,505 Z" fill="#c9a03d"/>
+
+      <ellipse cx="900" cy="555" rx="80" ry="60" fill="#112b1a"/>
+      <rect x="894" y="492" width="6" height="30" fill="#c9a03d"/>
+      <path d="M889,505 Q897,490 905,505 Z" fill="#c9a03d"/>
+
+      <!-- Main gate / entrance arch -->
+      <rect x="660" y="620" width="120" height="120" fill="#091f12"/>
+      <path d="M660,620 Q720,570 780,620 Z" fill="#091f12"/>
+      <!-- Gate glow -->
+      <path d="M665,620 Q720,575 775,620" fill="none" stroke="#c9a03d" stroke-width="2" opacity="0.5"/>
+      <!-- Gate light spill -->
+      <ellipse cx="720" cy="740" rx="40" ry="8" fill="#c9a03d" opacity="0.12" filter="url(#blur2)"/>
+
+      <!-- Dome gold glow -->
+      <ellipse cx="720" cy="490" rx="170" ry="140" fill="#c9a03d" opacity="0.04" filter="url(#blur12)"/>
+
+      <!-- Reflective pool -->
+      <ellipse cx="720" cy="760" rx="280" ry="25" fill="#1a5f3e" opacity="0.35"/>
+      <ellipse cx="720" cy="760" rx="200" ry="15" fill="#0d3b26" opacity="0.5"/>
+      <!-- Pool reflection of dome -->
+      <ellipse cx="720" cy="775" rx="60" ry="18" fill="#c9a03d" opacity="0.08" filter="url(#blur2)"/>
+
+      <!-- Lantern lights along path -->
+      <g fill="#c9a03d" opacity="0.7">
+        <circle cx="500" cy="718" r="4" filter="url(#blur2)"/>
+        <circle cx="580" cy="718" r="4" filter="url(#blur2)"/>
+        <circle cx="860" cy="718" r="4" filter="url(#blur2)"/>
+        <circle cx="940" cy="718" r="4" filter="url(#blur2)"/>
+      </g>
+
+      <!-- Atmospheric ground mist -->
+      <rect x="0" y="690" width="1440" height="40" fill="#1a5f3e" opacity="0.15" filter="url(#blur6)"/>
+
+      <!-- Overall warm vignette at bottom -->
+      <rect x="0" y="600" width="1440" height="300" fill="url(#groundGrad)" opacity="0.5"/>
+    </svg>
+  </div>
   <div class="hero-overlay"></div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
@@ -555,5 +750,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="script.js"></script>
+
 </body>
 </html>
