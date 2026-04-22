@@ -1,5 +1,5 @@
 // frontend/script.js
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let currentLanguage = 'en'; // 'en' or 'as'
 
 // Translation helper
