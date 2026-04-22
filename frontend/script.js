@@ -1,6 +1,6 @@
 // frontend/script.js
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
-let currentLanguage = 'en'; // 'en' or 'as'
+let currentLanguage = 'as'; // 'en' or 'as'
 
 // Translation helper
 function updateLanguage() {
