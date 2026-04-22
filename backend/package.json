@@ -1,8 +1,7 @@
-// backend/package.json
 {
   "name": "darandha-eidgah-backend",
   "version": "1.0.0",
-  "description": "Graveyard Management System API",
+  "description": "Backend API for Darandha Eidgah Committee",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
