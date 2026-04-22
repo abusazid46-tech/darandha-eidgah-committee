@@ -1,5 +1,5 @@
 // admin/admin.js
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 
 // Check authentication
