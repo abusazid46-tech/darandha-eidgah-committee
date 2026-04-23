@@ -247,6 +247,56 @@
     }
     .member-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.1); }
 
+    /* Event Card Styles */
+    .event-card {
+      background: white;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+      transition: transform 0.3s, box-shadow 0.3s;
+      margin-bottom: 30px;
+      height: 100%;
+    }
+    .event-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+    }
+    .event-image {
+      height: 220px;
+      object-fit: cover;
+      width: 100%;
+    }
+    .event-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 5px 15px;
+      border-radius: 25px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1;
+    }
+    .badge-today { background: #dc3545; color: white; }
+    .badge-upcoming { background: #198754; color: white; }
+    .badge-past { background: #6c757d; color: white; }
+    .event-time {
+      color: var(--islamic-gold);
+      font-weight: 600;
+    }
+    .view-all-btn {
+      background: transparent;
+      border: 2px solid var(--islamic-green);
+      color: var(--islamic-green);
+      padding: 10px 30px;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .view-all-btn:hover {
+      background: var(--islamic-green);
+      color: white;
+    }
+
     /* ───── SEARCH ───── */
     .search-box {
       border-radius: 50px;
@@ -288,12 +338,10 @@
       box-shadow: 0 6px 24px rgba(37,211,102,0.45);
       z-index: 1000;
       text-decoration: none;
-      /* vibrate animation */
       animation: waVibrate 3.5s ease-in-out infinite;
     }
     .whatsapp-float:hover { color: white; animation: none; transform: scale(1.14); box-shadow: 0 10px 30px rgba(37,211,102,0.55); }
 
-    /* Vibrate = short rapid wiggle that repeats with a long pause */
     @keyframes waVibrate {
       0%   { transform: rotate(0deg); }
       2%   { transform: rotate(-12deg); }
@@ -308,7 +356,6 @@
       100% { transform: rotate(0deg); }
     }
 
-    /* Ping ring around whatsapp button */
     .whatsapp-float::before {
       content: '';
       position: absolute;
@@ -364,6 +411,7 @@
         <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
         <li class="nav-item"><a class="nav-link" href="#members">Members</a></li>
         <li class="nav-item"><a class="nav-link" href="#events">Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="events.html">All Events</a></li>
         <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
         <li class="nav-item ms-2">
           <a href="#donate" class="btn btn-donate px-4 py-2 rounded-pill">Donate Now</a>
@@ -380,7 +428,6 @@
 
 <!-- Hero Section -->
 <section id="home" class="hero">
-  <!-- Layered background -->
   <div class="hero-bg">
     <canvas id="heroCanvas" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
   </div>
@@ -389,7 +436,6 @@
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
 
-  <!-- Glassmorphic card -->
   <div class="container" style="padding-top: 80px;">
     <div class="hero-content">
       <div class="hero-badge">
@@ -410,7 +456,6 @@
     </div>
   </div>
 
-  <!-- Scroll hint -->
   <div class="scroll-hint">
     <span>Scroll</span>
     <i class="fas fa-chevron-down"></i>
@@ -454,10 +499,15 @@
 <section id="events" class="py-5" style="background: var(--light-cream);">
   <div class="container">
     <div class="text-center">
-      <h2 class="section-title" data-en="News & Events" data-as="বাতৰি আৰু কাৰ্যসূচী">News & Events</h2>
+      <h2 class="section-title" data-en="Upcoming Events" data-as="আগন্তুক কাৰ্যসূচী">Upcoming Events</h2>
     </div>
     <div class="row" id="eventsContainer">
       <div class="col-12 text-center">Loading events...</div>
+    </div>
+    <div class="text-center mt-4">
+      <a href="events.html" class="btn view-all-btn">
+        <i class="fas fa-calendar-alt me-2"></i>View All Events
+      </a>
     </div>
   </div>
 </section>
@@ -470,7 +520,7 @@
     </div>
     <div class="row justify-content-center">
       <div class="col-md-8 text-center">
-        <p class="mb-4" style="color: #555;" data-en="Your donations help us maintain the graveyard and serve the community." data-as="আপোনাৰ দান কবৰস্থান পৰিচালনা আৰু সমাজ সেৱাত আমাক সহায় কৰে;">
+        <p class="mb-4" style="color: #555;" data-en="Your donations help us maintain the graveyard and serve the community." data-as="আপোনাৰ দান কবৰস্থান পৰিচালনা আৰু সমাজ সেৱাত আমাক সহায় কৰে.">
           Your donations help us maintain the graveyard and serve the community.
         </p>
         <div class="progress mb-4" style="height: 20px;">
@@ -575,7 +625,6 @@
   function rand(a,b){ return a + Math.random()*(b-a); }
 
   function initScene(){
-    // Stars
     stars = [];
     var count = Math.floor(W*H/1800);
     for(var i=0;i<count;i++){
@@ -587,7 +636,6 @@
         phase: rand(0,Math.PI*2)
       });
     }
-    // Fireflies
     fireflies = [];
     for(var i=0;i<18;i++){
       fireflies.push({
@@ -600,7 +648,6 @@
         speed: rand(1.5,3.5)
       });
     }
-    // Cloud layers
     cloudLayers = [
       {x:0, y:H*0.08, w:W*0.6, h:80, alpha:0.06, speed:0.12},
       {x:W*0.4, y:H*0.14, w:W*0.55, h:60, alpha:0.05, speed:0.08},
@@ -649,7 +696,6 @@
 
   function drawMoon(){
     var mx = W*0.82, my = H*0.14, mr = Math.min(W,H)*0.055;
-    // Outer glow rings
     for(var i=3;i>0;i--){
       var rg = ctx.createRadialGradient(mx,my,mr*0.3,mx,my,mr*(1+i*0.7));
       rg.addColorStop(0,'rgba(201,160,61,0.12)');
@@ -659,19 +705,16 @@
       ctx.arc(mx,my,mr*(1+i*0.7),0,Math.PI*2);
       ctx.fill();
     }
-    // Moon body
     ctx.save();
     ctx.beginPath();
     ctx.arc(mx,my,mr,0,Math.PI*2);
     ctx.fillStyle='#fffbe6';
     ctx.fill();
-    // Crescent shadow
     ctx.beginPath();
     ctx.arc(mx+mr*0.35, my-mr*0.15, mr*0.82, 0, Math.PI*2);
     ctx.fillStyle='#0a1628';
     ctx.fill();
     ctx.restore();
-    // Subtle surface shimmer
     var sg = ctx.createRadialGradient(mx-mr*0.3,my-mr*0.3,0,mx,my,mr);
     sg.addColorStop(0,'rgba(255,251,230,0.22)');
     sg.addColorStop(1,'rgba(255,251,230,0)');
@@ -684,7 +727,6 @@
   function drawStars(){
     stars.forEach(function(s){
       var twinkle = s.base * (0.5 + 0.5*Math.sin(t*s.speed + s.phase));
-      // Glow
       var sg = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
       sg.addColorStop(0,'rgba(255,255,240,'+twinkle*0.6+')');
       sg.addColorStop(1,'rgba(255,255,240,0)');
@@ -692,7 +734,6 @@
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);
       ctx.fill();
-      // Core
       ctx.fillStyle='rgba(255,255,240,'+twinkle+')';
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
@@ -723,21 +764,18 @@
     var cx = W/2, base = H*0.78, scale = Math.min(W,H)/900;
     ctx.save();
 
-    // Horizon glow
     var hg = ctx.createRadialGradient(cx, base, 0, cx, base, W*0.4);
     hg.addColorStop(0,'rgba(26,95,62,0.18)');
     hg.addColorStop(1,'rgba(26,95,62,0)');
     ctx.fillStyle=hg;
     ctx.fillRect(0, base-80, W, 160);
 
-    // Ground
     var gg = ctx.createLinearGradient(0,base,0,H);
     gg.addColorStop(0,'#0f3320');
     gg.addColorStop(1,'#071a0f');
     ctx.fillStyle=gg;
     ctx.fillRect(0,base,W,H-base);
 
-    // Ground mist
     var mg = ctx.createLinearGradient(0,base-30,0,base+40);
     mg.addColorStop(0,'rgba(26,95,62,0)');
     mg.addColorStop(0.5,'rgba(26,95,62,0.12)');
@@ -747,15 +785,12 @@
 
     var s=scale*1.1;
 
-    // Helper: draw minaret
     function drawMinaret(x, btm, w, h, bulbR){
       ctx.fillStyle='#0d2e1c';
       ctx.fillRect(x-w/2, btm-h, w, h);
-      // Collar rings
       ctx.fillStyle='#1a5f3e';
       ctx.fillRect(x-w/2-4, btm-h*0.45, w+8, 5*s);
       ctx.fillRect(x-w/2-6, btm-h*0.55, w+12, 4*s);
-      // Bulb
       ctx.fillStyle='#112b1a';
       ctx.beginPath();
       ctx.ellipse(x, btm-h, bulbR*1.1, bulbR*1.6, 0, 0, Math.PI*2);
@@ -764,14 +799,12 @@
       ctx.beginPath();
       ctx.ellipse(x, btm-h-bulbR*0.8, bulbR*0.6, bulbR*0.9, 0, 0, Math.PI*2);
       ctx.fill();
-      // Spire
       ctx.strokeStyle='#c9a03d';
       ctx.lineWidth=2*s;
       ctx.beginPath();
       ctx.moveTo(x, btm-h-bulbR*1.7);
       ctx.lineTo(x, btm-h-bulbR*2.8);
       ctx.stroke();
-      // Crescent
       ctx.fillStyle='#c9a03d';
       ctx.beginPath();
       ctx.arc(x, btm-h-bulbR*2.85, 5*s, 0, Math.PI*2);
@@ -782,34 +815,28 @@
       ctx.fill();
     }
 
-    // Far bg minarets
     ctx.globalAlpha=0.35;
     drawMinaret(cx-320*s, base, 14*s, 160*s, 10*s);
     drawMinaret(cx+320*s, base, 14*s, 160*s, 10*s);
     ctx.globalAlpha=1;
 
-    // Main mosque body
     ctx.fillStyle='#0d2e1c';
     ctx.fillRect(cx-280*s, base-100*s, 560*s, 100*s);
 
-    // Arched windows with warm glow
     var winPositions=[-200,-150,-100,-50,50,100,150,200];
     winPositions.forEach(function(wp){
       var wx=cx+wp*s, wy=base-70*s, ww=20*s, wh=50*s;
-      // Window glow
       var wg=ctx.createRadialGradient(wx,wy+wh/2,0,wx,wy+wh/2,30*s);
       wg.addColorStop(0,'rgba(201,160,61,0.18)');
       wg.addColorStop(1,'rgba(201,160,61,0)');
       ctx.fillStyle=wg;
       ctx.fillRect(wx-30*s,wy-10*s,60*s,80*s);
-      // Window arch
       ctx.fillStyle='rgba(201,160,61,0.22)';
       ctx.beginPath();
       ctx.roundRect(wx-ww/2, wy, ww, wh, [ww/2, ww/2, 2, 2]);
       ctx.fill();
     });
 
-    // Main entrance arch glow
     var eg=ctx.createRadialGradient(cx,base,0,cx,base,60*s);
     eg.addColorStop(0,'rgba(201,160,61,0.25)');
     eg.addColorStop(1,'rgba(201,160,61,0)');
@@ -828,13 +855,11 @@
     ctx.arc(cx, base-90*s, 40*s, Math.PI, 0);
     ctx.stroke();
 
-    // Side domes
     function drawDome(dx, dy, rx, ry){
       ctx.fillStyle='#0d2e1c';
       ctx.beginPath();
       ctx.ellipse(dx, dy, rx, ry, 0, Math.PI, 0);
       ctx.fill();
-      // Highlight
       var dh=ctx.createRadialGradient(dx-rx*0.3, dy-ry*0.3, 0, dx, dy, rx);
       dh.addColorStop(0,'rgba(26,95,62,0.25)');
       dh.addColorStop(1,'rgba(26,95,62,0)');
@@ -845,17 +870,14 @@
     }
     drawDome(cx-180*s, base-100*s, 70*s, 55*s);
     drawDome(cx+180*s, base-100*s, 70*s, 55*s);
-
-    // Main dome
     drawDome(cx, base-100*s, 120*s, 95*s);
-    // Dome spire
+
     ctx.strokeStyle='#c9a03d';
     ctx.lineWidth=3*s;
     ctx.beginPath();
     ctx.moveTo(cx, base-195*s);
     ctx.lineTo(cx, base-230*s);
     ctx.stroke();
-    // Main crescent
     ctx.fillStyle='#c9a03d';
     ctx.beginPath();
     ctx.arc(cx, base-234*s, 9*s, 0, Math.PI*2);
@@ -865,13 +887,11 @@
     ctx.arc(cx+5*s, base-237*s, 7.5*s, 0, Math.PI*2);
     ctx.fill();
 
-    // Main minarets
     drawMinaret(cx-240*s, base, 28*s, 220*s, 18*s);
     drawMinaret(cx+240*s, base, 28*s, 220*s, 18*s);
     drawMinaret(cx-150*s, base, 20*s, 170*s, 13*s);
     drawMinaret(cx+150*s, base, 20*s, 170*s, 13*s);
 
-    // Reflective pool
     var pool_y = base + 18*s;
     var pg=ctx.createLinearGradient(0,pool_y,0,pool_y+30*s);
     pg.addColorStop(0,'rgba(13,59,38,0.7)');
@@ -880,7 +900,6 @@
     ctx.beginPath();
     ctx.ellipse(cx, pool_y, 200*s, 14*s, 0, 0, Math.PI*2);
     ctx.fill();
-    // Pool shimmer
     var shimmer = 0.04 + 0.02*Math.sin(t*2.5);
     ctx.strokeStyle='rgba(201,160,61,'+shimmer+')';
     ctx.lineWidth=1;
