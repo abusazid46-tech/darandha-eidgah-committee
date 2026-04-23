@@ -28,6 +28,10 @@
             border-radius: 15px;
             border: none;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .card-stats:hover {
+            transform: translateY(-5px);
         }
         .table-actions i {
             cursor: pointer;
@@ -48,6 +52,31 @@
             width: 100%;
             max-width: 400px;
         }
+        .event-image-preview {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+        .event-image-preview img {
+            max-width: 200px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .badge-today { background-color: #dc3545; }
+        .badge-upcoming { background-color: #198754; }
+        .badge-past { background-color: #6c757d; }
+        .event-table-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card.today { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stats-card.upcoming { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stats-card.past { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
     </style>
 </head>
 <body>
@@ -96,31 +125,92 @@
 
             <!-- Main Content -->
             <div class="col-md-10 main-content">
-                <!-- Dashboard -->
+                <!-- Dashboard Section -->
                 <div id="dashboardSection">
-                    <h2 class="mb-4">Dashboard</h2>
-                    <div class="row">
+                    <h2 class="mb-4">Dashboard Overview</h2>
+                    
+                    <!-- Main Stats Row -->
+                    <div class="row mb-4">
                         <div class="col-md-4 mb-3">
                             <div class="card card-stats">
                                 <div class="card-body">
-                                    <h5>Total Members</h5>
-                                    <h2 id="statMembers">0</h2>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted">Total Members</h6>
+                                            <h2 id="statMembers">0</h2>
+                                        </div>
+                                        <i class="fas fa-users fa-3x text-success opacity-50"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <div class="card card-stats">
                                 <div class="card-body">
-                                    <h5>Total Events</h5>
-                                    <h2 id="statEvents">0</h2>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted">Total Events</h6>
+                                            <h2 id="statEvents">0</h2>
+                                        </div>
+                                        <i class="fas fa-calendar fa-3x text-success opacity-50"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <div class="card card-stats">
                                 <div class="card-body">
-                                    <h5>Donations Received</h5>
-                                    <h2 id="statDonations">₹0</h2>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted">Donations Received</h6>
+                                            <h2 id="statDonations">₹0</h2>
+                                        </div>
+                                        <i class="fas fa-hand-holding-heart fa-3x text-success opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Stats Row -->
+                    <h4 class="mb-3">Event Statistics</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card stats-card today">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-white opacity-75">Today's Events</h6>
+                                            <h2 class="text-white" id="todayEventsCount">0</h2>
+                                        </div>
+                                        <i class="fas fa-calendar-day fa-3x text-white opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card stats-card upcoming">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-white opacity-75">Upcoming Events</h6>
+                                            <h2 class="text-white" id="upcomingEventsCount">0</h2>
+                                        </div>
+                                        <i class="fas fa-calendar-week fa-3x text-white opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card stats-card past">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-white opacity-75">Past Events</h6>
+                                            <h2 class="text-white" id="pastEventsCount">0</h2>
+                                        </div>
+                                        <i class="fas fa-history fa-3x text-white opacity-50"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -131,12 +221,21 @@
                 <div id="membersSection" style="display: none;">
                     <div class="d-flex justify-content-between mb-3">
                         <h2>Manage Members</h2>
-                        <button class="btn btn-success" onclick="openMemberModal()">Add Member</button>
+                        <button class="btn btn-success" onclick="openMemberModal()">
+                            <i class="fas fa-plus me-2"></i>Add Member
+                        </button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr><th>Name</th><th>Phone</th><th>Role</th><th>Actions</th></tr>
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Name (Assamese)</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
                             </thead>
                             <tbody id="membersTable"></tbody>
                         </table>
@@ -147,11 +246,23 @@
                 <div id="eventsSection" style="display: none;">
                     <div class="d-flex justify-content-between mb-3">
                         <h2>Manage Events</h2>
-                        <button class="btn btn-success" onclick="openEventModal()">Add Event</button>
+                        <button class="btn btn-success" onclick="openEventModal()">
+                            <i class="fas fa-plus me-2"></i>Add Event
+                        </button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead><tr><th>Title</th><th>Date</th><th>Actions</th></tr></thead>
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>Date & Time</th>
+                                    <th>Location</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
                             <tbody id="eventsTable"></tbody>
                         </table>
                     </div>
@@ -161,8 +272,16 @@
                 <div id="donationsSection" style="display: none;">
                     <h2>Donation Records</h2>
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead><tr><th>Name</th><th>Amount</th><th>Transaction ID</th><th>Date</th></tr></thead>
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Donor Name</th>
+                                    <th>Amount</th>
+                                    <th>Transaction ID</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
                             <tbody id="donationsTable"></tbody>
                         </table>
                     </div>
@@ -171,50 +290,182 @@
                 <!-- Settings Section -->
                 <div id="settingsSection" style="display: none;">
                     <h2>Site Settings</h2>
-                    <form id="settingsForm">
-                        <div class="mb-3"><label>WhatsApp Number</label><input type="text" class="form-control" id="settingWhatsapp"></div>
-                        <div class="mb-3"><label>Contact Email</label><input type="email" class="form-control" id="settingEmail"></div>
-                        <div class="mb-3"><label>Contact Phone</label><input type="text" class="form-control" id="settingPhone"></div>
-                        <div class="mb-3"><label>About Content (English)</label><textarea class="form-control" rows="3" id="settingAboutEn"></textarea></div>
-                        <div class="mb-3"><label>About Content (Assamese)</label><textarea class="form-control" rows="3" id="settingAboutAs"></textarea></div>
-                        <button type="submit" class="btn btn-success">Save Settings</button>
-                    </form>
+                    <div class="card">
+                        <div class="card-body">
+                            <form id="settingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">WhatsApp Number</label>
+                                    <input type="text" class="form-control" id="settingWhatsapp" placeholder="+919876543210">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contact Email</label>
+                                    <input type="email" class="form-control" id="settingEmail" placeholder="info@darandhaeidgah.org">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contact Phone</label>
+                                    <input type="text" class="form-control" id="settingPhone" placeholder="+91 98765 43210">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">About Content (English)</label>
+                                    <textarea class="form-control" rows="4" id="settingAboutEn"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">About Content (Assamese)</label>
+                                    <textarea class="form-control" rows="4" id="settingAboutAs"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Save Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Member Modal -->
+<!-- Member Modal (Enhanced) -->
 <div class="modal fade" id="memberModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="memberModalTitle">Add New Member</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
                 <form id="memberForm">
                     <input type="hidden" id="memberId">
-                    <div class="mb-2"><label>Name</label><input class="form-control" id="memberName" required></div>
-                    <div class="mb-2"><label>Phone</label><input class="form-control" id="memberPhone"></div>
-                    <div class="mb-2"><label>Role</label><input class="form-control" id="memberRole" value="Member"></div>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Name (English) *</label>
+                            <input type="text" class="form-control" id="memberName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Name (Assamese)</label>
+                            <input type="text" class="form-control" id="memberNameAs">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="memberPhone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-control" id="memberRole">
+                                <option>Member</option>
+                                <option>Committee Head</option>
+                                <option>Secretary</option>
+                                <option>Treasurer</option>
+                                <option>Vice President</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" id="memberAddress" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Member</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Event Modal -->
+<!-- Event Modal (Enhanced with all fields) -->
 <div class="modal fade" id="eventModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="eventModalTitle">Add New Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
-                <form id="eventForm">
+                <form id="eventForm" enctype="multipart/form-data">
                     <input type="hidden" id="eventId">
-                    <div class="mb-2"><label>Title</label><input class="form-control" id="eventTitle" required></div>
-                    <div class="mb-2"><label>Description</label><textarea class="form-control" id="eventDesc"></textarea></div>
-                    <div class="mb-2"><label>Date</label><input type="date" class="form-control" id="eventDate"></div>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    
+                    <!-- Title Section -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Title (English) *</label>
+                            <input type="text" class="form-control" id="eventTitle" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Title (Assamese)</label>
+                            <input type="text" class="form-control" id="eventTitleAs">
+                        </div>
+                    </div>
+                    
+                    <!-- Date and Time Section -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Event Date *</label>
+                            <input type="date" class="form-control" id="eventDate" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="eventTime">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">End Time</label>
+                            <input type="time" class="form-control" id="eventEndTime">
+                        </div>
+                    </div>
+                    
+                    <!-- Location Section -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Location (English)</label>
+                            <input type="text" class="form-control" id="eventLocation" placeholder="Darandha Eidgah Ground">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Location (Assamese)</label>
+                            <input type="text" class="form-control" id="eventLocationAs">
+                        </div>
+                    </div>
+                    
+                    <!-- Description Section -->
+                    <div class="mb-3">
+                        <label class="form-label">Description (English)</label>
+                        <textarea class="form-control" id="eventDesc" rows="3" placeholder="Event description..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description (Assamese)</label>
+                        <textarea class="form-control" id="eventDescAs" rows="3"></textarea>
+                    </div>
+                    
+                    <!-- Status and Featured Section -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Event Status</label>
+                            <select class="form-control" id="eventStatus">
+                                <option value="active">Active</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Event Image</label>
+                            <input type="file" class="form-control" id="eventImage" accept="image/*">
+                            <small class="text-muted">Max size: 5MB (JPG, PNG, GIF)</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="eventFeatured">
+                                <label class="form-check-label">Feature this event</label>
+                                <br>
+                                <small class="text-muted">Featured events appear on homepage</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div id="eventImagePreview" class="mb-3 text-center" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save me-2"></i>Save Event
+                    </button>
                 </form>
             </div>
         </div>
