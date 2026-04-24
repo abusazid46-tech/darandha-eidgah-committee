@@ -96,82 +96,81 @@ async function loadMembers() {
 }
 
 // Load events (for homepage - shows upcoming events only)
+// Updated loadEvents function for homepage
 async function loadEvents() {
-  try {
-    // Fetch upcoming events only for homepage
-    const res = await fetch(`${API_URL}/events/upcoming`);
-    const events = await res.json();
-    const container = document.getElementById('eventsContainer');
-    
-    if (!container) return;
-    
-    if (events.length === 0) {
-      container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No upcoming events at this time. Please check back later.</p></div>';
-      return;
-    }
-    
-    // Show only first 3 upcoming events on homepage
-    const displayEvents = events.slice(0, 3);
-    
-    container.innerHTML = displayEvents.map(event => {
-      const eventDate = new Date(event.date);
-      const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
-      const description = currentLanguage === 'en' ? (event.description || '') : (event.descriptionAs || event.description || '');
-      const location = currentLanguage === 'en' ? (event.location || '') : (event.locationAs || event.location || '');
-      
-      return `
-        <div class="col-md-4 mb-4">
-          <div class="event-card">
-            <div style="position: relative;">
-              ${event.image ? 
-                `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
-                `<div class="event-image bg-light d-flex align-items-center justify-content-center">
-                  <i class="fas fa-calendar-alt fa-4x text-muted"></i>
-                </div>`
-              }
-              <span class="event-badge badge-${event.category}">
-                ${event.category === 'today' ? (currentLanguage === 'en' ? 'Today' : 'আজি') : 
-                  event.category === 'upcoming' ? (currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক') : 
-                  (currentLanguage === 'en' ? 'Past' : 'অতীত')}
-              </span>
-            </div>
-            <div class="p-4">
-              <h4 class="mb-2">${title}</h4>
-              <div class="event-time mb-2">
-                <i class="far fa-calendar-alt me-2"></i>${formattedDate}
-              </div>
-              ${event.time ? `
-                <div class="mb-2">
-                  <i class="far fa-clock me-2"></i>${event.time} ${event.endTime ? `- ${event.endTime}` : ''}
+    try {
+        // Fetch upcoming events only for homepage
+        const res = await fetch(`${API_URL}/events/upcoming`);
+        const events = await res.json();
+        const container = document.getElementById('eventsContainer');
+        
+        if (!container) return;
+        
+        if (!events || events.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No upcoming events at this time. Please check back later.</p></div>';
+            return;
+        }
+        
+        // Show only first 3 upcoming events on homepage
+        const displayEvents = events.slice(0, 3);
+        
+        container.innerHTML = displayEvents.map(event => {
+            const eventDate = new Date(event.date);
+            const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
+            const description = currentLanguage === 'en' ? (event.description || '') : (event.descriptionAs || event.description || '');
+            const location = currentLanguage === 'en' ? (event.location || '') : (event.locationAs || event.location || '');
+            const time = event.time || 'Time TBA';
+            
+            return `
+                <div class="col-md-4 mb-4">
+                    <div class="event-card">
+                        <div style="position: relative;">
+                            ${event.image ? 
+                                `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
+                                `<div class="event-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-calendar-alt fa-4x text-muted"></i>
+                                </div>`
+                            }
+                            <span class="event-badge badge-upcoming">
+                                ${currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক'}
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="mb-2">${title}</h4>
+                            <div class="event-time mb-2">
+                                <i class="far fa-calendar-alt me-2"></i>${formattedDate}
+                            </div>
+                            ${event.time ? `
+                                <div class="mb-2">
+                                    <i class="far fa-clock me-2"></i>${time}
+                                </div>
+                            ` : ''}
+                            ${location ? `
+                                <div class="mb-3">
+                                    <i class="fas fa-location-dot me-2"></i>${location}
+                                </div>
+                            ` : ''}
+                            <p class="text-muted">${description.substring(0, 100)}${description.length > 100 ? '...' : ''}</p>
+                        </div>
+                    </div>
                 </div>
-              ` : ''}
-              ${location ? `
-                <div class="mb-3">
-                  <i class="fas fa-location-dot me-2"></i>${location}
-                </div>
-              ` : ''}
-              <p class="text-muted">${description.substring(0, 100)}${description.length > 100 ? '...' : ''}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch (error) {
-    console.error('Error loading events:', error);
-    const container = document.getElementById('eventsContainer');
-    if (container) {
-      container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Error loading events. Please try again later.</p></div>';
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading events:', error);
+        const container = document.getElementById('eventsContainer');
+        if (container) {
+            container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Error loading events. Please try again later.</p></div>';
+        }
     }
-  }
 }
-
 // Load donation progress
 async function loadDonationProgress() {
   try {
