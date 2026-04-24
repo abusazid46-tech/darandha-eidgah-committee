@@ -40,9 +40,7 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ MongoDB connected successfully'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ========== ENHANCED SCHEMAS ==========
-
-// Member Schema
+// ========== ENHANCED EVENT SCHEMA ==========
 const memberSchema = new mongoose.Schema({
     name: { type: String, required: true },
     nameAs: String,
@@ -53,7 +51,6 @@ const memberSchema = new mongoose.Schema({
     status: { type: String, default: 'active' },
 });
 
-// Enhanced Event Schema with time, location, and category
 const eventSchema = new mongoose.Schema({
     title: { type: String, required: true },
     titleAs: String,
@@ -80,14 +77,16 @@ const eventSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Auto-update category based on date
+// Pre-save middleware to auto-set category
 eventSchema.pre('save', function(next) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const eventDate = new Date(this.date);
     eventDate.setHours(0, 0, 0, 0);
     
-    if (eventDate.getTime() === today.getTime()) {
+    if (this.status === 'cancelled' || this.status === 'completed') {
+        this.category = 'past';
+    } else if (eventDate.getTime() === today.getTime()) {
         this.category = 'today';
     } else if (eventDate > today) {
         this.category = 'upcoming';
@@ -97,14 +96,12 @@ eventSchema.pre('save', function(next) {
     next();
 });
 
-// Setting Schema
 const settingSchema = new mongoose.Schema({
     key: { type: String, unique: true },
     value: String,
     valueAs: String,
 });
 
-// Donation Schema
 const donationSchema = new mongoose.Schema({
     name: String,
     amount: Number,
@@ -113,7 +110,6 @@ const donationSchema = new mongoose.Schema({
     status: { type: String, default: 'pending' },
 });
 
-// Admin Schema
 const adminSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
@@ -132,7 +128,7 @@ const Setting = mongoose.model('Setting', settingSchema);
 const Donation = mongoose.model('Donation', donationSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
-// ========== MULTER SETUP FOR IMAGE UPLOADS ==========
+// ========== MULTER SETUP ==========
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './uploads/');
@@ -151,13 +147,13 @@ const fileFilter = (req, file, cb) => {
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb(new Error('Only images are allowed (jpeg, jpg, png, gif, webp)'));
+        cb(new Error('Only images are allowed'));
     }
 };
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: fileFilter
 });
 
@@ -182,10 +178,64 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
+// ========== AUTO-UPDATE EVENT CATEGORIES FUNCTION ==========
+async function autoUpdateEventCategories() {
+    try {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
+        const todayStart = new Date(now);
+        const todayEnd = new Date(now);
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        // Update events that should be "today"
+        await Event.updateMany(
+            { 
+                date: { $gte: todayStart, $lte: todayEnd },
+                status: 'active'
+            },
+            { category: 'today' }
+        );
+        
+        // Update events that should be "upcoming" (future dates)
+        await Event.updateMany(
+            { 
+                date: { $gt: todayEnd },
+                status: 'active'
+            },
+            { category: 'upcoming' }
+        );
+        
+        // Update events that should be "past" (past dates)
+        await Event.updateMany(
+            { 
+                date: { $lt: todayStart },
+                status: 'active'
+            },
+            { category: 'past' }
+        );
+        
+        // Update cancelled/completed events to past
+        await Event.updateMany(
+            { status: { $in: ['cancelled', 'completed'] } },
+            { category: 'past' }
+        );
+        
+        console.log('✅ Event categories auto-updated at:', new Date().toLocaleString());
+    } catch (error) {
+        console.error('❌ Auto-update error:', error);
+    }
+}
+
+// Run auto-update every hour
+setInterval(autoUpdateEventCategories, 60 * 60 * 1000);
+
+// Run on server startup
+autoUpdateEventCategories();
+
 // ========== DATABASE INITIALIZATION ==========
 async function initDatabase() {
     try {
-        // Create default admin
         const adminExists = await Admin.findOne({ username: 'admin' });
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -198,7 +248,6 @@ async function initDatabase() {
             console.log('✅ Default admin created (username: admin, password: admin123)');
         }
 
-        // Create default settings
         const defaultSettings = [
             { key: 'whatsapp_number', value: '+919876543210' },
             { key: 'contact_email', value: 'info@darandhaeidgah.org' },
@@ -222,9 +271,7 @@ async function initDatabase() {
 
 initDatabase();
 
-// ========== API ROUTES ==========
-
-// Health check
+// ========== HEALTH CHECK ==========
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
@@ -240,9 +287,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ========== AUTHENTICATION ROUTES ==========
-
-// Login
+// ========== AUTHENTICATION ==========
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -257,7 +302,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
         
         if (!admin.isActive) {
-            return res.status(401).json({ error: 'Account is deactivated. Contact super admin.' });
+            return res.status(401).json({ error: 'Account is deactivated' });
         }
         
         const valid = await bcrypt.compare(password, admin.password);
@@ -265,7 +310,6 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Update last login
         admin.lastLogin = new Date();
         await admin.save();
         
@@ -288,7 +332,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Verify token
 app.get('/api/auth/verify', authMiddleware, async (req, res) => {
     try {
         const admin = await Admin.findById(req.admin.id).select('-password');
@@ -299,36 +342,27 @@ app.get('/api/auth/verify', authMiddleware, async (req, res) => {
 });
 
 // ========== MEMBERS CRUD ==========
-
-// Get all members (public)
 app.get('/api/members', async (req, res) => {
     try {
         const members = await Member.find().sort({ name: 1 });
         res.json(members);
     } catch (error) {
-        console.error('Error fetching members:', error);
         res.status(500).json({ error: 'Failed to fetch members' });
     }
 });
 
-// Get single member
 app.get('/api/members/:id', async (req, res) => {
     try {
         const member = await Member.findById(req.params.id);
-        if (!member) {
-            return res.status(404).json({ error: 'Member not found' });
-        }
+        if (!member) return res.status(404).json({ error: 'Member not found' });
         res.json(member);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch member' });
     }
 });
 
-// Create member (protected)
 app.post('/api/members', authMiddleware, async (req, res) => {
     try {
-        console.log('Received member data:', req.body);
-        
         const { name, nameAs, phone, address, role } = req.body;
         
         if (!name) {
@@ -346,7 +380,6 @@ app.post('/api/members', authMiddleware, async (req, res) => {
         });
         
         await member.save();
-        console.log('Member saved:', member);
         res.status(201).json(member);
     } catch (error) {
         console.error('Error creating member:', error);
@@ -354,7 +387,6 @@ app.post('/api/members', authMiddleware, async (req, res) => {
     }
 });
 
-// Update member (protected)
 app.put('/api/members/:id', authMiddleware, async (req, res) => {
     try {
         const member = await Member.findByIdAndUpdate(
@@ -362,35 +394,30 @@ app.put('/api/members/:id', authMiddleware, async (req, res) => {
             req.body, 
             { new: true, runValidators: true }
         );
-        if (!member) {
-            return res.status(404).json({ error: 'Member not found' });
-        }
+        if (!member) return res.status(404).json({ error: 'Member not found' });
         res.json(member);
     } catch (error) {
-        console.error('Error updating member:', error);
         res.status(500).json({ error: 'Failed to update member' });
     }
 });
 
-// Delete member (protected)
 app.delete('/api/members/:id', authMiddleware, async (req, res) => {
     try {
         const member = await Member.findByIdAndDelete(req.params.id);
-        if (!member) {
-            return res.status(404).json({ error: 'Member not found' });
-        }
+        if (!member) return res.status(404).json({ error: 'Member not found' });
         res.json({ success: true, message: 'Member deleted successfully' });
     } catch (error) {
-        console.error('Error deleting member:', error);
         res.status(500).json({ error: 'Failed to delete member' });
     }
 });
 
-// ========== ENHANCED EVENTS CRUD ==========
+// ========== ENHANCED EVENTS CRUD WITH AUTO-UPDATE ==========
 
-// Get all events with filters
+// Get all events (auto-updated categories)
 app.get('/api/events', async (req, res) => {
     try {
+        await autoUpdateEventCategories();
+        
         const { category, featured, limit, status } = req.query;
         let query = {};
         
@@ -399,7 +426,6 @@ app.get('/api/events', async (req, res) => {
         if (status) query.status = status;
         
         let eventsQuery = Event.find(query).sort({ date: category === 'past' ? -1 : 1 });
-        
         if (limit) eventsQuery = eventsQuery.limit(parseInt(limit));
         
         const events = await eventsQuery;
@@ -410,28 +436,19 @@ app.get('/api/events', async (req, res) => {
     }
 });
 
-// Get events by category
-app.get('/api/events/category/:category', async (req, res) => {
-    try {
-        const { category } = req.params;
-        const events = await Event.find({ category }).sort({ date: category === 'past' ? -1 : 1 });
-        res.json(events);
-    } catch (error) {
-        console.error('Error fetching events by category:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-    }
-});
-
 // Get upcoming events
 app.get('/api/events/upcoming', async (req, res) => {
     try {
+        await autoUpdateEventCategories();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        
         const events = await Event.find({ 
             date: { $gte: today },
-            category: { $ne: 'past' },
-            status: 'active'
+            status: 'active',
+            category: { $in: ['today', 'upcoming'] }
         }).sort({ date: 1 });
+        
         res.json(events);
     } catch (error) {
         console.error('Error fetching upcoming events:', error);
@@ -442,6 +459,7 @@ app.get('/api/events/upcoming', async (req, res) => {
 // Get today's events
 app.get('/api/events/today', async (req, res) => {
     try {
+        await autoUpdateEventCategories();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
@@ -451,6 +469,7 @@ app.get('/api/events/today', async (req, res) => {
             date: { $gte: today, $lt: tomorrow },
             status: 'active'
         }).sort({ time: 1 });
+        
         res.json(events);
     } catch (error) {
         console.error('Error fetching today\'s events:', error);
@@ -458,33 +477,55 @@ app.get('/api/events/today', async (req, res) => {
     }
 });
 
+// Get events by category
+app.get('/api/events/category/:category', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const { category } = req.params;
+        
+        let query = { category };
+        
+        if (category === 'upcoming') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            query.date = { $gte: today };
+            query.status = 'active';
+        } else if (category === 'past') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            query.date = { $lt: today };
+        }
+        
+        const events = await Event.find(query).sort({ date: category === 'past' ? -1 : 1 });
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching events by category:', error);
+        res.status(500).json({ error: 'Failed to fetch events' });
+    }
+});
+
 // Get single event
 app.get('/api/events/:id', async (req, res) => {
     try {
+        await autoUpdateEventCategories();
         const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ error: 'Event not found' });
-        }
+        if (!event) return res.status(404).json({ error: 'Event not found' });
         res.json(event);
     } catch (error) {
-        console.error('Error fetching event:', error);
         res.status(500).json({ error: 'Failed to fetch event' });
     }
 });
 
-// Create event with image upload (protected)
+// Create event
 app.post('/api/events', authMiddleware, upload.single('image'), async (req, res) => {
     try {
         let eventData;
-        
-        // Handle form-data or JSON
         if (req.body.data) {
             eventData = JSON.parse(req.body.data);
         } else {
             eventData = req.body;
         }
         
-        // Validate required fields
         if (!eventData.title) {
             return res.status(400).json({ error: 'Title is required' });
         }
@@ -493,16 +534,30 @@ app.post('/api/events', authMiddleware, upload.single('image'), async (req, res)
             return res.status(400).json({ error: 'Date is required' });
         }
         
-        // Handle image upload
         if (req.file) {
             eventData.image = `/uploads/${req.file.filename}`;
             eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         
+        // Auto-set category based on date
+        const eventDate = new Date(eventData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (eventDate.toDateString() === today.toDateString()) {
+            eventData.category = 'today';
+        } else if (eventDate > today) {
+            eventData.category = 'upcoming';
+        } else {
+            eventData.category = 'past';
+        }
+        
         const event = new Event(eventData);
         await event.save();
         
-        console.log('Event saved:', event);
+        // Run auto-update after creation
+        await autoUpdateEventCategories();
+        
         res.status(201).json(event);
     } catch (error) {
         console.error('Event creation error:', error);
@@ -510,21 +565,17 @@ app.post('/api/events', authMiddleware, upload.single('image'), async (req, res)
     }
 });
 
-// Update event with image (protected)
+// Update event
 app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, res) => {
     try {
         let eventData;
-        
-        // Handle form-data or JSON
         if (req.body.data) {
             eventData = JSON.parse(req.body.data);
         } else {
             eventData = req.body;
         }
         
-        // Handle new image upload
         if (req.file) {
-            // Delete old image if exists
             const oldEvent = await Event.findById(req.params.id);
             if (oldEvent && oldEvent.image) {
                 const oldImagePath = path.join(__dirname, oldEvent.image);
@@ -532,9 +583,23 @@ app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, r
                     fs.unlinkSync(oldImagePath);
                 }
             }
-            
             eventData.image = `/uploads/${req.file.filename}`;
             eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        
+        // Auto-set category based on date and status
+        const eventDate = new Date(eventData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (eventData.status === 'cancelled' || eventData.status === 'completed') {
+            eventData.category = 'past';
+        } else if (eventDate.toDateString() === today.toDateString()) {
+            eventData.category = 'today';
+        } else if (eventDate > today) {
+            eventData.category = 'upcoming';
+        } else {
+            eventData.category = 'past';
         }
         
         const event = await Event.findByIdAndUpdate(
@@ -547,7 +612,9 @@ app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, r
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        console.log('Event updated:', event);
+        // Run auto-update after update
+        await autoUpdateEventCategories();
+        
         res.json(event);
     } catch (error) {
         console.error('Event update error:', error);
@@ -555,7 +622,7 @@ app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, r
     }
 });
 
-// Delete event (protected)
+// Delete event
 app.delete('/api/events/:id', authMiddleware, async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
@@ -563,7 +630,6 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        // Delete associated image
         if (event.image) {
             const imagePath = path.join(__dirname, event.image);
             if (fs.existsSync(imagePath)) {
@@ -572,6 +638,8 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         }
         
         await Event.findByIdAndDelete(req.params.id);
+        await autoUpdateEventCategories();
+        
         res.json({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
         console.error('Error deleting event:', error);
@@ -579,38 +647,69 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Get event statistics
-app.get('/api/events/stats/summary', async (req, res) => {
+// Manual sync endpoint (for admin to force update)
+app.post('/api/events/sync', authMiddleware, async (req, res) => {
     try {
+        await autoUpdateEventCategories();
+        
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         
-        const upcoming = await Event.countDocuments({ 
-            date: { $gt: today },
+        const todayCount = await Event.countDocuments({ 
+            date: { $gte: today, $lt: tomorrow },
             status: 'active'
         });
+        const upcomingCount = await Event.countDocuments({ 
+            date: { $gt: tomorrow },
+            status: 'active'
+        });
+        const pastCount = await Event.countDocuments({ 
+            date: { $lt: today }
+        });
+        
+        res.json({ 
+            success: true, 
+            message: 'Events synchronized successfully',
+            stats: { today: todayCount, upcoming: upcomingCount, past: pastCount }
+        });
+    } catch (error) {
+        console.error('Sync error:', error);
+        res.status(500).json({ error: 'Failed to sync events' });
+    }
+});
+
+// Get event statistics
+app.get('/api/events/stats/summary', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
         
         const todayCount = await Event.countDocuments({ 
             date: { $gte: today, $lt: tomorrow },
             status: 'active'
         });
-        
-        const past = await Event.countDocuments({ 
-            date: { $lt: today },
+        const upcomingCount = await Event.countDocuments({ 
+            date: { $gt: tomorrow },
             status: 'active'
         });
-        
-        const total = await Event.countDocuments();
-        const featured = await Event.countDocuments({ featured: true });
+        const pastCount = await Event.countDocuments({ 
+            date: { $lt: today }
+        });
+        const totalCount = await Event.countDocuments();
+        const featuredCount = await Event.countDocuments({ featured: true });
         
         res.json({ 
-            upcoming, 
             today: todayCount, 
-            past,
-            total,
-            featured
+            upcoming: upcomingCount, 
+            past: pastCount,
+            total: totalCount,
+            featured: featuredCount
         });
     } catch (error) {
         console.error('Error fetching event stats:', error);
@@ -619,8 +718,6 @@ app.get('/api/events/stats/summary', async (req, res) => {
 });
 
 // ========== SETTINGS CRUD ==========
-
-// Get all settings (public)
 app.get('/api/settings', async (req, res) => {
     try {
         const settings = await Setting.find();
@@ -630,12 +727,10 @@ app.get('/api/settings', async (req, res) => {
         });
         res.json(settingsObj);
     } catch (error) {
-        console.error('Error fetching settings:', error);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
 
-// Update setting (protected)
 app.put('/api/settings/:key', authMiddleware, async (req, res) => {
     try {
         const setting = await Setting.findOneAndUpdate(
@@ -645,25 +740,20 @@ app.put('/api/settings/:key', authMiddleware, async (req, res) => {
         );
         res.json(setting);
     } catch (error) {
-        console.error('Error updating setting:', error);
         res.status(500).json({ error: 'Failed to update setting' });
     }
 });
 
-// ========== DONATIONS CRUD ==========
-
-// Get all donations (protected)
+// ========== DONATIONS ==========
 app.get('/api/donations', authMiddleware, async (req, res) => {
     try {
         const donations = await Donation.find().sort({ date: -1 });
         res.json(donations);
     } catch (error) {
-        console.error('Error fetching donations:', error);
         res.status(500).json({ error: 'Failed to fetch donations' });
     }
 });
 
-// Create donation (public)
 app.post('/api/donations', async (req, res) => {
     try {
         const donation = new Donation({
@@ -672,7 +762,6 @@ app.post('/api/donations', async (req, res) => {
             date: new Date()
         });
         await donation.save();
-        console.log('Donation recorded:', donation);
         res.status(201).json(donation);
     } catch (error) {
         console.error('Error recording donation:', error);
@@ -681,8 +770,6 @@ app.post('/api/donations', async (req, res) => {
 });
 
 // ========== STATISTICS ==========
-
-// Get dashboard stats (protected)
 app.get('/api/stats', authMiddleware, async (req, res) => {
     try {
         const memberCount = await Member.countDocuments();
@@ -692,12 +779,10 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
         ]);
         const totalDonations = donationResult[0]?.total || 0;
         
-        // Get recent donations
         const recentDonations = await Donation.find()
             .sort({ date: -1 })
             .limit(5);
         
-        // Get event stats
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const upcomingEvents = await Event.countDocuments({ 
@@ -718,17 +803,11 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
     }
 });
 
-// ========== ERROR HANDLING MIDDLEWARE ==========
-
-// 404 handler for undefined routes
+// ========== ERROR HANDLING ==========
 app.use((req, res) => {
-    res.status(404).json({ 
-        error: 'Route not found',
-        message: `Cannot ${req.method} ${req.url}`
-    });
+    res.status(404).json({ error: 'Route not found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error('Global error:', err);
     
@@ -757,13 +836,17 @@ app.listen(PORT, () => {
     console.log(`   GET    /api/members`);
     console.log(`   POST   /api/members (protected)`);
     console.log(`   GET    /api/events`);
-    console.log(`   GET    /api/events/category/:category`);
     console.log(`   GET    /api/events/upcoming`);
     console.log(`   GET    /api/events/today`);
+    console.log(`   GET    /api/events/category/:category`);
+    console.log(`   POST   /api/events/sync (protected) - Manual sync`);
     console.log(`   POST   /api/events (protected)`);
+    console.log(`   PUT    /api/events/:id (protected)`);
+    console.log(`   DELETE /api/events/:id (protected)`);
     console.log(`   GET    /api/settings`);
     console.log(`   GET    /api/donations (protected)`);
     console.log(`   POST   /api/donations`);
     console.log(`   GET    /api/stats (protected)`);
     console.log(`   GET    /api/events/stats/summary`);
+    console.log(`\n🔄 Auto-update: Event categories update every hour`);
 });
