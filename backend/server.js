@@ -716,7 +716,72 @@ app.get('/api/events/stats/summary', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch event stats' });
     }
 });
+// ========== PAST EVENTS ENDPOINT ==========
 
+// Get past events (explicit endpoint)
+app.get('/api/events/past', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const events = await Event.find({ 
+            date: { $lt: today }
+        }).sort({ date: -1 }); // Sort descending (most recent past first)
+        
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching past events:', error);
+        res.status(500).json({ error: 'Failed to fetch past events' });
+    }
+});
+
+// Get events by category - FIXED for past events
+app.get('/api/events/category/:category', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const { category } = req.params;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        let query = {};
+        let sortOrder = {};
+        
+        switch(category) {
+            case 'today':
+                query = {
+                    date: { $gte: today, $lt: tomorrow },
+                    status: 'active'
+                };
+                sortOrder = { time: 1 };
+                break;
+            case 'upcoming':
+                query = {
+                    date: { $gt: tomorrow },
+                    status: 'active'
+                };
+                sortOrder = { date: 1 };
+                break;
+            case 'past':
+                query = {
+                    date: { $lt: today }
+                };
+                sortOrder = { date: -1 }; // Most recent past first
+                break;
+            default:
+                query = {};
+                sortOrder = { date: -1 };
+        }
+        
+        const events = await Event.find(query).sort(sortOrder);
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching events by category:', error);
+        res.status(500).json({ error: 'Failed to fetch events' });
+    }
+});
 // ========== SETTINGS CRUD ==========
 app.get('/api/settings', async (req, res) => {
     try {
