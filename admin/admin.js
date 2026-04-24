@@ -193,7 +193,7 @@ function animateValue(element) {
     }, 200);
 }
 
-// ========== ENHANCED MEMBERS MANAGEMENT (with Address for Area Filter) ==========
+// ========== MEMBERS MANAGEMENT ==========
 
 async function loadMembers() {
     try {
@@ -323,7 +323,7 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
     }
 });
 
-// ========== ENHANCED EVENTS MANAGEMENT ==========
+// ========== EVENTS MANAGEMENT ==========
 
 async function filterEvents(category) {
     currentEventFilter = category;
@@ -417,6 +417,10 @@ async function filterEvents(category) {
         }).join('');
     } catch (error) {
         console.error('Error filtering events:', error);
+        const tbody = document.getElementById('eventsTable');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
+        }
     }
 }
 
@@ -748,6 +752,9 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Make filterEvents globally available
+window.filterEvents = filterEvents;
 
 // Initialize
 checkAuth();
