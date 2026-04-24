@@ -584,6 +584,7 @@
 
 <!-- Members Section with Area Filter -->
 <!-- Members Section -->
+<!-- Members Section -->
 <section id="members" class="py-5 bg-white">
   <div class="container">
     <div class="text-center">
@@ -605,9 +606,7 @@
                 <span data-en="Filter by Residential Area" data-as="বাসস্থানীয় এলাকা অনুসৰি ফিল্টাৰ কৰক">Filter by Residential Area</span>
               </label>
               <select id="areaFilterSelect" class="form-select border-success">
-                <option value="all">
-                  <i class="fas fa-globe"></i> <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span>
-                </option>
+                <option value="all">🌍 <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span></option>
               </select>
             </div>
             
@@ -655,15 +654,14 @@
       </div>
     </div>
     
-    <!-- Members List View (Decorated List) -->
+    <!-- Members List Container -->
     <div class="row">
       <div class="col-lg-10 mx-auto">
-        <div id="membersListContainer" class="members-list-container">
-          <!-- Members will be displayed as a decorated list here -->
-        </div>
+        <div id="membersListContainer"></div>
+        <div id="viewAllContainer"></div>
       </div>
     </div>
-  </div</div>
+  </div>
 </section>
 <!-- Events Section -->
 <section id="events" class="py-5" style="background: var(--light-cream);">
