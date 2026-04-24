@@ -10,15 +10,29 @@
         :root {
             --islamic-green: #1a5f3e;
             --islamic-gold: #c9a03d;
+            --light-cream: #f5f0e8;
+            --dark-green: #0d3b26;
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f5f0e8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-cream);
         }
         
         .navbar {
             background-color: var(--islamic-green);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--islamic-green), var(--dark-green));
+            color: white;
+            padding: 80px 0 60px;
+            margin-top: 56px;
         }
         
         .event-card {
@@ -26,18 +40,20 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
             margin-bottom: 30px;
+            height: 100%;
         }
         
         .event-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
         
         .event-image {
-            height: 250px;
-            object-fit: cover;
+            height: 220px;
             width: 100%;
+            object-fit: cover;
         }
         
         .event-badge {
@@ -48,10 +64,11 @@
             border-radius: 25px;
             font-size: 12px;
             font-weight: bold;
+            z-index: 1;
         }
         
-        .badge-today { background: #ff4757; color: white; }
-        .badge-upcoming { background: #1a5f3e; color: white; }
+        .badge-today { background: #dc3545; color: white; }
+        .badge-upcoming { background: #198754; color: white; }
         .badge-past { background: #6c757d; color: white; }
         
         .category-tab {
@@ -59,6 +76,9 @@
             padding: 10px 25px;
             border-radius: 30px;
             transition: all 0.3s;
+            background: white;
+            border: none;
+            font-weight: 500;
         }
         
         .category-tab.active {
@@ -76,10 +96,22 @@
         }
         
         footer {
-            background: #0d3b26;
+            background: var(--dark-green);
             color: white;
             padding: 40px 0;
             margin-top: 50px;
+        }
+        
+        .language-toggle {
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 15px;
+            border-radius: 30px;
+            transition: background 0.3s;
+        }
+        
+        .language-toggle:hover {
+            background: rgba(255,255,255,0.3);
         }
     </style>
 </head>
@@ -88,27 +120,32 @@
 <!-- Navigation -->
 <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-        <a class="navbar-brand text-white" href="index.html">
+        <a class="navbar-brand" href="index.html">
             <i class="fas fa-mosque me-2"></i> Darandha Eidgah Committee
         </a>
-        <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link text-white" href="index.html">Home</a></li>
-                <li class="nav-item"><a class="nav-link text-white active" href="events.html">Events</a></li>
-                <li class="nav-item"><a class="nav-link text-white" href="#contact">Contact</a></li>
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="events.html">Events</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                <li class="nav-item ms-3">
+                    <div class="language-toggle" id="languageToggle">
+                        <i class="fas fa-language me-1"></i> অসমীয়া
+                    </div>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
 
 <!-- Hero Section -->
-<section class="hero" style="background: linear-gradient(135deg, #1a5f3e, #0d3b26); color: white; padding: 100px 0 60px; margin-top: 56px;">
+<section class="hero">
     <div class="container text-center">
-        <h1><i class="fas fa-calendar-alt me-3"></i>Events & Programs</h1>
-        <p class="lead">Stay updated with our community events, programs, and activities</p>
+        <h1><i class="fas fa-calendar-alt me-3"></i><span id="pageTitle">Events & Programs</span></h1>
+        <p class="lead" id="pageSubtitle">Stay updated with our community events and activities</p>
     </div>
 </section>
 
@@ -118,18 +155,18 @@
         <div class="row justify-content-center">
             <div class="col-auto">
                 <div class="d-flex gap-3 flex-wrap justify-content-center">
-                    <div class="category-tab active" data-category="all">
-                        <i class="fas fa-list me-2"></i>All Events
-                    </div>
-                    <div class="category-tab" data-category="today">
-                        <i class="fas fa-calendar-day me-2"></i>Today's Events
-                    </div>
-                    <div class="category-tab" data-category="upcoming">
-                        <i class="fas fa-calendar-week me-2"></i>Upcoming Events
-                    </div>
-                    <div class="category-tab" data-category="past">
-                        <i class="fas fa-history me-2"></i>Past Events
-                    </div>
+                    <button class="category-tab active" data-category="all">
+                        <i class="fas fa-list me-2"></i><span>All Events</span>
+                    </button>
+                    <button class="category-tab" data-category="today">
+                        <i class="fas fa-calendar-day me-2"></i><span>Today's Events</span>
+                    </button>
+                    <button class="category-tab" data-category="upcoming">
+                        <i class="fas fa-calendar-week me-2"></i><span>Upcoming Events</span>
+                    </button>
+                    <button class="category-tab" data-category="past">
+                        <i class="fas fa-history me-2"></i><span>Past Events</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -140,7 +177,7 @@
 <section class="py-4">
     <div class="container">
         <div id="eventsContainer" class="row">
-            <div class="col-12 text-center">
+            <div class="col-12 text-center py-5">
                 <div class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
@@ -160,8 +197,65 @@
 <script>
     const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
     let currentCategory = 'all';
+    let currentLanguage = 'en';
 
-    // Load events based on category
+    // Translation data
+    const translations = {
+        en: {
+            pageTitle: 'Events & Programs',
+            pageSubtitle: 'Stay updated with our community events and activities',
+            allEvents: 'All Events',
+            todayEvents: "Today's Events",
+            upcomingEvents: 'Upcoming Events',
+            pastEvents: 'Past Events',
+            noEvents: 'No events found',
+            checkLater: 'Check back later for upcoming events',
+            errorLoading: 'Error loading events',
+            tryAgain: 'Please try again later',
+            timeTBA: 'Time TBA',
+            locationTBA: 'Location TBA',
+            noDescription: 'No description available'
+        },
+        as: {
+            pageTitle: 'কাৰ্যসূচী আৰু অনুষ্ঠান',
+            pageSubtitle: 'আমাৰ সম্প্ৰদায়ৰ কাৰ্যসূচীৰ সৈতে সংযুক্ত থাকক',
+            allEvents: 'সকলো কাৰ্যসূচী',
+            todayEvents: 'আজিৰ কাৰ্যসূচী',
+            upcomingEvents: 'আগন্তুক কাৰ্যসূচী',
+            pastEvents: 'অতীতৰ কাৰ্যসূচী',
+            noEvents: 'কোনো কাৰ্যসূচী পোৱা নগল',
+            checkLater: 'পাছত চাওক নতুন কাৰ্যসূচীৰ বাবে',
+            errorLoading: 'কাৰ্যসূচী লোড কৰাত সমস্যা',
+            tryAgain: 'পাছত চেষ্টা কৰক',
+            timeTBA: 'সময় ঘোষণা হব',
+            locationTBA: 'স্থান ঘোষণা হব',
+            noDescription: 'কোনো বিৱৰণ নাই'
+        }
+    };
+
+    function updateLanguage() {
+        currentLanguage = document.getElementById('languageToggle').innerHTML.includes('English') ? 'as' : 'en';
+        const t = translations[currentLanguage];
+        
+        document.getElementById('pageTitle').innerText = t.pageTitle;
+        document.getElementById('pageSubtitle').innerText = t.pageSubtitle;
+        
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            const category = tab.getAttribute('data-category');
+            const span = tab.querySelector('span');
+            if (category === 'all') span.innerText = t.allEvents;
+            else if (category === 'today') span.innerText = t.todayEvents;
+            else if (category === 'upcoming') span.innerText = t.upcomingEvents;
+            else if (category === 'past') span.innerText = t.pastEvents;
+        });
+        
+        document.getElementById('languageToggle').innerHTML = currentLanguage === 'en' ? 
+            '<i class="fas fa-language me-1"></i> অসমীয়া' : 
+            '<i class="fas fa-language me-1"></i> English';
+        
+        loadEvents();
+    }
+
     async function loadEvents() {
         const container = document.getElementById('eventsContainer');
         container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-success"></div></div>';
@@ -172,64 +266,107 @@
                 url = `${API_URL}/events/category/${currentCategory}`;
             }
             
+            console.log('Fetching events from:', url);
             const res = await fetch(url);
-            const events = await res.json();
             
-            if (events.length === 0) {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            
+            const events = await res.json();
+            const t = translations[currentLanguage];
+            
+            if (!events || events.length === 0) {
                 container.innerHTML = `
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                        <h4>No events found</h4>
-                        <p class="text-muted">Check back later for upcoming events</p>
+                        <h4>${t.noEvents}</h4>
+                        <p class="text-muted">${t.checkLater}</p>
                     </div>
                 `;
                 return;
             }
             
-            container.innerHTML = events.map(event => `
-                <div class="col-md-6 col-lg-4">
-                    <div class="event-card">
-                        <div style="position: relative;">
-                            ${event.image ? 
-                                `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` :
-                                `<div class="event-image bg-light d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-calendar-alt fa-4x text-muted"></i>
-                                </div>`
-                            }
-                            <span class="event-badge badge-${event.category}">
-                                ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
-                            </span>
-                        </div>
-                        <div class="p-4">
-                            <h4>${event.title}</h4>
-                            <div class="event-time mb-2">
-                                <i class="far fa-calendar-alt me-2"></i>${new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            container.innerHTML = events.map(event => {
+                const eventDate = new Date(event.date);
+                const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
+                const description = currentLanguage === 'en' ? (event.description || t.noDescription) : (event.descriptionAs || event.description || t.noDescription);
+                const location = currentLanguage === 'en' ? (event.location || t.locationTBA) : (event.locationAs || event.location || t.locationTBA);
+                const time = event.time || t.timeTBA;
+                
+                let categoryText = '';
+                let categoryClass = '';
+                if (event.category === 'today') {
+                    categoryText = currentLanguage === 'en' ? 'Today' : 'আজি';
+                    categoryClass = 'badge-today';
+                } else if (event.category === 'upcoming') {
+                    categoryText = currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক';
+                    categoryClass = 'badge-upcoming';
+                } else {
+                    categoryText = currentLanguage === 'en' ? 'Past' : 'অতীত';
+                    categoryClass = 'badge-past';
+                }
+                
+                return `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="event-card">
+                            <div style="position: relative;">
+                                ${event.image ? 
+                                    `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
+                                    `<div class="event-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-calendar-alt fa-4x text-muted"></i>
+                                    </div>`
+                                }
+                                <span class="event-badge ${categoryClass}">
+                                    ${categoryText}
+                                </span>
                             </div>
-                            ${event.time ? `
+                            <div class="p-4">
+                                <h4 class="mb-2">${escapeHtml(title)}</h4>
+                                <div class="event-time mb-2">
+                                    <i class="far fa-calendar-alt me-2"></i>${formattedDate}
+                                </div>
                                 <div class="mb-2">
-                                    <i class="far fa-clock me-2"></i>${event.time} ${event.endTime ? `- ${event.endTime}` : ''}
+                                    <i class="far fa-clock me-2"></i>${escapeHtml(time)}
+                                    ${event.endTime ? ` - ${escapeHtml(event.endTime)}` : ''}
                                 </div>
-                            ` : ''}
-                            ${event.location ? `
                                 <div class="mb-3">
-                                    <i class="fas fa-location-dot me-2"></i>${event.location}
+                                    <i class="fas fa-location-dot me-2"></i>${escapeHtml(location)}
                                 </div>
-                            ` : ''}
-                            <p class="text-muted">${event.description || 'No description available'}</p>
+                                <p class="text-muted">${escapeHtml(description.substring(0, 150))}${description.length > 150 ? '...' : ''}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         } catch (error) {
             console.error('Error loading events:', error);
+            const t = translations[currentLanguage];
             container.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
-                    <h4>Error loading events</h4>
-                    <p>Please try again later</p>
+                    <h4>${t.errorLoading}</h4>
+                    <p class="text-muted">${t.tryAgain}</p>
+                    <button class="btn btn-success mt-3" onclick="loadEvents()">
+                        <i class="fas fa-sync-alt me-2"></i>Retry
+                    </button>
                 </div>
             `;
         }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // Category tabs
@@ -240,6 +377,12 @@
             currentCategory = tab.getAttribute('data-category');
             loadEvents();
         });
+    });
+
+    // Language toggle
+    document.getElementById('languageToggle').addEventListener('click', () => {
+        currentLanguage = currentLanguage === 'en' ? 'as' : 'en';
+        updateLanguage();
     });
 
     // Initial load
