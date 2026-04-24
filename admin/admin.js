@@ -6,6 +6,7 @@ let autoRefreshInterval = null;
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
+let currentEventFilter = 'all';
 
 // Check authentication
 async function checkAuth() {
@@ -389,7 +390,106 @@ async function loadEvents() {
         console.error('Error loading events:', error);
     }
 }
+// Filter events by category
+async function filterEvents(category) {
+    currentEventFilter = category;
+    
+    // Update active button styling
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-filter') === category) {
+            btn.classList.add('active');
+        }
+    });
+    
+    try {
+        let url = `${API_URL}/events`;
+        if (category !== 'all') {
+            url = `${API_URL}/events/category/${category}`;
+        }
+        
+        const res = await fetch(url);
+        const events = await res.json();
+        const tbody = document.getElementById('eventsTable');
+        if (!tbody) return;
+        
+        if (events.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>
+                        No ${category !== 'all' ? category : ''} events found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = events.map(event => {
+            let statusBadgeClass = '';
+            let statusText = '';
+            
+            if (event.status === 'cancelled') {
+                statusBadgeClass = 'danger';
+                statusText = 'Cancelled';
+            } else if (event.status === 'completed') {
+                statusBadgeClass = 'info';
+                statusText = 'Completed';
+            } else {
+                statusBadgeClass = 'success';
+                statusText = 'Active';
+            }
+            
+            return `
+                <tr data-event-id="${event._id}">
+                    <td>
+                        ${event.image ? 
+                            `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
+                            '<i class="fas fa-calendar fa-2x text-muted"></i>'}
+                    </td>
+                    <td>
+                        <strong>${event.title}</strong>
+                        ${event.titleAs ? `<br><small class="text-muted">${event.titleAs}</small>` : ''}
+                    </td>
+                    <td>
+                        ${new Date(event.date).toLocaleDateString()}<br>
+                        <small class="text-muted">${event.time || 'Time TBA'}</small>
+                    </td>
+                    <td>${event.location || 'TBA'}</td>
+                    <td>
+                        <span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">
+                            ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
+                        </span>
+                        ${event.featured ? '<span class="badge bg-warning ms-1">Featured</span>' : ''}
+                    </td>
+                    <td>
+                        <span class="badge bg-${statusBadgeClass} event-status-badge" data-id="${event._id}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <tr>
+                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error filtering events:', error);
+    }
+}
 
+// Also update the loadEvents function to use the current filter
+async function loadEvents() {
+    await filterEvents(currentEventFilter);
+}
 // Toggle event status (Active -> Cancelled -> Completed)
 window.toggleEventStatus = async (id, currentStatus) => {
     let newStatus = '';
