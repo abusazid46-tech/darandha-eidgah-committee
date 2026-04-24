@@ -77,6 +77,34 @@
         .stats-card.today { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         .stats-card.upcoming { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
         .stats-card.past { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        
+        /* Category filter tabs */
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border-radius: 25px;
+            border: none;
+            background: #e9ecef;
+            color: #495057;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .filter-btn:hover {
+            background: #1a5f3e;
+            color: white;
+        }
+        .filter-btn.active {
+            background: #1a5f3e;
+            color: white;
+        }
+        .filter-btn.today.active { background: #dc3545; }
+        .filter-btn.upcoming.active { background: #198754; }
+        .filter-btn.past.active { background: #6c757d; }
     </style>
 </head>
 <body>
@@ -219,17 +247,12 @@
 
                 <!-- Members Section -->
                 <div id="membersSection" style="display: none;">
-                   <div class="d-flex justify-content-between mb-3">
-    <h2>Manage Events</h2>
-    <div>
-        <button class="btn btn-info me-2" onclick="manualSync()">
-            <i class="fas fa-sync-alt me-2"></i>Sync Now
-        </button>
-        <button class="btn btn-success" onclick="openEventModal()">
-            <i class="fas fa-plus me-2"></i>Add Event
-        </button>
-    </div>
-</div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <h2>Manage Members</h2>
+                        <button class="btn btn-success" onclick="openMemberModal()">
+                            <i class="fas fa-plus me-2"></i>Add Member
+                        </button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered">
                             <thead class="table-success">
@@ -247,14 +270,36 @@
                     </div>
                 </div>
 
-                <!-- Events Section -->
+                <!-- Events Section with Category Filters -->
                 <div id="eventsSection" style="display: none;">
-                    <div class="d-flex justify-content-between mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h2>Manage Events</h2>
-                        <button class="btn btn-success" onclick="openEventModal()">
-                            <i class="fas fa-plus me-2"></i>Add Event
+                        <div>
+                            <button class="btn btn-info me-2" onclick="manualSync()">
+                                <i class="fas fa-sync-alt me-2"></i>Sync Now
+                            </button>
+                            <button class="btn btn-success" onclick="openEventModal()">
+                                <i class="fas fa-plus me-2"></i>Add Event
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Filter Tabs -->
+                    <div class="category-filter">
+                        <button class="filter-btn active" data-filter="all" onclick="filterEvents('all')">
+                            <i class="fas fa-list me-1"></i> All Events
+                        </button>
+                        <button class="filter-btn today" data-filter="today" onclick="filterEvents('today')">
+                            <i class="fas fa-calendar-day me-1"></i> Today's Events
+                        </button>
+                        <button class="filter-btn upcoming" data-filter="upcoming" onclick="filterEvents('upcoming')">
+                            <i class="fas fa-calendar-week me-1"></i> Upcoming Events
+                        </button>
+                        <button class="filter-btn past" data-filter="past" onclick="filterEvents('past')">
+                            <i class="fas fa-history me-1"></i> Past Events
                         </button>
                     </div>
+                    
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered">
                             <thead class="table-success">
@@ -332,7 +377,7 @@
 
 <!-- Member Modal (Enhanced) -->
 <div class="modal fade" id="memberModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="dialogue modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="memberModalTitle">Add New Member</h5>
