@@ -1,6 +1,6 @@
 // frontend/script.js
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
-let currentLanguage = 'en';
+let currentLanguage = 'as';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
 let currentViewMode = 'all'; // Default to 'all' members view
