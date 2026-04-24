@@ -1,6 +1,7 @@
 // admin/admin.js
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
+let autoRefreshInterval = null;
 
 // DOM Elements
 let currentSection = 'dashboard';
@@ -20,6 +21,7 @@ async function checkAuth() {
         
         if (res.ok) {
             showDashboard();
+            startAutoRefresh();
             return true;
         } else {
             localStorage.removeItem('adminToken');
@@ -33,11 +35,26 @@ async function checkAuth() {
     }
 }
 
+// Start auto-refresh every 30 seconds
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        if (currentSection === 'events') {
+            loadEvents();
+            loadEventStats();
+        } else if (currentSection === 'dashboard') {
+            loadDashboard();
+            loadEventStats();
+        }
+    }, 30000); // Refresh every 30 seconds
+}
+
 function showLogin() {
     const loginScreen = document.getElementById('loginScreen');
     const dashboardContent = document.getElementById('dashboardContent');
     if (loginScreen) loginScreen.style.display = 'flex';
     if (dashboardContent) dashboardContent.style.display = 'none';
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
 }
 
 function showDashboard() {
@@ -72,6 +89,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             token = data.token;
             localStorage.setItem('adminToken', token);
             showDashboard();
+            startAutoRefresh();
         } else {
             alert('Login failed: ' + (data.error || 'Invalid credentials'));
         }
@@ -85,6 +103,7 @@ document.getElementById('logoutBtn')?.addEventListener('click', () => {
     localStorage.removeItem('adminToken');
     token = null;
     showLogin();
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
 });
 
 // Navigation
@@ -136,7 +155,7 @@ async function loadDashboard() {
     }
 }
 
-// Load event statistics for dashboard
+// Load event statistics for dashboard with real-time updates
 async function loadEventStats() {
     try {
         const res = await fetch(`${API_URL}/events/stats/summary`);
@@ -146,12 +165,30 @@ async function loadEventStats() {
         const upcomingEventsCount = document.getElementById('upcomingEventsCount');
         const pastEventsCount = document.getElementById('pastEventsCount');
         
-        if (todayEventsCount) todayEventsCount.innerText = stats.today || 0;
-        if (upcomingEventsCount) upcomingEventsCount.innerText = stats.upcoming || 0;
-        if (pastEventsCount) pastEventsCount.innerText = stats.past || 0;
+        if (todayEventsCount) {
+            todayEventsCount.innerText = stats.today || 0;
+            // Add visual feedback if count changed
+            animateValue(todayEventsCount);
+        }
+        if (upcomingEventsCount) {
+            upcomingEventsCount.innerText = stats.upcoming || 0;
+            animateValue(upcomingEventsCount);
+        }
+        if (pastEventsCount) {
+            pastEventsCount.innerText = stats.past || 0;
+            animateValue(pastEventsCount);
+        }
     } catch (error) {
         console.error('Error loading event stats:', error);
     }
+}
+
+// Animation helper for number changes
+function animateValue(element) {
+    element.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+        element.style.transform = 'scale(1)';
+    }, 200);
 }
 
 // ========== MEMBERS MANAGEMENT ==========
@@ -176,8 +213,8 @@ async function loadMembers() {
                     <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')">
                         <i class="fas fa-trash"></i>
                     </button>
-                 </td>
-             </tr>
+                  </td>
+              </tr>
         `).join('');
     } catch (error) {
         console.error('Error loading members:', error);
@@ -282,7 +319,7 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
     }
 });
 
-// ========== ENHANCED EVENTS MANAGEMENT ==========
+// ========== ENHANCED EVENTS MANAGEMENT WITH REAL-TIME STATUS ==========
 
 async function loadEvents() {
     try {
@@ -291,42 +328,172 @@ async function loadEvents() {
         const tbody = document.getElementById('eventsTable');
         if (!tbody) return;
         
-        tbody.innerHTML = events.map(event => `
-            <tr>
-                <td>
-                    ${event.image ? 
-                        `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
-                        '<i class="fas fa-calendar fa-2x text-muted"></i>'}
-                </td>
-                <td>
-                    <strong>${event.title}</strong>
-                    ${event.titleAs ? `<br><small class="text-muted">${event.titleAs}</small>` : ''}
-                </td>
-                <td>
-                    ${new Date(event.date).toLocaleDateString()}<br>
-                    <small class="text-muted">${event.time || 'Time TBA'}</small>
-                </td>
-                <td>${event.location || 'TBA'}</td>
-                <td>
-                    <span class="badge bg-${event.category === 'today' ? 'danger' : event.category === 'upcoming' ? 'success' : 'secondary'}">
-                        ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
-                    </span>
-                    ${event.featured ? '<span class="badge bg-warning ms-1">Featured</span>' : ''}
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = events.map(event => {
+            // Determine badge colors based on status and category
+            let statusBadgeClass = '';
+            let statusText = '';
+            
+            if (event.status === 'cancelled') {
+                statusBadgeClass = 'danger';
+                statusText = 'Cancelled';
+            } else if (event.status === 'completed') {
+                statusBadgeClass = 'info';
+                statusText = 'Completed';
+            } else {
+                statusBadgeClass = 'success';
+                statusText = 'Active';
+            }
+            
+            return `
+                <tr data-event-id="${event._id}">
+                    <td>
+                        ${event.image ? 
+                            `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
+                            '<i class="fas fa-calendar fa-2x text-muted"></i>'}
+                    </td>
+                    <td>
+                        <strong>${event.title}</strong>
+                        ${event.titleAs ? `<br><small class="text-muted">${event.titleAs}</small>` : ''}
+                    </td>
+                    <td>
+                        ${new Date(event.date).toLocaleDateString()}<br>
+                        <small class="text-muted">${event.time || 'Time TBA'}</small>
+                    </td>
+                    <td>${event.location || 'TBA'}</td>
+                    <td>
+                        <span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">
+                            ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
+                        </span>
+                        ${event.featured ? '<span class="badge bg-warning ms-1">Featured</span>' : ''}
+                    </td>
+                    <td>
+                        <span class="badge bg-${statusBadgeClass} event-status-badge" data-id="${event._id}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading events:', error);
     }
 }
+
+// Toggle event status (Active -> Cancelled -> Completed)
+window.toggleEventStatus = async (id, currentStatus) => {
+    let newStatus = '';
+    let confirmMessage = '';
+    
+    if (currentStatus === 'active') {
+        newStatus = 'cancelled';
+        confirmMessage = 'Are you sure you want to CANCEL this event?';
+    } else if (currentStatus === 'cancelled') {
+        newStatus = 'completed';
+        confirmMessage = 'Mark this event as COMPLETED?';
+    } else if (currentStatus === 'completed') {
+        newStatus = 'active';
+        confirmMessage = 'Reactivate this event?';
+    }
+    
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+        // First fetch the current event data
+        const getRes = await fetch(`${API_URL}/events/${id}`);
+        const event = await getRes.json();
+        
+        // Update the status
+        event.status = newStatus;
+        
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(event)
+        });
+        
+        if (res.ok) {
+            const updatedEvent = await res.json();
+            alert(`Event ${updatedEvent.status === 'cancelled' ? 'cancelled' : updatedEvent.status === 'completed' ? 'marked as completed' : 'reactivated'} successfully!`);
+            
+            // Refresh all data in real-time
+            await Promise.all([
+                loadEvents(),
+                loadEventStats(),
+                loadDashboard()
+            ]);
+            
+            // Also trigger sync on backend
+            await fetch(`${API_URL}/events/sync`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } else {
+            const error = await res.json();
+            alert('Failed to update event status: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error updating event status:', error);
+        alert('Error: ' + error.message);
+    }
+};
+
+// Quick status update dropdown in table (alternative method)
+window.updateEventStatus = async (id, newStatus) => {
+    try {
+        const getRes = await fetch(`${API_URL}/events/${id}`);
+        const event = await getRes.json();
+        
+        event.status = newStatus;
+        
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(event)
+        });
+        
+        if (res.ok) {
+            // Update the badge in the table without reloading
+            const badge = document.querySelector(`.event-status-badge[data-id="${id}"]`);
+            if (badge) {
+                let badgeClass = '';
+                let statusText = '';
+                if (newStatus === 'cancelled') {
+                    badgeClass = 'danger';
+                    statusText = 'Cancelled';
+                } else if (newStatus === 'completed') {
+                    badgeClass = 'info';
+                    statusText = 'Completed';
+                } else {
+                    badgeClass = 'success';
+                    statusText = 'Active';
+                }
+                badge.className = `badge bg-${badgeClass} event-status-badge`;
+                badge.innerText = statusText;
+            }
+            
+            await Promise.all([loadEventStats(), loadDashboard()]);
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+    }
+};
 
 // Open event modal for add/edit
 window.openEventModal = () => {
@@ -349,6 +516,13 @@ window.openEventModal = () => {
     if (eventDate) {
         const today = new Date().toISOString().split('T')[0];
         eventDate.value = today;
+    }
+    
+    // Set default time
+    const eventTime = document.getElementById('eventTime');
+    if (eventTime) {
+        const now = new Date();
+        eventTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     }
     
     new bootstrap.Modal(document.getElementById('eventModal')).show();
@@ -433,9 +607,11 @@ window.deleteEvent = async (id) => {
         
         if (res.ok) {
             alert('Event deleted successfully');
-            loadEvents();
-            loadDashboard();
-            loadEventStats();
+            await Promise.all([
+                loadEvents(),
+                loadDashboard(),
+                loadEventStats()
+            ]);
         } else {
             alert('Failed to delete event');
         }
@@ -485,9 +661,19 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         if (res.ok) {
             alert(id ? 'Event updated successfully' : 'Event added successfully');
             bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-            loadEvents();
-            loadDashboard();
-            loadEventStats();
+            
+            // Refresh all data
+            await Promise.all([
+                loadEvents(),
+                loadDashboard(),
+                loadEventStats()
+            ]);
+            
+            // Trigger sync on backend
+            await fetch(`${API_URL}/events/sync`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
         } else {
             const error = await res.json();
             alert('Failed to save event: ' + (error.error || 'Unknown error'));
@@ -497,6 +683,46 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         alert('Error: ' + error.message);
     }
 });
+
+// Manual sync button (add this to events section header)
+async function manualSync() {
+    if (!confirm('Manually sync event categories? This will update all event statuses based on current date.')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/events/sync`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            alert(`Sync completed! Today: ${data.stats.today}, Upcoming: ${data.stats.upcoming}, Past: ${data.stats.past}`);
+            
+            await Promise.all([
+                loadEvents(),
+                loadEventStats(),
+                loadDashboard()
+            ]);
+        } else {
+            alert('Sync failed');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Add sync button to events section header (call this after DOM loads)
+function addSyncButton() {
+    const eventsHeader = document.querySelector('#eventsSection .d-flex');
+    if (eventsHeader && !document.getElementById('syncEventsBtn')) {
+        const syncBtn = document.createElement('button');
+        syncBtn.id = 'syncEventsBtn';
+        syncBtn.className = 'btn btn-info ms-2';
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Sync Now';
+        syncBtn.onclick = manualSync;
+        eventsHeader.appendChild(syncBtn);
+    }
+}
 
 // ========== DONATIONS MANAGEMENT ==========
 
@@ -521,7 +747,7 @@ async function loadDonations() {
                         ${d.status || 'pending'}
                     </span>
                 </td>
-            </tr>
+            </table>
         `).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
@@ -579,6 +805,9 @@ document.getElementById('settingsForm')?.addEventListener('submit', async (e) =>
         alert('Error saving settings: ' + error.message);
     }
 });
+
+// Add sync button after DOM loads
+setTimeout(addSyncButton, 500);
 
 // Initialize
 checkAuth();
