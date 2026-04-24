@@ -415,6 +415,87 @@
       .whatsapp-float { bottom: 20px; right: 20px; }
       .area-filter-btn { padding: 5px 12px; font-size: 0.8rem; }
     }
+    /* Member List Styles */
+.members-list-container {
+  min-height: 400px;
+}
+
+.member-list-item {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left-width: 4px !important;
+}
+
+.member-list-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+
+.member-avatar i {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 50%;
+}
+
+.member-details {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.member-card {
+  transition: all 0.3s ease;
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.member-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+/* Custom Select Styling */
+.form-select.border-success:focus {
+  border-color: var(--islamic-green);
+  box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25);
+}
+
+/* Button Group Styling */
+.btn-group .btn-outline-success {
+  color: var(--islamic-green);
+  border-color: var(--islamic-green);
+}
+
+.btn-group .btn-outline-success:hover,
+.btn-group .btn-outline-success.active {
+  background-color: var(--islamic-green);
+  color: white;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .member-list-item .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .member-avatar {
+    margin-bottom: 10px;
+  }
+  
+  .member-badge {
+    margin-top: 10px;
+  }
+  
+  .member-details span {
+    display: inline-block;
+    margin: 5px 0;
+  }
+}
   </style>
 </head>
 <body>
