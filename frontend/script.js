@@ -3,14 +3,13 @@ const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let currentLanguage = 'en';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
-let currentViewMode = 'all'; // 'dignitaries' or 'all'
+let currentViewMode = 'all'; // Default to 'all' members view
 let allMembers = [];
 let uniqueAreas = [];
 let allMembersFiltered = [];
 
 // Configuration for homepage member display
-const MAX_DIGNITARIES_ON_HOMEPAGE = 6; // Show maximum 6 dignitaries initially
-const MAX_MEMBERS_ON_HOMEPAGE = 12; // Show maximum 12 members in all view
+const MAX_MEMBERS_ON_HOMEPAGE = 12; // Show maximum 12 members initially
 
 // Dignitary roles (committee heads and leadership positions)
 const dignitaryRoles = ['Committee Head', 'Secretary', 'Treasurer', 'Vice President', 'President', 'Chairman', 'General Secretary'];
@@ -38,12 +37,6 @@ function updateLanguage() {
     languageToggle.innerHTML = currentLanguage === 'en' ? 
       '<i class="fas fa-language me-1"></i> অসমীয়া' : 
       '<i class="fas fa-language me-1"></i> English';
-  }
-  
-  // Update result count text if exists
-  const resultCountEl = document.getElementById('resultCount');
-  if (resultCountEl && resultCountEl.innerHTML) {
-    applyFilters(); // Refresh display with new language
   }
 }
 
@@ -148,23 +141,11 @@ function applyFilters() {
   allMembersFiltered = [...filteredMembers];
   let displayMembers = [...filteredMembers];
   let isLimited = false;
-  let totalAvailable = 0;
+  let totalAvailable = displayMembers.length;
   
-  // Apply view mode filter and limits
-  if (currentViewMode === 'dignitaries') {
-    displayMembers = displayMembers.filter(member => dignitaryRoles.includes(member.role));
-    totalAvailable = displayMembers.length;
-    
-    // Limit dignitaries shown on homepage (only when no search/area filter)
-    if (displayMembers.length > MAX_DIGNITARIES_ON_HOMEPAGE && currentSearchTerm === '' && currentAreaFilter === 'all') {
-      displayMembers = displayMembers.slice(0, MAX_DIGNITARIES_ON_HOMEPAGE);
-      isLimited = true;
-    }
-  } else {
-    totalAvailable = displayMembers.length;
-    
-    // Limit all members shown on homepage (only when no search/area filter)
-    if (displayMembers.length > MAX_MEMBERS_ON_HOMEPAGE && currentSearchTerm === '' && currentAreaFilter === 'all') {
+  // Apply limits only when showing all members and no filters active
+  if (currentViewMode === 'all' && currentSearchTerm === '' && currentAreaFilter === 'all') {
+    if (displayMembers.length > MAX_MEMBERS_ON_HOMEPAGE) {
       displayMembers = displayMembers.slice(0, MAX_MEMBERS_ON_HOMEPAGE);
       isLimited = true;
     }
@@ -190,52 +171,43 @@ function displayMembersList(members) {
     return;
   }
   
-  if (currentViewMode === 'dignitaries') {
-    // List view for dignitaries
-    container.innerHTML = `
-      <div class="members-decorated-list">
-        ${members.map(member => createMemberListItem(member)).join('')}
+  // Grid view for all members (default)
+  const dignitaries = members.filter(m => dignitaryRoles.includes(m.role));
+  const regularMembers = members.filter(m => !dignitaryRoles.includes(m.role));
+  
+  let html = '';
+  
+  if (dignitaries.length > 0) {
+    html += `
+      <div class="mb-4">
+        <h4 class="border-bottom border-success pb-2 mb-3">
+          <i class="fas fa-crown text-warning me-2"></i>
+          ${currentLanguage === 'en' ? 'Committee Leaders' : 'সমিতিৰ নেতৃবৃন্দ'}
+          <span class="badge bg-success ms-2">${dignitaries.length}</span>
+        </h4>
+        <div class="row">
+          ${dignitaries.map(member => createMemberCard(member)).join('')}
+        </div>
       </div>
     `;
-  } else {
-    // Grid view for all members
-    const dignitaries = members.filter(m => dignitaryRoles.includes(m.role));
-    const regularMembers = members.filter(m => !dignitaryRoles.includes(m.role));
-    
-    let html = '';
-    
-    if (dignitaries.length > 0) {
-      html += `
-        <div class="mb-4">
-          <h4 class="border-bottom border-success pb-2 mb-3">
-            <i class="fas fa-crown text-warning me-2"></i>
-            ${currentLanguage === 'en' ? 'Committee Leaders' : 'সমিতিৰ নেতৃবৃন্দ'}
-            <span class="badge bg-success ms-2">${dignitaries.length}</span>
-          </h4>
-          <div class="row">
-            ${dignitaries.map(member => createMemberCard(member)).join('')}
-          </div>
-        </div>
-      `;
-    }
-    
-    if (regularMembers.length > 0) {
-      html += `
-        <div>
-          <h4 class="border-bottom border-success pb-2 mb-3">
-            <i class="fas fa-users text-success me-2"></i>
-            ${currentLanguage === 'en' ? 'Community Members' : 'সম্প্ৰদায়ৰ সদস্য'}
-            <span class="badge bg-success ms-2">${regularMembers.length}</span>
-          </h4>
-          <div class="row">
-            ${regularMembers.map(member => createMemberCard(member)).join('')}
-          </div>
-        </div>
-      `;
-    }
-    
-    container.innerHTML = html;
   }
+  
+  if (regularMembers.length > 0) {
+    html += `
+      <div>
+        <h4 class="border-bottom border-success pb-2 mb-3">
+          <i class="fas fa-users text-success me-2"></i>
+          ${currentLanguage === 'en' ? 'Community Members' : 'সম্প্ৰদায়ৰ সদস্য'}
+          <span class="badge bg-success ms-2">${regularMembers.length}</span>
+        </h4>
+        <div class="row">
+          ${regularMembers.map(member => createMemberCard(member)).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
 }
 
 // Create member card (grid view)
@@ -266,50 +238,17 @@ function createMemberCard(member) {
   `;
 }
 
-// Create member list item (decorated list view for dignitaries)
-function createMemberListItem(member) {
-  const isDignitary = dignitaryRoles.includes(member.role);
-  const roleIcon = isDignitary ? 'fa-crown text-warning' : 'fa-user-circle text-success';
-  
-  return `
-    <div class="member-list-item p-3 mb-2 bg-white rounded-3 shadow-sm border-start border-3 ${isDignitary ? 'border-warning' : 'border-success'}">
-      <div class="d-flex align-items-center flex-wrap flex-md-nowrap">
-        <div class="member-avatar me-3">
-          <i class="fas ${roleIcon} fa-2x"></i>
-        </div>
-        <div class="member-info flex-grow-1">
-          <div class="d-flex align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">${escapeHtml(member.name)}</h5>
-            ${member.nameAs ? `<small class="text-muted">(${escapeHtml(member.nameAs)})</small>` : ''}
-            <span class="badge ${isDignitary ? 'bg-warning text-dark' : 'bg-success'}">
-              ${member.role || 'Member'}
-            </span>
-          </div>
-          <div class="member-details mt-2">
-            ${member.phone ? `<span class="me-3"><i class="fas fa-phone text-success me-1"></i> ${member.phone}</span>` : ''}
-            ${member.address ? `<span><i class="fas fa-map-marker-alt text-danger me-1"></i> ${escapeHtml(member.address)}</span>` : ''}
-          </div>
-        </div>
-        <div class="member-badge ms-2">
-          ${isDignitary ? '<i class="fas fa-crown fa-lg text-warning" title="Committee Leader"></i>' : ''}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 // Update result count display
 function updateResultCount(displayCount, isLimited, totalCount) {
   const resultCountEl = document.getElementById('resultCount');
   if (!resultCountEl) return;
   
   if (currentLanguage === 'en') {
-    const viewText = currentViewMode === 'dignitaries' ? 'leaders' : 'members';
     if (isLimited && totalCount > displayCount) {
-      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${displayCount} of ${totalCount} ${viewText}. 
+      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${displayCount} of ${totalCount} members. 
         <a href="javascript:void(0)" onclick="loadAllMembers()" class="text-success fw-bold">View All →</a>`;
     } else {
-      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${displayCount} ${viewText}`;
+      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${displayCount} members`;
     }
   } else {
     if (isLimited && totalCount > displayCount) {
@@ -323,20 +262,13 @@ function updateResultCount(displayCount, isLimited, totalCount) {
 
 // Load all members (remove limit)
 window.loadAllMembers = function() {
-  let displayMembers;
-  
-  if (currentViewMode === 'dignitaries') {
-    displayMembers = allMembersFiltered.filter(member => dignitaryRoles.includes(member.role));
-  } else {
-    displayMembers = [...allMembersFiltered];
-  }
-  
+  let displayMembers = [...allMembersFiltered];
   displayMembersList(displayMembers);
   updateResultCount(displayMembers.length, false, displayMembers.length);
   hideViewAllButton();
 };
 
-// Show view all button container
+// Show view all button container (kept for compatibility)
 function showViewAllButton() {
   let viewAllContainer = document.getElementById('viewAllContainer');
   if (!viewAllContainer) {
@@ -355,7 +287,7 @@ function showViewAllButton() {
       <div class="text-center mt-4">
         <button class="btn btn-outline-success px-4 py-2 rounded-pill" onclick="loadAllMembers()">
           <i class="fas fa-eye me-2"></i>
-          ${currentLanguage === 'en' ? `View All ${currentViewMode === 'dignitaries' ? 'Leaders' : 'Members'}` : `সকলো ${currentViewMode === 'dignitaries' ? 'নেতৃবৃন্দ' : 'সদস্য'} চাওক`}
+          ${currentLanguage === 'en' ? 'View All Members' : 'সকলো সদস্য চাওক'}
           <i class="fas fa-arrow-right ms-2"></i>
         </button>
       </div>
@@ -389,7 +321,7 @@ window.clearSearch = function() {
   }
 };
 
-// Toggle view mode
+// Toggle view mode (between All Members and Leaders Only)
 window.toggleView = function(viewMode) {
   currentViewMode = viewMode;
   
@@ -407,6 +339,7 @@ window.toggleView = function(viewMode) {
     }
   }
   
+  // Re-apply filters with new view mode
   applyFilters();
 };
 
@@ -563,7 +496,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Initialize event listeners
+// Initialize all on page load
 document.addEventListener('DOMContentLoaded', () => {
   updateLanguage();
   loadSettings();
@@ -571,7 +504,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loadEvents();
   loadDonationProgress();
   
-  // Search input
+  // Set initial button states (All Members active by default)
+  const dignitariesBtn = document.getElementById('viewDignitariesBtn');
+  const allBtn = document.getElementById('viewAllBtn');
+  
+  if (currentViewMode === 'dignitaries') {
+    dignitariesBtn?.classList.add('active');
+    allBtn?.classList.remove('active');
+  } else {
+    dignitariesBtn?.classList.remove('active');
+    allBtn?.classList.add('active');
+  }
+  
+  // Search input event listener
   const memberSearch = document.getElementById('memberSearch');
   if (memberSearch) {
     memberSearch.addEventListener('input', (e) => {
@@ -580,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Area filter
+  // Area filter change event listener
   const areaFilterSelect = document.getElementById('areaFilterSelect');
   if (areaFilterSelect) {
     areaFilterSelect.addEventListener('change', filterByArea);
@@ -603,51 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add styles for member list
 const style = document.createElement('style');
 style.textContent = `
-  .members-decorated-list {
-    max-height: 600px;
-    overflow-y: auto;
-    padding-right: 5px;
-  }
-  
-  .members-decorated-list::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .members-decorated-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-  
-  .members-decorated-list::-webkit-scrollbar-thumb {
-    background: #1a5f3e;
-    border-radius: 10px;
-  }
-  
-  .member-list-item {
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-  
-  .member-list-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-  }
-  
-  .member-avatar i {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    border-radius: 50%;
-  }
-  
-  .member-details {
-    font-size: 0.85rem;
-    color: #6c757d;
-  }
-  
   .member-card {
     transition: all 0.3s ease;
     background: white;
@@ -674,6 +574,11 @@ style.textContent = `
   .btn-outline-success:hover {
     background-color: #1a5f3e;
     color: white;
+  }
+  
+  .form-select.border-success:focus {
+    border-color: #1a5f3e;
+    box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25);
   }
 `;
 document.head.appendChild(style);
