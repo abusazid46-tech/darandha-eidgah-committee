@@ -1,21 +1,80 @@
-// frontend/script.js - Enhanced Member Functions
-
+// frontend/script.js
+const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
+let currentLanguage = 'en';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
-let currentViewMode = 'dignitaries'; // 'dignitaries' or 'all'
+let currentViewMode = 'dignitaries';
 let allMembers = [];
 let uniqueAreas = [];
 
-// Dignitary roles (committee heads and leadership positions)
+// Dignitary roles
 const dignitaryRoles = ['Committee Head', 'Secretary', 'Treasurer', 'Vice President', 'President', 'Chairman', 'General Secretary'];
 
-// Load members with area filter support
+// Translation helper
+function updateLanguage() {
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (currentLanguage === 'en') {
+      el.innerText = el.getAttribute('data-en');
+    } else {
+      el.innerText = el.getAttribute('data-as');
+    }
+  });
+  
+  document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+    if (currentLanguage === 'en') {
+      el.placeholder = el.getAttribute('data-en-placeholder');
+    } else {
+      el.placeholder = el.getAttribute('data-as-placeholder');
+    }
+  });
+  
+  const languageToggle = document.getElementById('languageToggle');
+  if (languageToggle) {
+    languageToggle.innerHTML = currentLanguage === 'en' ? 
+      '<i class="fas fa-language me-1"></i> অসমীয়া' : 
+      '<i class="fas fa-language me-1"></i> English';
+  }
+  
+  // Update result count text
+  updateResultCount(document.querySelectorAll('.member-list-item, .member-card').length);
+}
+
+// Load settings and about content
+async function loadSettings() {
+  try {
+    const res = await fetch(`${API_URL}/settings`);
+    const settings = await res.json();
+    
+    const aboutText = document.getElementById('aboutText');
+    if (aboutText) {
+      aboutText.innerHTML = currentLanguage === 'en' ? 
+        settings.about_content?.value || 'Darandha Eidgah Committee is dedicated to serving the Muslim community by maintaining the graveyard with dignity and respect.' : 
+        settings.about_content_as?.value || 'দৰংদহ ঈদগাহ কমিটিয়ে মুছলমান সমাজক মৰ্যাদা আৰু সন্মানেৰে কবৰস্থান পৰিচালনা কৰি সেৱা আগবঢ়োৱাত নিয়োজিত।';
+    }
+    
+    const contactPhone = document.getElementById('contactPhone');
+    const contactEmail = document.getElementById('contactEmail');
+    const whatsappNumber = document.getElementById('whatsappNumber');
+    const whatsappLink = document.getElementById('whatsappLink');
+    
+    if (contactPhone) contactPhone.innerText = settings.contact_phone?.value || '+91 98765 43210';
+    if (contactEmail) contactEmail.innerText = settings.contact_email?.value || 'info@darandhaeidgah.org';
+    
+    const whatsappNum = settings.whatsapp_number?.value || '+919876543210';
+    if (whatsappNumber) whatsappNumber.innerText = whatsappNum;
+    if (whatsappLink) whatsappLink.href = `https://wa.me/${whatsappNum.replace(/\+/g, '')}`;
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+}
+
+// Load members
 async function loadMembers() {
   try {
     const res = await fetch(`${API_URL}/members`);
     allMembers = await res.json();
     
-    // Extract unique areas from member addresses
+    // Extract unique areas
     const areasSet = new Set();
     allMembers.forEach(member => {
       if (member.address && member.address.trim()) {
@@ -27,10 +86,7 @@ async function loadMembers() {
     });
     uniqueAreas = Array.from(areasSet).sort();
     
-    // Populate area dropdown
     populateAreaDropdown();
-    
-    // Apply filters and display
     applyFilters();
   } catch (error) {
     console.error('Error loading members:', error);
@@ -47,8 +103,7 @@ function populateAreaDropdown() {
   if (!select) return;
   
   const allCount = allMembers.length;
-  
-  let options = `<option value="all">🌍 <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span> (${allCount})</option>`;
+  let options = `<option value="all">🌍 All Areas (${allCount})</option>`;
   
   uniqueAreas.forEach(area => {
     const count = allMembers.filter(m => m.address && m.address.split(',')[0].trim() === area).length;
@@ -56,8 +111,6 @@ function populateAreaDropdown() {
   });
   
   select.innerHTML = options;
-  
-  // Set current value
   select.value = currentAreaFilter;
 }
 
@@ -87,13 +140,14 @@ function applyFilters() {
     );
   }
   
-  displayMembersAsList(filteredMembers);
+  displayMembers(filteredMembers);
   updateResultCount(filteredMembers.length);
 }
 
-// Display members as decorated list
-function displayMembersAsList(members) {
+// Display members
+function displayMembers(members) {
   const container = document.getElementById('membersListContainer');
+  if (!container) return;
   
   if (!members || members.length === 0) {
     container.innerHTML = `
@@ -106,43 +160,41 @@ function displayMembersAsList(members) {
     return;
   }
   
-  // Group members by role for better organization
-  const dignitaries = members.filter(m => dignitaryRoles.includes(m.role));
-  const regularMembers = members.filter(m => !dignitaryRoles.includes(m.role));
-  
-  let html = '';
-  
-  // Display Dignitaries section
-  if (dignitaries.length > 0 && currentViewMode === 'all') {
-    html += `
-      <div class="mb-4">
-        <h4 class="border-bottom border-success pb-2 mb-3">
-          <i class="fas fa-crown text-warning me-2"></i>
-          <span data-en="Committee Leaders" data-as="সমিতিৰ নেতৃবৃন্দ">Committee Leaders</span>
-          <span class="badge bg-success ms-2">${dignitaries.length}</span>
-        </h4>
-        <div class="row">
-          ${dignitaries.map(member => createMemberCard(member)).join('')}
-        </div>
+  if (currentViewMode === 'dignitaries') {
+    // List view for dignitaries
+    container.innerHTML = `
+      <div class="members-decorated-list">
+        ${members.map(member => createMemberListItem(member)).join('')}
       </div>
     `;
-  }
-  
-  // Display Regular Members section
-  if (regularMembers.length > 0) {
-    if (currentViewMode === 'dignitaries') {
-      // Show dignitaries in list view
+  } else {
+    // Grid view for all members
+    const dignitaries = members.filter(m => dignitaryRoles.includes(m.role));
+    const regularMembers = members.filter(m => !dignitaryRoles.includes(m.role));
+    
+    let html = '';
+    
+    if (dignitaries.length > 0) {
       html += `
-        <div class="members-decorated-list">
-          ${members.map(member => createMemberListItem(member)).join('')}
+        <div class="mb-4">
+          <h4 class="border-bottom border-success pb-2 mb-3">
+            <i class="fas fa-crown text-warning me-2"></i>
+            Committee Leaders
+            <span class="badge bg-success ms-2">${dignitaries.length}</span>
+          </h4>
+          <div class="row">
+            ${dignitaries.map(member => createMemberCard(member)).join('')}
+          </div>
         </div>
       `;
-    } else {
+    }
+    
+    if (regularMembers.length > 0) {
       html += `
         <div>
           <h4 class="border-bottom border-success pb-2 mb-3">
             <i class="fas fa-users text-success me-2"></i>
-            <span data-en="Community Members" data-as="সম্প্ৰদায়ৰ সদস্য">Community Members</span>
+            Community Members
             <span class="badge bg-success ms-2">${regularMembers.length}</span>
           </h4>
           <div class="row">
@@ -151,37 +203,20 @@ function displayMembersAsList(members) {
         </div>
       `;
     }
-  }
-  
-  // For dignitaries only view, use list view
-  if (currentViewMode === 'dignitaries') {
-    html = `
-      <div class="members-decorated-list">
-        ${members.map(member => createMemberListItem(member)).join('')}
-      </div>
-    `;
-  }
-  
-  container.innerHTML = html;
-  
-  // Update language for dynamically added content
-  if (currentLanguage === 'as') {
-    document.querySelectorAll('[data-en]').forEach(el => {
-      if (el.getAttribute('data-as')) {
-        el.innerText = el.getAttribute('data-as');
-      }
-    });
+    
+    container.innerHTML = html;
   }
 }
 
 // Create member card (grid view)
 function createMemberCard(member) {
-  const roleClass = dignitaryRoles.includes(member.role) ? 'border-warning' : 'border-success';
-  const roleIcon = dignitaryRoles.includes(member.role) ? 'fa-crown text-warning' : 'fa-user-circle text-success';
+  const isDignitary = dignitaryRoles.includes(member.role);
+  const roleClass = isDignitary ? 'border-warning' : 'border-success';
+  const roleIcon = isDignitary ? 'fa-crown text-warning' : 'fa-user-circle text-success';
   
   return `
     <div class="col-md-6 col-lg-4 mb-3">
-      <div class="member-card border-start border-3 ${roleClass} shadow-sm">
+      <div class="member-card border-start border-3 ${roleClass} shadow-sm p-3">
         <div class="d-flex align-items-start">
           <div class="flex-shrink-0">
             <i class="fas ${roleIcon} fa-3x me-3"></i>
@@ -189,8 +224,8 @@ function createMemberCard(member) {
           <div class="flex-grow-1">
             <h5 class="mb-1">${escapeHtml(member.name)}</h5>
             ${member.nameAs ? `<p class="text-muted small mb-1">${escapeHtml(member.nameAs)}</p>` : ''}
-            <span class="badge ${dignitaryRoles.includes(member.role) ? 'bg-warning text-dark' : 'bg-success'} mb-2">
-              <i class="fas ${dignitaryRoles.includes(member.role) ? 'fa-crown' : 'fa-user'} me-1"></i> ${member.role || 'Member'}
+            <span class="badge ${isDignitary ? 'bg-warning text-dark' : 'bg-success'} mb-2">
+              <i class="fas ${isDignitary ? 'fa-crown' : 'fa-user'} me-1"></i> ${member.role || 'Member'}
             </span>
             ${member.phone ? `<p class="mb-1 small"><i class="fas fa-phone me-1 text-success"></i> ${member.phone}</p>` : ''}
             ${member.address ? `<p class="mb-0 small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${escapeHtml(member.address)}</p>` : ''}
@@ -201,12 +236,13 @@ function createMemberCard(member) {
   `;
 }
 
-// Create member list item (decorated list view for dignitaries)
+// Create member list item (decorated list view)
 function createMemberListItem(member) {
-  const roleIcon = dignitaryRoles.includes(member.role) ? 'fa-crown text-warning' : 'fa-user-circle text-success';
+  const isDignitary = dignitaryRoles.includes(member.role);
+  const roleIcon = isDignitary ? 'fa-crown text-warning' : 'fa-user-circle text-success';
   
   return `
-    <div class="member-list-item p-3 mb-2 bg-white rounded-3 shadow-sm border-start border-3 ${dignitaryRoles.includes(member.role) ? 'border-warning' : 'border-success'}">
+    <div class="member-list-item p-3 mb-2 bg-white rounded-3 shadow-sm border-start border-3 ${isDignitary ? 'border-warning' : 'border-success'}">
       <div class="d-flex align-items-center flex-wrap flex-md-nowrap">
         <div class="member-avatar me-3">
           <i class="fas ${roleIcon} fa-2x"></i>
@@ -215,7 +251,7 @@ function createMemberListItem(member) {
           <div class="d-flex align-items-center flex-wrap gap-2">
             <h5 class="mb-0">${escapeHtml(member.name)}</h5>
             ${member.nameAs ? `<small class="text-muted">(${escapeHtml(member.nameAs)})</small>` : ''}
-            <span class="badge ${dignitaryRoles.includes(member.role) ? 'bg-warning text-dark' : 'bg-success'}">
+            <span class="badge ${isDignitary ? 'bg-warning text-dark' : 'bg-success'}">
               ${member.role || 'Member'}
             </span>
           </div>
@@ -225,27 +261,27 @@ function createMemberListItem(member) {
           </div>
         </div>
         <div class="member-badge ms-2">
-          ${dignitaryRoles.includes(member.role) ? '<i class="fas fa-crown fa-lg text-warning" title="Committee Leader"></i>' : ''}
+          ${isDignitary ? '<i class="fas fa-crown fa-lg text-warning" title="Committee Leader"></i>' : ''}
         </div>
       </div>
     </div>
   `;
 }
 
-// Update result count display
+// Update result count
 function updateResultCount(count) {
   const resultCountEl = document.getElementById('resultCount');
   if (resultCountEl) {
     if (currentLanguage === 'en') {
-      let viewText = currentViewMode === 'dignitaries' ? 'leaders' : 'members';
-      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${count} ${viewText}${count !== 1 ? '' : ''}`;
+      const viewText = currentViewMode === 'dignitaries' ? 'leaders' : 'members';
+      resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> Showing ${count} ${viewText}`;
     } else {
       resultCountEl.innerHTML = `<i class="fas fa-users me-1"></i> ${count} জন সদস্য দেখুওৱা হৈছে`;
     }
   }
 }
 
-// Filter by area from dropdown
+// Filter by area
 function filterByArea() {
   const select = document.getElementById('areaFilterSelect');
   if (select) {
@@ -268,7 +304,6 @@ window.clearSearch = function() {
 window.toggleView = function(viewMode) {
   currentViewMode = viewMode;
   
-  // Update button styles
   const dignitariesBtn = document.getElementById('viewDignitariesBtn');
   const allBtn = document.getElementById('viewAllBtn');
   
@@ -285,22 +320,181 @@ window.toggleView = function(viewMode) {
   applyFilters();
 };
 
-// Search input event listener
-const memberSearch = document.getElementById('memberSearch');
-if (memberSearch) {
-  memberSearch.addEventListener('input', (e) => {
-    currentSearchTerm = e.target.value.toLowerCase();
-    applyFilters();
+// Load events
+async function loadEvents() {
+  try {
+    const res = await fetch(`${API_URL}/events/upcoming`);
+    const events = await res.json();
+    const container = document.getElementById('eventsContainer');
+    
+    if (!container) return;
+    
+    if (!events || events.length === 0) {
+      container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No upcoming events at this time.</p></div>';
+      return;
+    }
+    
+    const displayEvents = events.slice(0, 3);
+    
+    container.innerHTML = displayEvents.map(event => {
+      const eventDate = new Date(event.date);
+      const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
+      const description = currentLanguage === 'en' ? (event.description || '') : (event.descriptionAs || event.description || '');
+      const location = currentLanguage === 'en' ? (event.location || '') : (event.locationAs || event.location || '');
+      
+      return `
+        <div class="col-md-4 mb-4">
+          <div class="event-card">
+            <div style="position: relative;">
+              ${event.image ? 
+                `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
+                `<div class="event-image bg-light d-flex align-items-center justify-content-center">
+                  <i class="fas fa-calendar-alt fa-4x text-muted"></i>
+                </div>`
+              }
+              <span class="event-badge badge-upcoming">${currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক'}</span>
+            </div>
+            <div class="p-4">
+              <h4 class="mb-2">${escapeHtml(title)}</h4>
+              <div class="event-time mb-2">
+                <i class="far fa-calendar-alt me-2"></i>${formattedDate}
+              </div>
+              ${event.time ? `<div class="mb-2"><i class="far fa-clock me-2"></i>${event.time}</div>` : ''}
+              ${location ? `<div class="mb-3"><i class="fas fa-location-dot me-2"></i>${escapeHtml(location)}</div>` : ''}
+              <p class="text-muted">${escapeHtml(description.substring(0, 100))}${description.length > 100 ? '...' : ''}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error loading events:', error);
+  }
+}
+
+// Load donation progress
+async function loadDonationProgress() {
+  try {
+    const res = await fetch(`${API_URL}/donations`);
+    const donations = await res.json();
+    const total = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const goal = 500000;
+    const percentage = Math.min((total / goal) * 100, 100);
+    
+    const progressBar = document.getElementById('donationProgress');
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+      if (percentage > 0) {
+        progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
+      } else {
+        progressBar.innerText = '0%';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading donation progress:', error);
+  }
+}
+
+// Submit donation
+const donationForm = document.getElementById('donationForm');
+if (donationForm) {
+  donationForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const donorName = document.getElementById('donorName');
+    const donorAmount = document.getElementById('donorAmount');
+    const transactionId = document.getElementById('transactionId');
+    
+    if (!donorName || !donorAmount) return;
+    
+    const donation = {
+      name: donorName.value,
+      amount: parseInt(donorAmount.value),
+      transactionId: transactionId?.value || '',
+      status: 'completed'
+    };
+    
+    if (!donation.name || !donation.amount || donation.amount <= 0) {
+      alert('Please enter valid name and amount');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${API_URL}/donations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(donation)
+      });
+      
+      if (res.ok) {
+        alert('Thank you for your donation! May Allah reward you abundantly.');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('donationModal'));
+        if (modal) modal.hide();
+        donationForm.reset();
+        loadDonationProgress();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.error || 'Failed to submit donation.'));
+      }
+    } catch (error) {
+      console.error('Donation error:', error);
+      alert('Network error. Please check your connection.');
+    }
   });
 }
 
-// Area filter change event listener
-const areaFilterSelect = document.getElementById('areaFilterSelect');
-if (areaFilterSelect) {
-  areaFilterSelect.addEventListener('change', filterByArea);
+// Escape HTML helper
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-// Add styles for member list
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  updateLanguage();
+  loadSettings();
+  loadMembers();
+  loadEvents();
+  loadDonationProgress();
+  
+  // Search input
+  const memberSearch = document.getElementById('memberSearch');
+  if (memberSearch) {
+    memberSearch.addEventListener('input', (e) => {
+      currentSearchTerm = e.target.value.toLowerCase();
+      applyFilters();
+    });
+  }
+  
+  // Area filter
+  const areaFilterSelect = document.getElementById('areaFilterSelect');
+  if (areaFilterSelect) {
+    areaFilterSelect.addEventListener('change', filterByArea);
+  }
+  
+  // Language toggle
+  const languageToggle = document.getElementById('languageToggle');
+  if (languageToggle) {
+    languageToggle.addEventListener('click', () => {
+      currentLanguage = currentLanguage === 'en' ? 'as' : 'en';
+      updateLanguage();
+      loadSettings();
+      loadEvents();
+      applyFilters();
+    });
+  }
+});
+
+// Add styles
 const style = document.createElement('style');
 style.textContent = `
   .members-decorated-list {
@@ -308,53 +502,51 @@ style.textContent = `
     overflow-y: auto;
     padding-right: 5px;
   }
-  
   .members-decorated-list::-webkit-scrollbar {
     width: 6px;
   }
-  
   .members-decorated-list::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
   }
-  
   .members-decorated-list::-webkit-scrollbar-thumb {
-    background: var(--islamic-green);
+    background: #1a5f3e;
     border-radius: 10px;
   }
-  
   .member-list-item {
     transition: all 0.3s ease;
-    cursor: pointer;
   }
-  
   .member-list-item:hover {
     transform: translateX(5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
   }
-  
   .member-avatar i {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #f8f9fa;
+    border-radius: 50%;
   }
-  
   .member-details {
     font-size: 0.85rem;
     color: #6c757d;
   }
-  
   .member-card {
     transition: all 0.3s ease;
     background: white;
     border-radius: 12px;
+    cursor: pointer;
   }
-  
   .member-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  }
+  .btn-group .btn-outline-success.active {
+    background-color: #1a5f3e;
+    color: white;
+    border-color: #1a5f3e;
   }
 `;
 document.head.appendChild(style);
