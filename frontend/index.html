@@ -1,4 +1,3 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -246,6 +245,29 @@
       transition: transform 0.3s, box-shadow 0.3s;
     }
     .member-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.1); }
+    
+    /* Area filter button styles */
+    .area-filter-btn {
+      border-radius: 25px;
+      padding: 8px 20px;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    .area-filter-btn.active {
+      background-color: var(--islamic-green);
+      border-color: var(--islamic-green);
+      color: white;
+    }
+    .area-filter-btn:hover:not(.active) {
+      background-color: #e8e0d5;
+      border-color: var(--islamic-green);
+      color: var(--islamic-green);
+    }
+    .area-stats {
+      font-size: 0.75rem;
+      margin-left: 5px;
+      opacity: 0.7;
+    }
 
     /* Event Card Styles */
     .event-card {
@@ -385,12 +407,13 @@
     /* ───── MODAL ───── */
     .modal-content { border-radius: 20px; overflow: hidden; border: none; }
     .modal-header { background: linear-gradient(135deg, var(--islamic-green), #2e8b57); }
-    .form-control:focus { border-color: var(--islamic-green); box-shadow: 0 0 0 3px rgba(26,95,62,0.12); }
+    .form-control:focus { border-color: var(--islamic-green); box-shadow: 0 0 0 3px rgba(26,95,62,0.12); outline: none; }
 
     @media (max-width: 768px) {
       .hero h1 { font-size: 2.2rem; }
       .hero-content { padding: 40px 24px; margin: 0 16px; }
       .whatsapp-float { bottom: 20px; right: 20px; }
+      .area-filter-btn { padding: 5px 12px; font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -441,7 +464,7 @@
       <div class="hero-badge">
         <i class="fas fa-mosque"></i> Est. Community Service
       </div>
-      <h1 data-en="Darandha Eidgah Committee" data-as="দ্ৱাৰান্ধা ঈদ্গাহ কমিটি">
+      <h1 data-en="Darandha Eidgah Committee" data-as="দৰংদহ ঈদগাহ কমিটি">
         Darandha Eidgah Committee
       </h1>
       <p class="lead" data-en="Serving the community with dignity and respect" data-as="মৰ্যাদা আৰু সন্মানেৰে সমাজক সেৱা আগবঢ়োৱা">
@@ -478,19 +501,60 @@
   </div>
 </section>
 
-<!-- Members Section -->
+<!-- Members Section with Area Filter -->
 <section id="members" class="py-5 bg-white">
   <div class="container">
     <div class="text-center">
       <h2 class="section-title" data-en="Member Directory" data-as="সদস্য পঞ্জী">Member Directory</h2>
     </div>
+    
+    <!-- Area Filter Section -->
     <div class="row mb-4">
-      <div class="col-md-6 mx-auto">
-        <input type="text" id="memberSearch" class="form-control search-box" placeholder="Search members..." data-en-placeholder="Search members..." data-as-placeholder="সদস্য সন্ধান কৰক...">
+      <div class="col-lg-10 mx-auto">
+        <div class="card p-3 border-0 shadow-sm">
+          <label class="form-label fw-bold mb-2" data-en="Filter by Residential Area" data-as="বাসস্থানীয় এলাকা অনুসৰি ফিল্টাৰ কৰক">
+            <i class="fas fa-map-marker-alt me-2 text-success"></i> Filter by Residential Area
+          </label>
+          <div class="d-flex flex-wrap gap-2" id="areaFilterContainer">
+            <button class="btn btn-outline-success area-filter-btn active" data-area="all" onclick="filterByArea('all')">
+              <i class="fas fa-globe me-1"></i> <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span>
+              <span class="area-stats" id="allCount">(0)</span>
+            </button>
+            <!-- Areas will be dynamically populated -->
+          </div>
+        </div>
       </div>
     </div>
+    
+    <!-- Search Box -->
+    <div class="row mb-4">
+      <div class="col-md-8 mx-auto">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="fas fa-search text-success"></i>
+          </span>
+          <input type="text" id="memberSearch" class="form-control search-box border-start-0 ps-0" placeholder="Search by name..." data-en-placeholder="Search by name..." data-as-placeholder="নাম অনুসৰি সন্ধান কৰক...">
+          <button class="btn btn-outline-secondary" onclick="clearSearch()" type="button">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Results Count -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <p class="text-muted text-center" id="resultCount"></p>
+      </div>
+    </div>
+    
+    <!-- Members Container -->
     <div class="row" id="membersContainer">
-      <div class="col-12 text-center">Loading members...</div>
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-success" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -506,7 +570,7 @@
     </div>
     <div class="text-center mt-4">
       <a href="events.html" class="btn view-all-btn">
-        <i class="fas fa-calendar-alt me-2"></i>View All Events
+        <i class="fas fa-calendar-alt me-2"></i><span data-en="View All Events" data-as="সকলো কাৰ্যসূচী চাওক">View All Events</span>
       </a>
     </div>
   </div>
@@ -542,19 +606,19 @@
     </div>
     <div class="row text-center">
       <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100">
+        <div class="card p-4 h-100 border-0 shadow-sm">
           <i class="fas fa-phone fa-2x mb-3" style="color:var(--islamic-green)"></i>
           <p id="contactPhone" class="mb-0 fw-500">Loading...</p>
         </div>
       </div>
       <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100">
+        <div class="card p-4 h-100 border-0 shadow-sm">
           <i class="fas fa-envelope fa-2x mb-3" style="color:var(--islamic-green)"></i>
           <p id="contactEmail" class="mb-0">Loading...</p>
         </div>
       </div>
       <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100">
+        <div class="card p-4 h-100 border-0 shadow-sm">
           <i class="fab fa-whatsapp fa-2x mb-3" style="color:#25d366"></i>
           <p id="whatsappNumber" class="mb-0">Loading...</p>
         </div>
@@ -953,6 +1017,5 @@
   draw();
 })();
 </script>
-
 </body>
 </html>
