@@ -187,9 +187,10 @@ async function loadEventStats() {
 
 // Animation helper
 function animateValue(element) {
+    if (!element) return;
     element.style.transform = 'scale(1.1)';
     setTimeout(() => {
-        element.style.transform = 'scale(1)';
+        if (element) element.style.transform = 'scale(1)';
     }, 200);
 }
 
@@ -227,19 +228,27 @@ async function loadMembers() {
     }
 }
 
-window.openMemberModal = () => {
-    const memberId = document.getElementById('memberId');
-    const memberForm = document.getElementById('memberForm');
-    const memberModalTitle = document.getElementById('memberModalTitle');
-    
-    if (memberId) memberId.value = '';
-    if (memberForm) memberForm.reset();
-    if (memberModalTitle) memberModalTitle.innerText = 'Add New Member';
-    
-    new bootstrap.Modal(document.getElementById('memberModal')).show();
+window.openMemberModal = function() {
+    try {
+        const memberId = document.getElementById('memberId');
+        const memberForm = document.getElementById('memberForm');
+        const memberModalTitle = document.getElementById('memberModalTitle');
+        
+        if (memberId) memberId.value = '';
+        if (memberForm) memberForm.reset();
+        if (memberModalTitle) memberModalTitle.innerText = 'Add New Member';
+        
+        const modalElement = document.getElementById('memberModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error opening member modal:', error);
+    }
 };
 
-window.editMember = async (id) => {
+window.editMember = async function(id) {
     try {
         const res = await fetch(`${API_URL}/members/${id}`);
         const member = await res.json();
@@ -252,14 +261,18 @@ window.editMember = async (id) => {
         document.getElementById('memberRole').value = member.role || 'Member';
         document.getElementById('memberModalTitle').innerText = 'Edit Member';
         
-        new bootstrap.Modal(document.getElementById('memberModal')).show();
+        const modalElement = document.getElementById('memberModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
     } catch (error) {
         console.error('Error loading member:', error);
         alert('Error loading member: ' + error.message);
     }
 };
 
-window.deleteMember = async (id) => {
+window.deleteMember = async function(id) {
     if (!confirm('Delete this member?')) return;
     try {
         const res = await fetch(`${API_URL}/members/${id}`, {
@@ -310,7 +323,11 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
         
         if (res.ok) {
             alert(id ? 'Member updated successfully' : 'Member added successfully');
-            bootstrap.Modal.getInstance(document.getElementById('memberModal')).hide();
+            const modalElement = document.getElementById('memberModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+            }
             loadMembers();
             loadDashboard();
         } else {
@@ -325,7 +342,7 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
 
 // ========== EVENTS MANAGEMENT ==========
 
-async function filterEvents(category) {
+window.filterEvents = async function(category) {
     currentEventFilter = category;
     
     // Update active button styling
@@ -422,10 +439,10 @@ async function filterEvents(category) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
         }
     }
-}
+};
 
 // Toggle event status
-window.toggleEventStatus = async (id, currentStatus) => {
+window.toggleEventStatus = async function(id, currentStatus) {
     let newStatus = '';
     let confirmMessage = '';
     
@@ -479,37 +496,45 @@ window.toggleEventStatus = async (id, currentStatus) => {
 };
 
 // Open event modal
-window.openEventModal = () => {
-    document.getElementById('eventId').value = '';
-    document.getElementById('eventForm').reset();
-    document.getElementById('eventModalTitle').innerText = 'Add New Event';
-    
-    const eventImagePreview = document.getElementById('eventImagePreview');
-    if (eventImagePreview) {
-        eventImagePreview.innerHTML = '';
-        eventImagePreview.style.display = 'none';
+window.openEventModal = function() {
+    try {
+        document.getElementById('eventId').value = '';
+        document.getElementById('eventForm').reset();
+        document.getElementById('eventModalTitle').innerText = 'Add New Event';
+        
+        const eventImagePreview = document.getElementById('eventImagePreview');
+        if (eventImagePreview) {
+            eventImagePreview.innerHTML = '';
+            eventImagePreview.style.display = 'none';
+        }
+        currentEventImage = null;
+        
+        // Set default date to today
+        const eventDate = document.getElementById('eventDate');
+        if (eventDate) {
+            const today = new Date().toISOString().split('T')[0];
+            eventDate.value = today;
+        }
+        
+        // Set default time
+        const eventTime = document.getElementById('eventTime');
+        if (eventTime) {
+            const now = new Date();
+            eventTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        const modalElement = document.getElementById('eventModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error opening event modal:', error);
     }
-    currentEventImage = null;
-    
-    // Set default date to today
-    const eventDate = document.getElementById('eventDate');
-    if (eventDate) {
-        const today = new Date().toISOString().split('T')[0];
-        eventDate.value = today;
-    }
-    
-    // Set default time
-    const eventTime = document.getElementById('eventTime');
-    if (eventTime) {
-        const now = new Date();
-        eventTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    }
-    
-    new bootstrap.Modal(document.getElementById('eventModal')).show();
 };
 
 // Edit event
-window.editEvent = async (id) => {
+window.editEvent = async function(id) {
     try {
         const res = await fetch(`${API_URL}/events/${id}`);
         const event = await res.json();
@@ -541,7 +566,11 @@ window.editEvent = async (id) => {
             eventImagePreview.style.display = 'block';
         }
         
-        new bootstrap.Modal(document.getElementById('eventModal')).show();
+        const modalElement = document.getElementById('eventModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
     } catch (error) {
         console.error('Error loading event:', error);
         alert('Error loading event: ' + error.message);
@@ -549,7 +578,7 @@ window.editEvent = async (id) => {
 };
 
 // Remove event image
-window.removeEventImage = () => {
+window.removeEventImage = function() {
     currentEventImage = null;
     const eventImagePreview = document.getElementById('eventImagePreview');
     const eventImage = document.getElementById('eventImage');
@@ -562,7 +591,7 @@ window.removeEventImage = () => {
 };
 
 // Delete event
-window.deleteEvent = async (id) => {
+window.deleteEvent = async function(id) {
     if (!confirm('Are you sure you want to delete this event?')) return;
     
     try {
@@ -624,7 +653,11 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         
         if (res.ok) {
             alert(id ? 'Event updated successfully' : 'Event added successfully');
-            bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+            const modalElement = document.getElementById('eventModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+            }
             await filterEvents(currentEventFilter);
             await loadDashboard();
             await loadEventStats();
@@ -645,7 +678,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 });
 
 // Manual sync
-window.manualSync = async () => {
+window.manualSync = async function() {
     if (!confirm('Manually sync event categories? This will update all event statuses based on current date.')) return;
     
     try {
@@ -752,9 +785,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-// Make filterEvents globally available
-window.filterEvents = filterEvents;
 
 // Initialize
 checkAuth();
