@@ -502,41 +502,67 @@
 </section>
 
 <!-- Members Section with Area Filter -->
+<!-- Members Section -->
 <section id="members" class="py-5 bg-white">
   <div class="container">
     <div class="text-center">
       <h2 class="section-title" data-en="Member Directory" data-as="সদস্য পঞ্জী">Member Directory</h2>
+      <p class="text-muted mb-4" data-en="Our respected committee members and community leaders" data-as="আমাৰ সন্মানীয় সমিতিৰ সদস্য আৰু সম্প্ৰদায়ৰ নেতৃবৃন্দ">
+        Our respected committee members and community leaders
+      </p>
     </div>
     
-    <!-- Area Filter Section -->
+    <!-- Filter Controls Row -->
     <div class="row mb-4">
       <div class="col-lg-10 mx-auto">
-        <div class="card p-3 border-0 shadow-sm">
-          <label class="form-label fw-bold mb-2" data-en="Filter by Residential Area" data-as="বাসস্থানীয় এলাকা অনুসৰি ফিল্টাৰ কৰক">
-            <i class="fas fa-map-marker-alt me-2 text-success"></i> Filter by Residential Area
-          </label>
-          <div class="d-flex flex-wrap gap-2" id="areaFilterContainer">
-            <button class="btn btn-outline-success area-filter-btn active" data-area="all" onclick="filterByArea('all')">
-              <i class="fas fa-globe me-1"></i> <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span>
-              <span class="area-stats" id="allCount">(0)</span>
-            </button>
-            <!-- Areas will be dynamically populated -->
+        <div class="card border-0 shadow-sm p-3">
+          <div class="row g-3 align-items-end">
+            <!-- Area Filter Dropdown -->
+            <div class="col-md-5">
+              <label class="form-label fw-semibold mb-1">
+                <i class="fas fa-map-marker-alt text-success me-1"></i>
+                <span data-en="Filter by Residential Area" data-as="বাসস্থানীয় এলাকা অনুসৰি ফিল্টাৰ কৰক">Filter by Residential Area</span>
+              </label>
+              <select id="areaFilterSelect" class="form-select border-success">
+                <option value="all">
+                  <i class="fas fa-globe"></i> <span data-en="All Areas" data-as="সকলো এলাকা">All Areas</span>
+                </option>
+              </select>
+            </div>
+            
+            <!-- Search Box -->
+            <div class="col-md-5">
+              <label class="form-label fw-semibold mb-1">
+                <i class="fas fa-search text-success me-1"></i>
+                <span data-en="Search by Name" data-as="নাম অনুসৰি সন্ধান কৰক">Search by Name</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                  <i class="fas fa-search text-success"></i>
+                </span>
+                <input type="text" id="memberSearch" class="form-control border-start-0" placeholder="Type name..." data-en-placeholder="Type name..." data-as-placeholder="নাম টাইপ কৰক...">
+                <button class="btn btn-outline-secondary" onclick="clearSearch()" type="button">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- View Toggle -->
+            <div class="col-md-2">
+              <label class="form-label fw-semibold mb-1">
+                <i class="fas fa-eye text-success me-1"></i>
+                <span data-en="View" data-as="দেখুৱাওক">View</span>
+              </label>
+              <div class="btn-group w-100" role="group">
+                <button type="button" class="btn btn-outline-success active" id="viewDignitariesBtn" onclick="toggleView('dignitaries')">
+                  <i class="fas fa-crown me-1"></i> <span data-en="Leaders" data-as="নেতৃবৃন্দ">Leaders</span>
+                </button>
+                <button type="button" class="btn btn-outline-success" id="viewAllBtn" onclick="toggleView('all')">
+                  <i class="fas fa-users me-1"></i> <span data-en="All" data-as="সকলো">All</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Search Box -->
-    <div class="row mb-4">
-      <div class="col-md-8 mx-auto">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <i class="fas fa-search text-success"></i>
-          </span>
-          <input type="text" id="memberSearch" class="form-control search-box border-start-0 ps-0" placeholder="Search by name..." data-en-placeholder="Search by name..." data-as-placeholder="নাম অনুসৰি সন্ধান কৰক...">
-          <button class="btn btn-outline-secondary" onclick="clearSearch()" type="button">
-            <i class="fas fa-times"></i>
-          </button>
         </div>
       </div>
     </div>
@@ -544,21 +570,20 @@
     <!-- Results Count -->
     <div class="row mb-3">
       <div class="col-12">
-        <p class="text-muted text-center" id="resultCount"></p>
+        <div id="resultCount" class="text-center text-muted"></div>
       </div>
     </div>
     
-    <!-- Members Container -->
-    <div class="row" id="membersContainer">
-      <div class="col-12 text-center py-5">
-        <div class="spinner-border text-success" role="status">
-          <span class="visually-hidden">Loading...</span>
+    <!-- Members List View (Decorated List) -->
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        <div id="membersListContainer" class="members-list-container">
+          <!-- Members will be displayed as a decorated list here -->
         </div>
       </div>
     </div>
-  </div>
+  </div</div>
 </section>
-
 <!-- Events Section -->
 <section id="events" class="py-5" style="background: var(--light-cream);">
   <div class="container">
