@@ -1872,9 +1872,7 @@ if (isIOS() && !localStorage.getItem('iosBannerClosed')) {
     document.getElementById('iosInstallBanner').style.display = 'block';
   }, 3000); // Show after 3 seconds
 }
-</script>
 
-<script>
 /* ── Scroll Reveal Observer ── */
 (function(){
   var els = document.querySelectorAll('.reveal');
@@ -1889,6 +1887,19 @@ if (isIOS() && !localStorage.getItem('iosBannerClosed')) {
   }, { threshold: 0.12 });
   els.forEach(function(el){ io.observe(el); });
 })();
+ // Close mobile navbar when tapping outside
+document.addEventListener('click', function(e) {
+  var navbar = document.getElementById('navbarNav');
+  var toggler = document.querySelector('.navbar-toggler');
+
+  if (
+    navbar.classList.contains('show') &&
+    !navbar.contains(e.target) &&
+    !toggler.contains(e.target)
+  ) {
+    toggler.click();
+  }
+}); 
 </script>
 </body>
 </html>
