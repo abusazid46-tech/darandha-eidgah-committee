@@ -2,11 +2,28 @@
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
+let selectedMembers = new Set();
 
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
 let currentEventFilter = 'all';
+
+// Helper functions for address handling
+function parseAddress(address) {
+    if (!address) return { houseNumber: '', fullAddress: '' };
+    const parts = address.split(',');
+    const houseNumber = parts[0].trim();
+    const fullAddress = parts.slice(1).join(',').trim();
+    return { houseNumber, fullAddress };
+}
+
+function combineAddress(houseNumber, fullAddress) {
+    if (!houseNumber && !fullAddress) return '';
+    if (!houseNumber) return fullAddress;
+    if (!fullAddress) return houseNumber;
+    return `${houseNumber}, ${fullAddress}`;
+}
 
 // Check authentication
 async function checkAuth() {
@@ -36,7 +53,6 @@ async function checkAuth() {
     }
 }
 
-// Start auto-refresh every 30 seconds
 function startAutoRefresh() {
     if (autoRefreshInterval) clearInterval(autoRefreshInterval);
     autoRefreshInterval = setInterval(() => {
@@ -164,7 +180,6 @@ async function loadDashboard() {
     }
 }
 
-// Load event statistics for dashboard
 async function loadEventStats() {
     try {
         const res = await fetch(`${API_URL}/events/stats/summary`);
@@ -191,7 +206,6 @@ async function loadEventStats() {
     }
 }
 
-// Animation helper
 function animateValue(element) {
     if (!element) return;
     element.style.transform = 'scale(1.1)';
@@ -200,7 +214,7 @@ function animateValue(element) {
     }, 200);
 }
 
-// ========== MEMBERS MANAGEMENT ==========
+// ========== MEMBERS MANAGEMENT WITH BULK ACTIONS ==========
 
 async function loadMembers() {
     try {
@@ -209,40 +223,247 @@ async function loadMembers() {
         const tbody = document.getElementById('membersTable');
         if (!tbody) return;
         
-        tbody.innerHTML = members.map(m => `
-            <tr>
-                <td>
-                    <strong>${escapeHtml(m.name)}</strong>
-                    ${m.nameAs ? `<br><small class="text-muted">${escapeHtml(m.nameAs)}</small>` : ''}
-                </td>
-                <td>${m.nameAs ? escapeHtml(m.nameAs) : '-'}</td>
-                <td>${m.phone || '-'}</td>
-                <td>${m.address ? escapeHtml(m.address) : '-'}</td>
-                <td><span class="badge bg-success">${m.role || 'Member'}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = members.map(m => {
+            const { houseNumber, fullAddress } = parseAddress(m.address || '');
+            
+            return `
+                <tr>
+                    <td><input type="checkbox" class="member-select" value="${m._id}" onclick="updateSelection()"></td>
+                    <td>
+                        <strong>${escapeHtml(m.name)}</strong>
+                        ${m.nameAs ? `<br><small class="text-muted">${escapeHtml(m.nameAs)}</small>` : ''}
+                    </td>
+                    <td>${m.nameAs ? escapeHtml(m.nameAs) : '-'}</td>
+                    <td>${m.phone || '-'}</td>
+                    <td>
+                        ${houseNumber ? `<span class="badge bg-info me-1">House: ${escapeHtml(houseNumber)}</span>` : ''}
+                        ${fullAddress ? `<small class="text-muted">${escapeHtml(fullAddress)}</small>` : ''}
+                        ${!houseNumber && !fullAddress ? '-' : ''}
+                     </td>
+                    <td><span class="badge bg-success">${m.role || 'Member'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Clear selection after loading
+        clearSelection();
     } catch (error) {
         console.error('Error loading members:', error);
     }
 }
 
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('.member-select');
+    selectedMembers.clear();
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedMembers.add(cb.value);
+    });
+    
+    const selectedCount = document.getElementById('selectedCount');
+    const bulkBar = document.getElementById('bulkActionsBar');
+    
+    if (selectedCount) selectedCount.innerText = selectedMembers.size;
+    if (bulkBar) {
+        if (selectedMembers.size > 0) {
+            bulkBar.classList.add('show');
+        } else {
+            bulkBar.classList.remove('show');
+        }
+    }
+    
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (selectAll) {
+        selectAll.checked = checkboxes.length > 0 && checkboxes.length === selectedMembers.size;
+    }
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.member-select');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
+    updateSelection();
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.member-select');
+    checkboxes.forEach(cb => cb.checked = false);
+    selectedMembers.clear();
+    updateSelection();
+}
+
+async function bulkDeleteMembers() {
+    if (selectedMembers.size === 0) {
+        alert('Please select members to delete');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${selectedMembers.size} selected members? This action cannot be undone.`)) return;
+    
+    const deletePromises = Array.from(selectedMembers).map(id =>
+        fetch(`${API_URL}/members/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+    );
+    
+    try {
+        const results = await Promise.all(deletePromises);
+        const successCount = results.filter(r => r.ok).length;
+        
+        alert(`${successCount} members deleted successfully!`);
+        loadMembers();
+        loadDashboard();
+        clearSelection();
+    } catch (error) {
+        alert('Error deleting members: ' + error.message);
+    }
+}
+
+// CSV/Excel Import Functions
+function importMembersCSV() {
+    new bootstrap.Modal(document.getElementById('importCSVModal')).show();
+}
+
+async function processImport() {
+    const fileInput = document.getElementById('csvFileInput');
+    if (!fileInput.files.length) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+        try {
+            const data = e.target.result;
+            let members = [];
+            
+            if (file.name.endsWith('.csv')) {
+                // Parse CSV
+                const lines = data.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const values = lines[i].split(',');
+                    const member = {};
+                    headers.forEach((h, idx) => {
+                        member[h] = values[idx] ? values[idx].trim() : '';
+                    });
+                    
+                    if (member.name) {
+                        const address = combineAddress(member.housenumber || '', member.fulladdress || '');
+                        members.push({
+                            name: member.name,
+                            nameAs: member.nameas || '',
+                            phone: member.phone || '',
+                            address: address,
+                            role: member.role || 'Member'
+                        });
+                    }
+                }
+            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                // Parse Excel using SheetJS
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+                
+                rows.forEach(row => {
+                    const address = combineAddress(row.houseNumber || row.housenumber || '', row.fullAddress || row.fulladdress || '');
+                    members.push({
+                        name: row.name,
+                        nameAs: row.nameAs || row.nameas || '',
+                        phone: row.phone || '',
+                        address: address,
+                        role: row.role || 'Member'
+                    });
+                });
+            }
+            
+            if (members.length === 0) {
+                alert('No valid members found in file');
+                return;
+            }
+            
+            // Import members one by one
+            let successCount = 0;
+            for (const member of members) {
+                try {
+                    const res = await fetch(`${API_URL}/members`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(member)
+                    });
+                    if (res.ok) successCount++;
+                } catch (err) {
+                    console.error('Import error:', err);
+                }
+            }
+            
+            alert(`${successCount} out of ${members.length} members imported successfully!`);
+            bootstrap.Modal.getInstance(document.getElementById('importCSVModal')).hide();
+            fileInput.value = '';
+            loadMembers();
+            loadDashboard();
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Error importing file: ' + error.message);
+        }
+    };
+    
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        reader.readAsBinaryString(file);
+    } else {
+        reader.readAsText(file);
+    }
+}
+
+function downloadSampleCSV() {
+    const sampleData = [
+        ['name', 'nameAs', 'phone', 'houseNumber', 'fullAddress', 'role'],
+        ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha, Dist- Morigaon, PIN-782001', 'Committee Head'],
+        ['Smt. Ayesha Begum', 'শ্ৰীমতী আয়েশা বেগম', '9876543211', 'Flat 4B', 'Green Park, Darandha, PIN-782001', 'Secretary'],
+        ['Md. Karim Uddin', 'মোঃ কৰিম উদ্দিন', '9876543212', 'House No. 45', 'Vill- Darandha, PO- Darandha, Dist- Morigaon', 'Member']
+    ];
+    
+    let csvContent = sampleData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'member_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Open member modal
 window.openMemberModal = function() {
     try {
-        const memberId = document.getElementById('memberId');
-        const memberForm = document.getElementById('memberForm');
-        const memberModalTitle = document.getElementById('memberModalTitle');
+        document.getElementById('memberId').value = '';
+        document.getElementById('memberForm').reset();
+        document.getElementById('memberModalTitle').innerText = 'Add New Member';
         
-        if (memberId) memberId.value = '';
-        if (memberForm) memberForm.reset();
-        if (memberModalTitle) memberModalTitle.innerText = 'Add New Member';
+        // Clear house number and address fields
+        const houseNumber = document.getElementById('memberHouseNumber');
+        const fullAddress = document.getElementById('memberFullAddress');
+        if (houseNumber) houseNumber.value = '';
+        if (fullAddress) fullAddress.value = '';
         
         const modalElement = document.getElementById('memberModal');
         if (modalElement) {
@@ -259,11 +480,14 @@ window.editMember = async function(id) {
         const res = await fetch(`${API_URL}/members/${id}`);
         const member = await res.json();
         
+        const { houseNumber, fullAddress } = parseAddress(member.address || '');
+        
         document.getElementById('memberId').value = member._id;
         document.getElementById('memberName').value = member.name;
         document.getElementById('memberNameAs').value = member.nameAs || '';
         document.getElementById('memberPhone').value = member.phone || '';
-        document.getElementById('memberAddress').value = member.address || '';
+        document.getElementById('memberHouseNumber').value = houseNumber;
+        document.getElementById('memberFullAddress').value = fullAddress;
         document.getElementById('memberRole').value = member.role || 'Member';
         document.getElementById('memberModalTitle').innerText = 'Edit Member';
         
@@ -301,11 +525,16 @@ window.deleteMember = async function(id) {
 document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('memberId').value;
+    
+    const houseNumber = document.getElementById('memberHouseNumber')?.value || '';
+    const fullAddress = document.getElementById('memberFullAddress')?.value || '';
+    const combinedAddress = combineAddress(houseNumber, fullAddress);
+    
     const data = {
         name: document.getElementById('memberName').value,
         nameAs: document.getElementById('memberNameAs')?.value || '',
         phone: document.getElementById('memberPhone').value,
-        address: document.getElementById('memberAddress').value,
+        address: combinedAddress,
         role: document.getElementById('memberRole').value
     };
     
@@ -347,11 +576,9 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
 });
 
 // ========== EVENTS MANAGEMENT ==========
-
 window.filterEvents = async function(category) {
     currentEventFilter = category;
     
-    // Update active button styling
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-filter') === category) {
@@ -371,14 +598,7 @@ window.filterEvents = async function(category) {
         if (!tbody) return;
         
         if (events.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
-                        <i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>
-                        No ${category !== 'all' ? category : ''} events found
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No events found</td></tr>`;
             return;
         }
         
@@ -398,148 +618,71 @@ window.filterEvents = async function(category) {
             }
             
             return `
-                <tr data-event-id="${event._id}">
-                    <td>
-                        ${event.image ? 
-                            `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
-                            '<i class="fas fa-calendar fa-2x text-muted"></i>'}
-                    </td>
-                    <td>
-                        <strong>${escapeHtml(event.title)}</strong>
-                        ${event.titleAs ? `<br><small class="text-muted">${escapeHtml(event.titleAs)}</small>` : ''}
-                    </td>
-                    <td>
-                        ${new Date(event.date).toLocaleDateString()}<br>
-                        <small class="text-muted">${event.time || 'Time TBA'}</small>
-                    </td>
+                <tr>
+                    <td>${event.image ? `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : '<i class="fas fa-calendar fa-2x text-muted"></i>'}</td>
+                    <td><strong>${escapeHtml(event.title)}</strong>${event.titleAs ? `<br><small class="text-muted">${escapeHtml(event.titleAs)}</small>` : ''}</td>
+                    <td>${new Date(event.date).toLocaleDateString()}<br><small>${event.time || 'TBA'}</small></td>
                     <td>${event.location ? escapeHtml(event.location) : 'TBA'}</td>
+                    <td><span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">${event.category}</span></td>
+                    <td><span class="badge bg-${statusBadgeClass}">${statusText}</span></td>
                     <td>
-                        <span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">
-                            ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
-                        </span>
-                        ${event.featured ? '<span class="badge bg-warning ms-1">Featured</span>' : ''}
-                    </td>
-                    <td>
-                        <span class="badge bg-${statusBadgeClass} event-status-badge" data-id="${event._id}">
-                            ${statusText}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
+                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')"><i class="fas fa-sync-alt"></i></button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')"><i class="fas fa-trash"></i></button>
+                     </td>
                 </tr>
             `;
         }).join('');
     } catch (error) {
         console.error('Error filtering events:', error);
-        const tbody = document.getElementById('eventsTable');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></td>';
-        }
     }
 };
 
-// Toggle event status
 window.toggleEventStatus = async function(id, currentStatus) {
     let newStatus = '';
-    let confirmMessage = '';
+    if (currentStatus === 'active') newStatus = 'cancelled';
+    else if (currentStatus === 'cancelled') newStatus = 'completed';
+    else if (currentStatus === 'completed') newStatus = 'active';
     
-    if (currentStatus === 'active') {
-        newStatus = 'cancelled';
-        confirmMessage = 'Are you sure you want to CANCEL this event?';
-    } else if (currentStatus === 'cancelled') {
-        newStatus = 'completed';
-        confirmMessage = 'Mark this event as COMPLETED?';
-    } else if (currentStatus === 'completed') {
-        newStatus = 'active';
-        confirmMessage = 'Reactivate this event?';
-    }
-    
-    if (!confirm(confirmMessage)) return;
+    if (!confirm(`Change event status to ${newStatus}?`)) return;
     
     try {
         const getRes = await fetch(`${API_URL}/events/${id}`);
         const event = await getRes.json();
-        
         event.status = newStatus;
         
         const res = await fetch(`${API_URL}/events/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(event)
         });
         
         if (res.ok) {
-            alert(`Event ${newStatus === 'cancelled' ? 'cancelled' : newStatus === 'completed' ? 'marked as completed' : 'reactivated'} successfully!`);
+            alert(`Event ${newStatus} successfully!`);
             await filterEvents(currentEventFilter);
             await loadEventStats();
             await loadDashboard();
-            
-            // Trigger sync
-            await fetch(`${API_URL}/events/sync`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-        } else {
-            const error = await res.json();
-            alert('Failed to update event status: ' + (error.error || 'Unknown error'));
+            await fetch(`${API_URL}/events/sync`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         }
     } catch (error) {
-        console.error('Error updating event status:', error);
         alert('Error: ' + error.message);
     }
 };
 
-// Open event modal
 window.openEventModal = function() {
-    try {
-        document.getElementById('eventId').value = '';
-        document.getElementById('eventForm').reset();
-        document.getElementById('eventModalTitle').innerText = 'Add New Event';
-        
-        const eventImagePreview = document.getElementById('eventImagePreview');
-        if (eventImagePreview) {
-            eventImagePreview.innerHTML = '';
-            eventImagePreview.style.display = 'none';
-        }
-        currentEventImage = null;
-        
-        // Set default date to today
-        const eventDate = document.getElementById('eventDate');
-        if (eventDate) {
-            const today = new Date().toISOString().split('T')[0];
-            eventDate.value = today;
-        }
-        
-        // Set default time
-        const eventTime = document.getElementById('eventTime');
-        if (eventTime) {
-            const now = new Date();
-            eventTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        }
-        
-        const modalElement = document.getElementById('eventModal');
-        if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        }
-    } catch (error) {
-        console.error('Error opening event modal:', error);
+    document.getElementById('eventId').value = '';
+    document.getElementById('eventForm').reset();
+    document.getElementById('eventModalTitle').innerText = 'Add New Event';
+    const eventImagePreview = document.getElementById('eventImagePreview');
+    if (eventImagePreview) {
+        eventImagePreview.innerHTML = '';
+        eventImagePreview.style.display = 'none';
     }
+    const eventDate = document.getElementById('eventDate');
+    if (eventDate) eventDate.value = new Date().toISOString().split('T')[0];
+    new bootstrap.Modal(document.getElementById('eventModal')).show();
 };
 
-// Edit event
 window.editEvent = async function(id) {
     try {
         const res = await fetch(`${API_URL}/events/${id}`);
@@ -550,8 +693,8 @@ window.editEvent = async function(id) {
         document.getElementById('eventTitleAs').value = event.titleAs || '';
         document.getElementById('eventDesc').value = event.description || '';
         document.getElementById('eventDescAs').value = event.descriptionAs || '';
-        document.getElementById('eventDate').value = event.date ? event.date.split('T')[0] : '';
-        document.getElementById('eventTime').value = event.time || '12:00';
+        document.getElementById('eventDate').value = event.date.split('T')[0];
+        document.getElementById('eventTime').value = event.time || '';
         document.getElementById('eventEndTime').value = event.endTime || '';
         document.getElementById('eventLocation').value = event.location || '';
         document.getElementById('eventLocationAs').value = event.locationAs || '';
@@ -559,73 +702,45 @@ window.editEvent = async function(id) {
         document.getElementById('eventFeatured').checked = event.featured || false;
         document.getElementById('eventModalTitle').innerText = 'Edit Event';
         
-        const eventImagePreview = document.getElementById('eventImagePreview');
-        if (event.image && eventImagePreview) {
-            currentEventImage = event.image;
-            eventImagePreview.innerHTML = `
-                <div class="text-center">
-                    <img src="${API_URL.replace('/api', '')}${event.image}" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;">
-                    <br>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeEventImage()">Remove Image</button>
-                </div>
-            `;
-            eventImagePreview.style.display = 'block';
+        const preview = document.getElementById('eventImagePreview');
+        if (event.image && preview) {
+            preview.innerHTML = `<div class="text-center"><img src="${API_URL.replace('/api', '')}${event.image}" style="max-width:200px; border-radius:8px;"><br><button class="btn btn-sm btn-danger mt-2" onclick="removeEventImage()">Remove</button></div>`;
+            preview.style.display = 'block';
         }
-        
-        const modalElement = document.getElementById('eventModal');
-        if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        }
+        new bootstrap.Modal(document.getElementById('eventModal')).show();
     } catch (error) {
-        console.error('Error loading event:', error);
-        alert('Error loading event: ' + error.message);
+        alert('Error loading event');
     }
 };
 
-// Remove event image
 window.removeEventImage = function() {
-    currentEventImage = null;
-    const eventImagePreview = document.getElementById('eventImagePreview');
-    const eventImage = document.getElementById('eventImage');
-    
-    if (eventImagePreview) {
-        eventImagePreview.innerHTML = '';
-        eventImagePreview.style.display = 'none';
+    const preview = document.getElementById('eventImagePreview');
+    if (preview) {
+        preview.innerHTML = '';
+        preview.style.display = 'none';
     }
-    if (eventImage) eventImage.value = '';
+    document.getElementById('eventImage').value = '';
 };
 
-// Delete event
 window.deleteEvent = async function(id) {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-    
+    if (!confirm('Delete this event?')) return;
     try {
-        const res = await fetch(`${API_URL}/events/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
+        const res = await fetch(`${API_URL}/events/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Event deleted successfully');
+            alert('Event deleted');
             await filterEvents(currentEventFilter);
             await loadDashboard();
             await loadEventStats();
-        } else {
-            alert('Failed to delete event');
         }
     } catch (error) {
         alert('Error: ' + error.message);
     }
 };
 
-// Save event
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const id = document.getElementById('eventId').value;
     const formData = new FormData();
-    
     const eventData = {
         title: document.getElementById('eventTitle').value,
         titleAs: document.getElementById('eventTitleAs')?.value || '',
@@ -639,314 +754,164 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         status: document.getElementById('eventStatus').value,
         featured: document.getElementById('eventFeatured')?.checked || false
     };
-    
     formData.append('data', JSON.stringify(eventData));
-    
     const imageFile = document.getElementById('eventImage')?.files[0];
-    if (imageFile) {
-        formData.append('image', imageFile);
-    }
+    if (imageFile) formData.append('image', imageFile);
     
     try {
         const url = id ? `${API_URL}/events/${id}` : `${API_URL}/events`;
         const method = id ? 'PUT' : 'POST';
-        
-        const res = await fetch(url, {
-            method,
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-        
+        const res = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}` }, body: formData });
         if (res.ok) {
-            alert(id ? 'Event updated successfully' : 'Event added successfully');
-            const modalElement = document.getElementById('eventModal');
-            if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
-            }
+            alert(id ? 'Event updated' : 'Event added');
+            bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
             await filterEvents(currentEventFilter);
             await loadDashboard();
             await loadEventStats();
-            
-            // Trigger sync
-            await fetch(`${API_URL}/events/sync`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-        } else {
-            const error = await res.json();
-            alert('Failed to save event: ' + (error.error || 'Unknown error'));
+            await fetch(`${API_URL}/events/sync`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         }
     } catch (error) {
-        console.error('Error saving event:', error);
         alert('Error: ' + error.message);
     }
 });
 
-// Manual sync
 window.manualSync = async function() {
-    if (!confirm('Manually sync event categories? This will update all event statuses based on current date.')) return;
-    
+    if (!confirm('Sync event categories?')) return;
     try {
-        const res = await fetch(`${API_URL}/events/sync`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
-            alert(`Sync completed! Today: ${data.stats.today}, Upcoming: ${data.stats.upcoming}, Past: ${data.stats.past}`);
-            
-            await filterEvents(currentEventFilter);
-            await loadEventStats();
-            await loadDashboard();
-        } else {
-            alert('Sync failed');
-        }
+        const res = await fetch(`${API_URL}/events/sync`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        alert(`Sync complete! Today: ${data.stats.today}, Upcoming: ${data.stats.upcoming}, Past: ${data.stats.past}`);
+        await filterEvents(currentEventFilter);
+        await loadEventStats();
+        await loadDashboard();
     } catch (error) {
-        alert('Error: ' + error.message);
+        alert('Sync failed');
     }
 };
 
-// ========== DONATIONS MANAGEMENT WITH APPROVAL ==========
-
+// ========== DONATIONS MANAGEMENT ==========
 async function loadDonations() {
     if (!token) return;
     try {
-        const res = await fetch(`${API_URL}/donations`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/donations`, { headers: { 'Authorization': `Bearer ${token}` } });
         const donations = await res.json();
         const tbody = document.getElementById('donationsTable');
         if (!tbody) return;
         
-        if (donations.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
-                        <i class="fas fa-hand-holding-heart fa-2x mb-2 d-block"></i>
-                        No donations yet
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        tbody.innerHTML = donations.map(d => {
-            let statusClass = '';
-            let statusText = '';
-            let actionButtons = '';
-            
-            if (d.status === 'approved') {
-                statusClass = 'approved';
-                statusText = 'Approved';
-                actionButtons = '<span class="text-muted">✓ Approved</span>';
-            } else if (d.status === 'rejected') {
-                statusClass = 'rejected';
-                statusText = 'Rejected';
-                actionButtons = '<span class="text-muted">✗ Rejected</span>';
-            } else {
-                statusClass = 'pending';
-                statusText = 'Pending';
-                actionButtons = `
-                    <button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')" title="Approve">
-                        <i class="fas fa-check-circle"></i> Approve
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')" title="Reject">
-                        <i class="fas fa-times-circle"></i> Reject
-                    </button>
-                `;
-            }
-            
-            return `
-                <tr data-donation-id="${d._id}">
-                    <td>${escapeHtml(d.name || 'Anonymous')}</td>
-                    <td>₹${d.amount || 0}</td>
-                    <td>${d.transactionId || '-'}</td>
-                    <td>${new Date(d.date).toLocaleDateString()}</td>
-                    <td>
-                        <span class="badge badge-${statusClass}">${statusText}</span>
-                    </td>
-                    <td class="table-actions">${actionButtons}</td>
-                </tr>
-            `;
-        }).join('');
+        tbody.innerHTML = donations.map(d => `
+            <tr>
+                <td>${escapeHtml(d.name || 'Anonymous')}</td>
+                <td>₹${d.amount || 0}</td>
+                <td>${d.transactionId || '-'}</td>
+                <td>${new Date(d.date).toLocaleDateString()}</td>
+                <td><span class="badge ${d.status === 'approved' ? 'bg-success' : d.status === 'pending' ? 'bg-warning' : 'bg-danger'}">${d.status || 'pending'}</span></td>
+                <td>${d.status === 'pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')">Approve</button><button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')">Reject</button>` : (d.status === 'approved' ? '✓ Approved' : '✗ Rejected')}</td>
+            </tr>
+        `).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
-        const tbody = document.getElementById('donationsTable');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading donations</td></tr>';
-        }
     }
 }
 
-// Approve donation
 window.approveDonation = async function(id) {
-    if (!confirm('Approve this donation? This will add it to the public donation total.')) return;
-    
+    if (!confirm('Approve this donation?')) return;
     try {
-        const res = await fetch(`${API_URL}/donations/${id}/approve`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
+        const res = await fetch(`${API_URL}/donations/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Donation approved successfully!');
+            alert('Donation approved');
             loadDonations();
             loadDashboard();
-        } else {
-            const error = await res.json();
-            alert('Failed to approve donation: ' + (error.error || 'Unknown error'));
         }
     } catch (error) {
         alert('Error: ' + error.message);
     }
 };
 
-// Reject donation
 window.rejectDonation = async function(id) {
-    if (!confirm('Reject this donation? This will not be shown in public stats.')) return;
-    
+    if (!confirm('Reject this donation?')) return;
     try {
-        const res = await fetch(`${API_URL}/donations/${id}/reject`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
+        const res = await fetch(`${API_URL}/donations/${id}/reject`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Donation rejected!');
+            alert('Donation rejected');
             loadDonations();
             loadDashboard();
-        } else {
-            const error = await res.json();
-            alert('Failed to reject donation: ' + (error.error || 'Unknown error'));
         }
     } catch (error) {
         alert('Error: ' + error.message);
     }
 };
 
-// ========== UPI SETTINGS MANAGEMENT ==========
-
-async function loadUpiSettings() {
-    try {
-        const res = await fetch(`${API_URL}/settings`);
-        const settings = await res.json();
-        
-        const upiIdInput = document.getElementById('settingUpiId');
-        const qrUrlInput = document.getElementById('settingQrUrl');
-        const bankNameInput = document.getElementById('settingBankName');
-        const bankAccountInput = document.getElementById('settingBankAccount');
-        const ifscInput = document.getElementById('settingIfsc');
-        const donationGoalInput = document.getElementById('settingDonationGoal');
-        
-        if (upiIdInput) upiIdInput.value = settings.upi_id?.value || 'committee@bank';
-        if (qrUrlInput) qrUrlInput.value = settings.qr_url?.value || '';
-        if (bankNameInput) bankNameInput.value = settings.bank_name?.value || 'Darandha Eidgah Committee';
-        if (bankAccountInput) bankAccountInput.value = settings.bank_account?.value || '';
-        if (ifscInput) ifscInput.value = settings.ifsc_code?.value || '';
-        if (donationGoalInput) donationGoalInput.value = settings.donation_goal?.value || '500000';
-    } catch (error) {
-        console.error('Error loading UPI settings:', error);
-    }
-}
-
-// Save UPI Settings
-const upiSettingsForm = document.getElementById('upiSettingsForm');
-if (upiSettingsForm) {
-    upiSettingsForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!token) return;
-        
-        const updates = [
-            { key: 'upi_id', value: document.getElementById('settingUpiId')?.value || 'committee@bank' },
-            { key: 'qr_url', value: document.getElementById('settingQrUrl')?.value || '' },
-            { key: 'bank_name', value: document.getElementById('settingBankName')?.value || '' },
-            { key: 'bank_account', value: document.getElementById('settingBankAccount')?.value || '' },
-            { key: 'ifsc_code', value: document.getElementById('settingIfsc')?.value || '' },
-            { key: 'donation_goal', value: document.getElementById('settingDonationGoal')?.value || '500000' }
-        ];
-        
-        try {
-            for (const up of updates) {
-                await fetch(`${API_URL}/settings/${up.key}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ value: up.value })
-                });
-            }
-            alert('UPI settings saved successfully!');
-        } catch (error) {
-            alert('Error saving UPI settings: ' + error.message);
-        }
-    });
-}
-
-// ========== CONTACT SETTINGS MANAGEMENT ==========
-
+// ========== SETTINGS MANAGEMENT ==========
 async function loadSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
         const settings = await res.json();
-        
-        const whatsappInput = document.getElementById('settingWhatsapp');
-        const emailInput = document.getElementById('settingEmail');
-        const phoneInput = document.getElementById('settingPhone');
-        const aboutEnInput = document.getElementById('settingAboutEn');
-        const aboutAsInput = document.getElementById('settingAboutAs');
-        
-        if (whatsappInput) whatsappInput.value = settings.whatsapp_number?.value || '';
-        if (emailInput) emailInput.value = settings.contact_email?.value || '';
-        if (phoneInput) phoneInput.value = settings.contact_phone?.value || '';
-        if (aboutEnInput) aboutEnInput.value = settings.about_content?.value || '';
-        if (aboutAsInput) aboutAsInput.value = settings.about_content_as?.value || '';
+        document.getElementById('settingWhatsapp').value = settings.whatsapp_number?.value || '';
+        document.getElementById('settingEmail').value = settings.contact_email?.value || '';
+        document.getElementById('settingPhone').value = settings.contact_phone?.value || '';
+        document.getElementById('settingAboutEn').value = settings.about_content?.value || '';
+        document.getElementById('settingAboutAs').value = settings.about_content_as?.value || '';
     } catch (error) {
         console.error('Error loading settings:', error);
     }
 }
 
-const settingsForm = document.getElementById('settingsForm');
-if (settingsForm) {
-    settingsForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!token) return;
-        
-        const updates = [
-            { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
-            { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
-            { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
-            { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
-            { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
-        ];
-        
-        try {
-            for (const up of updates) {
-                await fetch(`${API_URL}/settings/${up.key}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ value: up.value })
-                });
-            }
-            alert('Contact settings saved successfully!');
-        } catch (error) {
-            alert('Error saving settings: ' + error.message);
-        }
-    });
+async function loadUpiSettings() {
+    try {
+        const res = await fetch(`${API_URL}/settings`);
+        const settings = await res.json();
+        document.getElementById('settingUpiId').value = settings.upi_id?.value || 'committee@bank';
+        document.getElementById('settingQrUrl').value = settings.qr_url?.value || '';
+        document.getElementById('settingBankName').value = settings.bank_name?.value || '';
+        document.getElementById('settingBankAccount').value = settings.bank_account?.value || '';
+        document.getElementById('settingIfsc').value = settings.ifsc_code?.value || '';
+        document.getElementById('settingDonationGoal').value = settings.donation_goal?.value || '500000';
+    } catch (error) {
+        console.error('Error loading UPI settings:', error);
+    }
 }
 
-// Escape HTML helper
+document.getElementById('settingsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!token) return;
+    const updates = [
+        { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
+        { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
+        { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
+        { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
+        { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
+    ];
+    try {
+        for (const up of updates) {
+            await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
+        }
+        alert('Settings saved!');
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
+document.getElementById('upiSettingsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!token) return;
+    const updates = [
+        { key: 'upi_id', value: document.getElementById('settingUpiId')?.value || 'committee@bank' },
+        { key: 'qr_url', value: document.getElementById('settingQrUrl')?.value || '' },
+        { key: 'bank_name', value: document.getElementById('settingBankName')?.value || '' },
+        { key: 'bank_account', value: document.getElementById('settingBankAccount')?.value || '' },
+        { key: 'ifsc_code', value: document.getElementById('settingIfsc')?.value || '' },
+        { key: 'donation_goal', value: document.getElementById('settingDonationGoal')?.value || '500000' }
+    ];
+    try {
+        for (const up of updates) {
+            await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
+        }
+        alert('UPI settings saved!');
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -954,5 +919,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Initialize
 checkAuth();
