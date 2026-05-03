@@ -793,7 +793,7 @@
   <i class="fab fa-whatsapp"></i>
 </a>
 
-<!-- Advanced Donation Modal with Dynamic QR -->
+<!-- Donation Modal with QR Code - Fixed Tab Colors -->
 <div class="modal fade" id="donationModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -820,21 +820,21 @@
           <div class="tab-pane fade show active" id="formTab" role="tabpanel">
             <form id="donationForm">
               <div class="mb-3">
-                <label class="form-label">Full Name *</label>
-                <input type="text" class="form-control" id="donorName" required>
+                <label class="form-label fw-600">Full Name *</label>
+                <input type="text" class="form-control" id="donorName" placeholder="Enter your full name" required>
               </div>
               <div class="mb-3">
-                <label class="form-label">Amount (₹) *</label>
+                <label class="form-label fw-600">Amount (₹) *</label>
                 <div class="input-group">
                   <span class="input-group-text">₹</span>
-                  <input type="number" class="form-control" id="donorAmount" required>
+                  <input type="number" class="form-control" id="donorAmount" placeholder="Enter amount" required>
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label">UPI Transaction ID</label>
-                <input type="text" class="form-control" id="transactionId">
+                <label class="form-label fw-600">UPI Transaction ID <small class="text-muted">(optional)</small></label>
+                <input type="text" class="form-control" id="transactionId" placeholder="Transaction ID from UPI app">
               </div>
-              <button type="submit" class="btn btn-success w-100">
+              <button type="submit" class="btn btn-success w-100 py-2 rounded-pill fw-600">
                 <i class="fas fa-hand-holding-heart me-2"></i>Submit Donation
               </button>
             </form>
@@ -844,9 +844,9 @@
           <div class="tab-pane fade" id="qrTab" role="tabpanel">
             <div class="text-center">
               <div class="qr-code-container p-3 bg-light rounded-4 d-inline-block mb-3">
-                <img id="qrCodeImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=committee@bank&pn=Darandha%20Eidgah%20Committee&cu=INR" alt="UPI QR Code" style="width: 200px; height: 200px;">
+                <img id="qrCodeImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=committee@bank&pn=Darandha%20Eidgah%20Committee&cu=INR" alt="UPI QR Code" style="width: 180px; height: 180px;">
               </div>
-              <p class="mb-2"><strong>UPI ID:</strong> <code>committee@bank</code></p>
+              <p class="mb-2"><strong>UPI ID:</strong> <code class="bg-light p-1 rounded">committee@bank</code></p>
               <p class="text-muted small">Scan this QR code using any UPI app (Google Pay, PhonePe, Paytm, BHIM)</p>
               <div class="d-flex justify-content-center gap-3 mt-2">
                 <span class="badge bg-light text-dark p-2"><i class="fab fa-google"></i> Google Pay</span>
