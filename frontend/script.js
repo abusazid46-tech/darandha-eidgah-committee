@@ -416,78 +416,77 @@ async function loadEvents() {
     }
   }
 }
-
-// Load donation progress
+// Load donation progress - COMPLETELY FIXED VERSION
 async function loadDonationProgress() {
   try {
-    const res = await fetch(`${API_URL}/donations`);
-    const donations = await res.json();
-    const total = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+    // Try multiple endpoints to get donation data
+    let total = 0;
+    let success = false;
+    
+    // Try 1: Public stats endpoint
+    try {
+      const res = await fetch(`${API_URL}/stats/public`);
+      if (res.ok) {
+        const stats = await res.json();
+        total = stats.totalDonations || 0;
+        success = true;
+      }
+    } catch (e) {
+      console.log('Stats endpoint not available');
+    }
+    
+    // Try 2: Direct donations public endpoint
+    if (!success) {
+      try {
+        const res = await fetch(`${API_URL}/donations/public`);
+        if (res.ok) {
+          const data = await res.json();
+          total = data.total || 0;
+          success = true;
+        }
+      } catch (e) {
+        console.log('Donations public endpoint not available');
+      }
+    }
+    
+    // Try 3: Use local storage cache as fallback
+    if (!success) {
+      const cachedTotal = localStorage.getItem('cachedDonationTotal');
+      if (cachedTotal) {
+        total = parseInt(cachedTotal) || 0;
+        console.log('Using cached donation total:', total);
+      }
+    }
+    
+    // Update progress bar
     const goal = 500000;
     const percentage = Math.min((total / goal) * 100, 100);
     
     const progressBar = document.getElementById('donationProgress');
     if (progressBar) {
       progressBar.style.width = `${percentage}%`;
-      if (percentage > 0) {
+      if (total > 0) {
         progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
       } else {
         progressBar.innerText = '0%';
       }
     }
+    
+    // Cache the total for future use
+    if (total > 0) {
+      localStorage.setItem('cachedDonationTotal', total);
+    }
+    
   } catch (error) {
     console.error('Error loading donation progress:', error);
+    // Don't show error to user, just show default
+    const progressBar = document.getElementById('donationProgress');
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      progressBar.innerText = '0%';
+    }
   }
 }
-
-// Submit donation
-const donationForm = document.getElementById('donationForm');
-if (donationForm) {
-  donationForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const donorName = document.getElementById('donorName');
-    const donorAmount = document.getElementById('donorAmount');
-    const transactionId = document.getElementById('transactionId');
-    
-    if (!donorName || !donorAmount) return;
-    
-    const donation = {
-      name: donorName.value,
-      amount: parseInt(donorAmount.value),
-      transactionId: transactionId?.value || '',
-      status: 'completed'
-    };
-    
-    if (!donation.name || !donation.amount || donation.amount <= 0) {
-      alert('Please enter valid name and amount');
-      return;
-    }
-    
-    try {
-      const res = await fetch(`${API_URL}/donations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(donation)
-      });
-      
-      if (res.ok) {
-        alert('Thank you for your donation! May Allah reward you abundantly.');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('donationModal'));
-        if (modal) modal.hide();
-        donationForm.reset();
-        loadDonationProgress();
-      } else {
-        const error = await res.json();
-        alert('Error: ' + (error.error || 'Failed to submit donation. Please try again.'));
-      }
-    } catch (error) {
-      console.error('Donation error:', error);
-      alert('Network error. Please check your connection and try again.');
-    }
-  });
-}
-
 // Escape HTML helper
 function escapeHtml(text) {
   if (!text) return '';
