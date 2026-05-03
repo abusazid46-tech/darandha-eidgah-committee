@@ -795,7 +795,51 @@ app.get('/api/settings', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
+// ========== DONATIONS WITH APPROVAL SYSTEM ==========
 
+// Approve donation (protected)
+app.put('/api/donations/:id/approve', authMiddleware, async (req, res) => {
+    try {
+        const donation = await Donation.findByIdAndUpdate(
+            req.params.id,
+            { status: 'approved' },
+            { new: true }
+        );
+        if (!donation) {
+            return res.status(404).json({ error: 'Donation not found' });
+        }
+        res.json({ success: true, message: 'Donation approved', donation });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to approve donation' });
+    }
+});
+
+// Reject donation (protected)
+app.put('/api/donations/:id/reject', authMiddleware, async (req, res) => {
+    try {
+        const donation = await Donation.findByIdAndUpdate(
+            req.params.id,
+            { status: 'rejected' },
+            { new: true }
+        );
+        if (!donation) {
+            return res.status(404).json({ error: 'Donation not found' });
+        }
+        res.json({ success: true, message: 'Donation rejected', donation });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to reject donation' });
+    }
+});
+
+// Update donation schema to include 'approved' and 'rejected' status
+// Update the donationSchema status enum
+const donationSchema = new mongoose.Schema({
+    name: String,
+    amount: Number,
+    date: { type: Date, default: Date.now },
+    transactionId: String,
+    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
+});
 app.put('/api/settings/:key', authMiddleware, async (req, res) => {
     try {
         const setting = await Setting.findOneAndUpdate(
