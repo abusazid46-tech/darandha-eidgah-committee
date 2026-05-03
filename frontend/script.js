@@ -40,7 +40,7 @@ function updateLanguage() {
   }
 }
 
-// Load settings and about content
+// Load settings and about content (with UPI settings)
 async function loadSettings() {
   try {
     const res = await fetch(`${API_URL}/settings`);
@@ -64,6 +64,23 @@ async function loadSettings() {
     const whatsappNum = settings.whatsapp_number?.value || '+919876543210';
     if (whatsappNumber) whatsappNumber.innerText = whatsappNum;
     if (whatsappLink) whatsappLink.href = `https://wa.me/${whatsappNum.replace(/\+/g, '')}`;
+    
+    // UPI Settings - Update QR code dynamically
+    const upiId = settings.upi_id?.value || 'committee@bank';
+    const upiIdDisplay = document.getElementById('upiIdDisplay');
+    const upiInstructionId = document.getElementById('upiInstructionId');
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    
+    if (upiIdDisplay) upiIdDisplay.innerText = upiId;
+    if (upiInstructionId) upiInstructionId.innerText = upiId;
+    
+    // Update QR code if UPI ID changed
+    if (qrCodeImage && upiId) {
+      const encodedUpi = encodeURIComponent(upiId);
+      const encodedName = encodeURIComponent('Darandha Eidgah Committee');
+      qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${encodedUpi}&pn=${encodedName}&cu=INR`;
+    }
+    
   } catch (error) {
     console.error('Error loading settings:', error);
   }
@@ -118,7 +135,7 @@ function populateAreaDropdown() {
   select.value = currentAreaFilter;
 }
 
-// Apply all filters with limits
+// Apply all filters with limits (UPDATED to include phone search)
 function applyFilters() {
   let filteredMembers = [...allMembers];
   
@@ -129,11 +146,12 @@ function applyFilters() {
     );
   }
   
-  // Apply search filter
+  // Apply search filter - NOW INCLUDES PHONE NUMBER SEARCH
   if (currentSearchTerm) {
     filteredMembers = filteredMembers.filter(member => 
       member.name.toLowerCase().includes(currentSearchTerm) ||
-      (member.nameAs && member.nameAs.toLowerCase().includes(currentSearchTerm))
+      (member.nameAs && member.nameAs.toLowerCase().includes(currentSearchTerm)) ||
+      (member.phone && member.phone.includes(currentSearchTerm))
     );
   }
   
@@ -210,11 +228,20 @@ function displayMembersList(members) {
   container.innerHTML = html;
 }
 
-// Create member card (grid view)
+// Create member card (grid view) - UPDATED to show house number separately
 function createMemberCard(member) {
   const isDignitary = dignitaryRoles.includes(member.role);
   const roleClass = isDignitary ? 'border-warning' : 'border-success';
   const roleIcon = isDignitary ? 'fa-crown text-warning' : 'fa-user-circle text-success';
+  
+  // Extract house number from address (first part before comma)
+  let houseNumber = '';
+  let fullAddress = member.address || '';
+  if (fullAddress) {
+    const parts = fullAddress.split(',');
+    houseNumber = parts[0].trim();
+    fullAddress = parts.slice(1).join(',').trim();
+  }
   
   return `
     <div class="col-md-6 col-lg-4 mb-3">
@@ -230,7 +257,8 @@ function createMemberCard(member) {
               <i class="fas ${isDignitary ? 'fa-crown' : 'fa-user'} me-1"></i> ${member.role || 'Member'}
             </span>
             ${member.phone ? `<p class="mb-1 small"><i class="fas fa-phone me-1 text-success"></i> ${member.phone}</p>` : ''}
-            ${member.address ? `<p class="mb-0 small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${escapeHtml(member.address)}</p>` : ''}
+            ${houseNumber ? `<p class="mb-0 small"><i class="fas fa-home me-1 text-primary"></i> ${escapeHtml(houseNumber)}</p>` : ''}
+            ${fullAddress ? `<p class="mb-0 small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${escapeHtml(fullAddress)}</p>` : ''}
           </div>
         </div>
       </div>
@@ -416,6 +444,7 @@ async function loadEvents() {
     }
   }
 }
+
 // Load donation progress - USING CORRECT PUBLIC ENDPOINT
 async function loadDonationProgress() {
   try {
@@ -466,6 +495,7 @@ function updateProgressBarFallback(total) {
     }
   }
 }
+
 // Helper function to update progress bar
 function updateProgressBar(total) {
   const goal = 500000;
@@ -503,7 +533,7 @@ if (donationForm) {
       name: donorName.value,
       amount: parseInt(donorAmount.value),
       transactionId: transactionId?.value || '',
-      status: 'completed'
+      status: 'pending'
     };
     
     if (!donation.name || !donation.amount || donation.amount <= 0) {
@@ -519,7 +549,7 @@ if (donationForm) {
       });
       
       if (res.ok) {
-        alert('Thank you for your donation! May Allah reward you abundantly.');
+        alert('Thank you for your donation! Your donation will be visible after admin approval. May Allah reward you abundantly.');
         const modal = bootstrap.Modal.getInstance(document.getElementById('donationModal'));
         if (modal) modal.hide();
         donationForm.reset();
