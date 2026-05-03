@@ -2,12 +2,20 @@
   "version": 2,
   "builds": [
     {
+      "src": "public/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "frontend/**",
       "use": "@vercel/static"
     },
     {
       "src": "admin/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "backend/**",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -16,23 +24,61 @@
       "dest": "/sw.js",
       "headers": {
         "Cache-Control": "public, max-age=0, must-revalidate",
-        "Service-Worker-Allowed": "/"
+        "Service-Worker-Allowed": "/",
+        "Content-Type": "application/javascript"
       }
     },
     {
       "src": "/manifest.json",
       "dest": "/manifest.json",
       "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Type": "application/json"
       }
+    },
+    {
+      "src": "/offline.html",
+      "dest": "/offline.html"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1"
     },
     {
       "src": "/admin/(.*)",
       "dest": "/admin/$1"
     },
     {
+      "src": "/api/(.*)",
+      "dest": "/backend/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }
