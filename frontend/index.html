@@ -505,19 +505,38 @@
 .qr-code-container:hover {
   transform: scale(1.02);
 }
-.nav-tabs .nav-link {
-  color: var(--islamic-green);
-  border: none;
-  font-weight: 500;
+
+/* Tab Navigation Styles - FIXED for visibility */
+.nav-tabs {
+  border-bottom: 1px solid rgba(201, 160, 61, 0.3);
 }
+
+.nav-tabs .nav-link {
+  color: var(--islamic-gold) !important;  /* Gold color for inactive tabs */
+  border: none;
+  font-weight: 600;
+  background: transparent;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link i {
+  margin-right: 6px;
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--islamic-gold) !important;
+  border-bottom: 2px solid var(--islamic-gold);
+  background: rgba(201, 160, 61, 0.1);
+}
+
 .nav-tabs .nav-link.active {
-  color: var(--islamic-green);
+  color: var(--islamic-green) !important;  /* Green color for active tab */
   background-color: transparent;
   border-bottom: 3px solid var(--islamic-green);
+  font-weight: 700;
 }
-.nav-tabs .nav-link:hover {
-  border-bottom: 3px solid var(--islamic-gold);
-}
+
 @media (max-width: 768px) {
   .qr-code-container img {
     width: 150px !important;
