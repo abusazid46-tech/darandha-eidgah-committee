@@ -495,58 +495,227 @@
     display: inline-block;
     margin: 5px 0;
   }
- /* QR Code Modal Styles */
+/* ========================
+   DONATION MODAL STYLES
+   ======================== */
+
+/* QR Code Container */
 .qr-code-container {
   background: white !important;
   border-radius: 20px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.1);
   transition: transform 0.3s;
+  display: inline-block;
+  padding: 15px;
 }
+
 .qr-code-container:hover {
   transform: scale(1.02);
 }
 
-/* Tab Navigation Styles - FIXED for visibility */
+/* Tab Navigation - GOLD for both active and inactive */
 .nav-tabs {
-  border-bottom: 1px solid rgba(201, 160, 61, 0.3);
+  border-bottom: 2px solid rgba(201, 160, 61, 0.3);
+  background: transparent;
+  margin-bottom: 20px;
 }
 
 .nav-tabs .nav-link {
-  color: var(--islamic-gold) !important;  /* Gold color for inactive tabs */
-  border: none;
+  color: var(--islamic-gold) !important;  /* Gold color for all tabs */
+  background: transparent !important;
+  border: none !important;
   font-weight: 600;
-  background: transparent;
-  padding: 10px 20px;
+  font-size: 1rem;
+  padding: 12px 24px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .nav-tabs .nav-link i {
-  margin-right: 6px;
+  margin-right: 8px;
+  font-size: 1rem;
 }
 
+/* Hover effect */
 .nav-tabs .nav-link:hover {
   color: var(--islamic-gold) !important;
-  border-bottom: 2px solid var(--islamic-gold);
-  background: rgba(201, 160, 61, 0.1);
+  background: rgba(201, 160, 61, 0.1) !important;
+  border-radius: 8px 8px 0 0;
 }
 
+/* Active tab - Gold with bottom border */
 .nav-tabs .nav-link.active {
-  color: var(--islamic-green) !important;  /* Green color for active tab */
-  background-color: transparent;
-  border-bottom: 3px solid var(--islamic-green);
+  color: var(--islamic-gold) !important;
+  background: transparent !important;
   font-weight: 700;
 }
 
+.nav-tabs .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--islamic-gold);
+  border-radius: 3px;
+}
+
+/* Tab content styling */
+.tab-content {
+  padding: 10px 5px;
+}
+
+/* Form styling */
+#donationForm .form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+#donationForm .form-control {
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 10px 15px;
+  transition: all 0.3s;
+}
+
+#donationForm .form-control:focus {
+  border-color: var(--islamic-gold);
+  box-shadow: 0 0 0 3px rgba(201, 160, 61, 0.2);
+}
+
+#donationForm .input-group-text {
+  background-color: #f8f9fa;
+  border-radius: 10px 0 0 10px;
+  font-weight: 600;
+  color: var(--islamic-green);
+}
+
+/* Submit button */
+.btn-success {
+  background: linear-gradient(135deg, var(--islamic-green), #2e8b57);
+  border: none;
+  border-radius: 50px;
+  padding: 12px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(26, 95, 62, 0.3);
+}
+
+/* QR Tab styling */
+#qrTab p {
+  margin-bottom: 10px;
+}
+
+#qrTab code {
+  background-color: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--islamic-green);
+  font-weight: 600;
+}
+
+#qrTab .badge {
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+}
+
+/* Instructions box */
+#qrTab .bg-light {
+  background-color: #f8f9fa !important;
+  border-radius: 12px;
+  border-left: 4px solid var(--islamic-gold);
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
+  .qr-code-container {
+    padding: 10px;
+  }
+  
   .qr-code-container img {
     width: 150px !important;
     height: 150px !important;
   }
+  
   .nav-tabs .nav-link {
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 8px 16px;
+  }
+  
+  .nav-tabs .nav-link i {
+    margin-right: 5px;
+    font-size: 12px;
+  }
+  
+  .modal-header h5 {
+    font-size: 1.1rem;
+  }
+  
+  #qrTab .bg-light {
+    padding: 12px !important;
+  }
+  
+  #qrTab .bg-light small {
+    font-size: 11px;
   }
 }
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .nav-tabs .nav-link {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  .qr-code-container img {
+    width: 120px !important;
+    height: 120px !important;
+  }
+  
+  .modal-body {
+    padding: 20px !important;
+  }
+}
+
+/* Modal header styling */
+.modal-header {
+  background: linear-gradient(135deg, var(--islamic-green), #2e8b57);
+  border-bottom: none;
+}
+
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+/* Modal body */
+.modal-body {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for modal body */
+.modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--islamic-gold);
+  border-radius: 10px;
+}
+  }
   </style>
 </head>
 <body>
