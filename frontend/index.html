@@ -943,162 +943,97 @@
 </section>
 
 <!-- Donation Section -->
-<section id="donate" class="py-5" style="background: linear-gradient(160deg, #0d3b26 0%, #1a5f3e 60%, #0b3322 100%); color: white;">
+<section id="donate" class="py-5 bg-white reveal">
   <div class="container">
 
-    <!-- Title -->
-    <div class="text-center mb-5">
-      <h2 class="section-title" style="color: var(--islamic-gold);" data-en="Support Our Cause" data-as="আমাক সহায় কৰক">Support Our Cause</h2>
-      <p style="color:rgba(255,255,255,0.75); max-width:560px; margin:0 auto; font-size:1.05rem;" data-en="Your generosity keeps our graveyard dignified and our community supported." data-as="আপোনাৰ উদাৰতাই আমাৰ কবৰস্থানক মৰ্যদাপূৰ্ণ ৰাখে আৰু সমাজক সহায় কৰে।">
-        Your generosity keeps our graveyard dignified and our community supported.
-      </p>
+    <!-- Section title -->
+    <div class="text-center mb-4">
+      <h2 class="section-title" data-en="Support Our Cause" data-as="আমাক সহায় কৰক">Support Our Cause</h2>
     </div>
 
-    <!-- Stat cards -->
-    <div class="row g-4 justify-content-center mb-5">
-      <div class="col-6 col-md-3">
-        <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(201,160,61,0.25); border-radius:18px; padding:24px 16px; text-align:center; backdrop-filter:blur(8px);">
-          <div style="font-size:2rem; font-weight:800; color:var(--islamic-gold); font-family:'Cormorant Garamond',serif;" id="statRaised">₹0</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.65); margin-top:4px; text-transform:uppercase; letter-spacing:0.08em;">Raised</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(201,160,61,0.25); border-radius:18px; padding:24px 16px; text-align:center; backdrop-filter:blur(8px);">
-          <div style="font-size:2rem; font-weight:800; color:var(--islamic-gold); font-family:'Cormorant Garamond',serif;" id="statGoal">₹1,00,000</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.65); margin-top:4px; text-transform:uppercase; letter-spacing:0.08em;">Our Goal</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(201,160,61,0.25); border-radius:18px; padding:24px 16px; text-align:center; backdrop-filter:blur(8px);">
-          <div style="font-size:2rem; font-weight:800; color:var(--islamic-gold); font-family:'Cormorant Garamond',serif;" id="statDonors">0</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.65); margin-top:4px; text-transform:uppercase; letter-spacing:0.08em;">Donors</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(201,160,61,0.25); border-radius:18px; padding:24px 16px; text-align:center; backdrop-filter:blur(8px);">
-          <div style="font-size:2rem; font-weight:800; color:var(--islamic-gold); font-family:'Cormorant Garamond',serif;" id="statPct">0%</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.65); margin-top:4px; text-transform:uppercase; letter-spacing:0.08em;">Funded</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Progress bar -->
+    <!-- Hadith card -->
     <div class="row justify-content-center mb-5">
-      <div class="col-md-8">
-        <div style="background:rgba(255,255,255,0.12); border-radius:50px; height:22px; overflow:hidden; box-shadow:inset 0 2px 6px rgba(0,0,0,0.2);">
-          <div id="donationProgress" style="height:100%; width:0%; background:linear-gradient(90deg,var(--islamic-gold),#f0c84a); border-radius:50px; transition:width 1.4s cubic-bezier(0.22,1,0.36,1); display:flex; align-items:center; justify-content:flex-end; padding-right:10px;">
-            <span id="progressLabel" style="font-size:0.72rem; font-weight:700; color:#1a3c2a; white-space:nowrap;"></span>
+      <div class="col-lg-7 col-md-9">
+        <div style="
+          background: linear-gradient(135deg, var(--dark-green) 0%, var(--islamic-green) 100%);
+          border-radius: 22px;
+          padding: 36px 32px;
+          box-shadow: 0 12px 40px rgba(13,59,38,0.18);
+          position: relative;
+          overflow: hidden;
+        ">
+          <!-- decorative quote mark -->
+          <div style="position:absolute;top:-10px;left:18px;font-size:8rem;color:rgba(201,160,61,0.08);font-family:Georgia,serif;line-height:1;pointer-events:none;">"</div>
+
+          <!-- Arabic heading -->
+          <div style="
+            font-family: 'Amiri', 'Traditional Arabic', serif;
+            font-size: clamp(1.3rem, 4vw, 1.9rem);
+            font-weight: 700;
+            color: var(--islamic-gold);
+            direction: rtl;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            text-shadow: 0 2px 12px rgba(201,160,61,0.25);
+          ">
+            مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ
+          </div>
+
+          <!-- Divider -->
+          <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--islamic-gold),transparent);margin:0 auto 22px;"></div>
+
+          <!-- English translation -->
+          <p style="
+            color: rgba(255,255,255,0.92);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 14px;
+            font-style: italic;
+          " data-en="&ldquo;Charity never decreases wealth.&rdquo;" data-as="&ldquo;দান কেতিয়াও সম্পদ কমায় নহয়।&rdquo;">
+            &ldquo;Charity never decreases wealth.&rdquo;
+          </p>
+
+          <!-- Assamese translation -->
+          <p style="
+            color: rgba(255,255,255,0.7);
+            font-size: 0.95rem;
+            line-height: 1.75;
+            text-align: center;
+            margin-bottom: 20px;
+          " data-en="Sadaqah (charity) does not diminish wealth. Rather, Allah increases it." data-as="চদক্বা (দান)ই সম্পদ কমায় নহয়। বৰং আল্লাহে ইয়াক বৃদ্ধি কৰেন।">
+            Sadaqah (charity) does not diminish wealth. Rather, Allah increases it.
+          </p>
+
+          <!-- Source -->
+          <div style="text-align:center;">
+            <span style="
+              display:inline-block;
+              background:rgba(201,160,61,0.15);
+              border:1px solid rgba(201,160,61,0.35);
+              color:var(--islamic-gold);
+              font-size:0.78rem;
+              font-weight:600;
+              letter-spacing:0.08em;
+              padding:5px 16px;
+              border-radius:50px;
+            ">— Sahih Muslim 2588</span>
           </div>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-top:6px;">
-          <span style="font-size:0.78rem; color:rgba(255,255,255,0.5);">₹0</span>
-          <span style="font-size:0.78rem; color:rgba(255,255,255,0.5);">Goal: ₹1,00,000</span>
-        </div>
       </div>
     </div>
 
-    <!-- Uses of funds -->
-    <div class="row g-3 justify-content-center mb-5">
-      <div class="col-12 text-center mb-1"><p style="color:rgba(255,255,255,0.55); font-size:0.82rem; text-transform:uppercase; letter-spacing:0.1em;">Where your donation goes</p></div>
-      <div class="col-md-3 col-6">
-        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); border-radius:12px; padding:12px 16px;">
-          <i class="fas fa-shovel" style="color:var(--islamic-gold); font-size:1.2rem;"></i>
-          <span style="font-size:0.88rem; color:rgba(255,255,255,0.8);">Grave maintenance</span>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); border-radius:12px; padding:12px 16px;">
-          <i class="fas fa-water" style="color:var(--islamic-gold); font-size:1.2rem;"></i>
-          <span style="font-size:0.88rem; color:rgba(255,255,255,0.8);">Water & cleanliness</span>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); border-radius:12px; padding:12px 16px;">
-          <i class="fas fa-hands-helping" style="color:var(--islamic-gold); font-size:1.2rem;"></i>
-          <span style="font-size:0.88rem; color:rgba(255,255,255,0.8);">Family support</span>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); border-radius:12px; padding:12px 16px;">
-          <i class="fas fa-mosque" style="color:var(--islamic-gold); font-size:1.2rem;"></i>
-          <span style="font-size:0.88rem; color:rgba(255,255,255,0.8);">Eidgah upkeep</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- CTA -->
+    <!-- Donate button -->
     <div class="text-center">
       <button class="btn btn-donate btn-lg px-5 py-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#donationModal">
         <i class="fas fa-hand-holding-heart me-2"></i>
         <span data-en="Donate Now" data-as="এতিয়া দান কৰক">Donate Now</span>
       </button>
-      <p style="color:rgba(255,255,255,0.4); font-size:0.78rem; margin-top:14px;">
-        <i class="fas fa-lock me-1"></i> Secure UPI payment &nbsp;·&nbsp; Every rupee is accounted for
-      </p>
     </div>
 
   </div>
 </section>
-
-<script>
-/* Animate donation stats from script.js data or use defaults */
-(function(){
-  function animateCount(el, target, prefix, suffix, duration){
-    var start = 0, startTime = null;
-    function step(ts){
-      if(!startTime) startTime = ts;
-      var progress = Math.min((ts-startTime)/duration, 1);
-      var ease = 1 - Math.pow(1-progress, 3);
-      var val = Math.round(ease * target);
-      el.textContent = prefix + val.toLocaleString('en-IN') + suffix;
-      if(progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  function updateDonationStats(raised, goal, donors){
-    raised = raised || 0; goal = goal || 100000; donors = donors || 0;
-    var pct = Math.min(Math.round((raised/goal)*100), 100);
-    var elRaised  = document.getElementById('statRaised');
-    var elGoal    = document.getElementById('statGoal');
-    var elDonors  = document.getElementById('statDonors');
-    var elPct     = document.getElementById('statPct');
-    var bar       = document.getElementById('donationProgress');
-    var label     = document.getElementById('progressLabel');
-    if(elRaised)  animateCount(elRaised,  raised, '₹', '', 1600);
-    if(elGoal)    elGoal.textContent = '₹' + goal.toLocaleString('en-IN');
-    if(elDonors)  animateCount(elDonors,  donors, '',  '', 1200);
-    if(elPct)     animateCount(elPct,     pct,    '',  '%', 1400);
-    if(bar)  setTimeout(function(){ bar.style.width = pct + '%'; }, 200);
-    if(label && pct > 8) label.textContent = pct + '%';
-  }
-
-  /* Expose globally so script.js can call window.updateDonationStats(raised, goal, donors) */
-  window.updateDonationStats = updateDonationStats;
-
-  /* Observer: only animate when section scrolls into view */
-  var section = document.getElementById('donate');
-  if(section && window.IntersectionObserver){
-    var observed = false;
-    new IntersectionObserver(function(entries, obs){
-      entries.forEach(function(e){
-        if(e.isIntersecting && !observed){
-          observed = true;
-          obs.disconnect();
-          /* Use real data if already loaded, else defaults */
-          updateDonationStats(
-            window._donationRaised  || 0,
-            window._donationGoal    || 100000,
-            window._donationDonors  || 0
-          );
-        }
-      });
-    }, { threshold: 0.25 }).observe(section);
-  } else {
-    updateDonationStats(0, 100000, 0);
-  }
-})();
-</script>
 
 <!-- Contact Section -->
 <section id="contact" class="py-5 reveal" style="background: #e8e0d5;">
