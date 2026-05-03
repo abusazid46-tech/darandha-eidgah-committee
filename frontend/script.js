@@ -14,6 +14,26 @@ const MAX_MEMBERS_ON_HOMEPAGE = 12; // Show maximum 12 members initially
 // Dignitary roles (committee heads and leadership positions)
 const dignitaryRoles = ['Committee Head', 'Secretary', 'Treasurer', 'Vice President', 'President', 'Chairman', 'General Secretary'];
 
+// Helper function to extract area from full address (everything after the first comma)
+function extractAreaFromAddress(address) {
+    if (!address) return '';
+    const firstCommaIndex = address.indexOf(',');
+    if (firstCommaIndex === -1) return address; // No comma, treat whole as area
+    return address.substring(firstCommaIndex + 1).trim();
+}
+
+// Helper function to parse address into house number and area
+function parseAddress(address) {
+    if (!address) return { houseNumber: '', area: '' };
+    const firstCommaIndex = address.indexOf(',');
+    if (firstCommaIndex === -1) {
+        return { houseNumber: '', area: address };
+    }
+    const houseNumber = address.substring(0, firstCommaIndex).trim();
+    const area = address.substring(firstCommaIndex + 1).trim();
+    return { houseNumber, area };
+}
+
 // Translation helper
 function updateLanguage() {
   document.querySelectorAll('[data-en]').forEach(el => {
@@ -86,18 +106,18 @@ async function loadSettings() {
   }
 }
 
-// Load members with area filter support
+// Load members with area filter support - UPDATED to use full address for areas
 async function loadMembers() {
   try {
     const res = await fetch(`${API_URL}/members`);
     allMembers = await res.json();
     
-    // Extract unique areas from member addresses
+    // Extract unique areas from member addresses (using FULL ADDRESS after comma)
     const areasSet = new Set();
     allMembers.forEach(member => {
       if (member.address && member.address.trim()) {
-        let area = member.address.split(',')[0].trim();
-        if (area.length > 0 && area.length < 50) {
+        const area = extractAreaFromAddress(member.address);
+        if (area.length > 0 && area.length < 100) {
           areasSet.add(area);
         }
       }
@@ -118,7 +138,7 @@ async function loadMembers() {
   }
 }
 
-// Populate area dropdown
+// Populate area dropdown - UPDATED to show area names (not house numbers)
 function populateAreaDropdown() {
   const select = document.getElementById('areaFilterSelect');
   if (!select) return;
@@ -127,26 +147,34 @@ function populateAreaDropdown() {
   let options = `<option value="all">🌍 ${currentLanguage === 'en' ? 'All Areas' : 'সকলো এলাকা'} (${allCount})</option>`;
   
   uniqueAreas.forEach(area => {
-    const count = allMembers.filter(m => m.address && m.address.split(',')[0].trim() === area).length;
-    options += `<option value="${escapeHtml(area)}">📍 ${escapeHtml(area)} (${count})</option>`;
+    const count = allMembers.filter(m => {
+      if (!m.address) return false;
+      const memberArea = extractAreaFromAddress(m.address);
+      return memberArea === area;
+    }).length;
+    // Truncate long area names for display
+    const displayArea = area.length > 35 ? area.substring(0, 32) + '...' : area;
+    options += `<option value="${escapeHtml(area)}">📍 ${escapeHtml(displayArea)} (${count})</option>`;
   });
   
   select.innerHTML = options;
   select.value = currentAreaFilter;
 }
 
-// Apply all filters with limits (UPDATED to include phone search)
+// Apply all filters with limits - UPDATED to use full address for area filter
 function applyFilters() {
   let filteredMembers = [...allMembers];
   
-  // Apply area filter
+  // Apply area filter - using FULL ADDRESS (after house number)
   if (currentAreaFilter !== 'all') {
-    filteredMembers = filteredMembers.filter(member => 
-      member.address && member.address.split(',')[0].trim() === currentAreaFilter
-    );
+    filteredMembers = filteredMembers.filter(member => {
+      if (!member.address) return false;
+      const memberArea = extractAreaFromAddress(member.address);
+      return memberArea === currentAreaFilter;
+    });
   }
   
-  // Apply search filter - NOW INCLUDES PHONE NUMBER SEARCH
+  // Apply search filter - includes name, Assamese name, and phone
   if (currentSearchTerm) {
     filteredMembers = filteredMembers.filter(member => 
       member.name.toLowerCase().includes(currentSearchTerm) ||
@@ -234,14 +262,8 @@ function createMemberCard(member) {
   const roleClass = isDignitary ? 'border-warning' : 'border-success';
   const roleIcon = isDignitary ? 'fa-crown text-warning' : 'fa-user-circle text-success';
   
-  // Extract house number from address (first part before comma)
-  let houseNumber = '';
-  let fullAddress = member.address || '';
-  if (fullAddress) {
-    const parts = fullAddress.split(',');
-    houseNumber = parts[0].trim();
-    fullAddress = parts.slice(1).join(',').trim();
-  }
+  // Parse address into house number and area
+  const { houseNumber, area } = parseAddress(member.address || '');
   
   return `
     <div class="col-md-6 col-lg-4 mb-3">
@@ -258,7 +280,7 @@ function createMemberCard(member) {
             </span>
             ${member.phone ? `<p class="mb-1 small"><i class="fas fa-phone me-1 text-success"></i> ${member.phone}</p>` : ''}
             ${houseNumber ? `<p class="mb-0 small"><i class="fas fa-home me-1 text-primary"></i> ${escapeHtml(houseNumber)}</p>` : ''}
-            ${fullAddress ? `<p class="mb-0 small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${escapeHtml(fullAddress)}</p>` : ''}
+            ${area ? `<p class="mb-0 small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${escapeHtml(area)}</p>` : ''}
           </div>
         </div>
       </div>
