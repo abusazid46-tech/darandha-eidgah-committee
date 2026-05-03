@@ -73,7 +73,6 @@
       overflow: hidden;
     }
 
-    /* Full-viewport background image */
     .hero-bg {
       position: absolute;
       inset: 0;
@@ -89,7 +88,6 @@
       to   { transform: scale(1.13); }
     }
 
-    /* Gradient overlay for depth */
     .hero-overlay {
       position: absolute;
       inset: 0;
@@ -99,7 +97,6 @@
       z-index: 1;
     }
 
-    /* Animated floating orbs */
     .orb {
       position: absolute;
       border-radius: 50%;
@@ -116,7 +113,6 @@
       to   { transform: translate(30px, -30px) scale(1.08); }
     }
 
-    /* Glassmorphic hero card */
     .hero-content {
       position: relative;
       z-index: 2;
@@ -183,7 +179,6 @@
       margin-top: 10px;
     }
 
-    /* scroll indicator */
     .scroll-hint {
       position: absolute;
       bottom: 36px;
@@ -225,7 +220,6 @@
       border-radius: 2px;
     }
 
-    /* ───── CARDS ───── */
     .card {
       border: none;
       border-radius: 18px;
@@ -246,7 +240,6 @@
     }
     .member-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(0,0,0,0.1); }
     
-    /* Area filter button styles */
     .area-filter-btn {
       border-radius: 25px;
       padding: 8px 20px;
@@ -269,7 +262,6 @@
       opacity: 0.7;
     }
 
-    /* Event Card Styles */
     .event-card {
       background: white;
       border-radius: 18px;
@@ -319,7 +311,6 @@
       color: white;
     }
 
-    /* ───── SEARCH ───── */
     .search-box {
       border-radius: 50px;
       padding: 13px 22px;
@@ -329,7 +320,6 @@
     }
     .search-box:focus { border-color: var(--islamic-green); box-shadow: 0 0 0 3px rgba(26,95,62,0.12); outline: none; }
 
-    /* ───── LANGUAGE TOGGLE ───── */
     .language-toggle {
       cursor: pointer;
       background: rgba(255,255,255,0.15);
@@ -343,7 +333,6 @@
     }
     .language-toggle:hover { background: rgba(255,255,255,0.25); }
 
-    /* ───── WHATSAPP FLOATING ───── */
     .whatsapp-float {
       position: fixed;
       bottom: 32px;
@@ -392,7 +381,6 @@
       100% { transform: scale(2.2); opacity: 0; }
     }
 
-    /* ───── FOOTER ───── */
     footer {
       background-color: var(--dark-green);
       color: rgba(255,255,255,0.75);
@@ -400,11 +388,9 @@
       font-family: 'DM Sans', sans-serif;
     }
 
-    /* ───── DONATE PROGRESS ───── */
     .progress { border-radius: 50px; background: #e0e0e0; }
     .progress-bar { border-radius: 50px; background: linear-gradient(90deg, var(--islamic-green), #2e8b57); }
 
-    /* ───── MODAL ───── */
     .modal-content { border-radius: 20px; overflow: hidden; border: none; }
     .modal-header { background: linear-gradient(135deg, var(--islamic-green), #2e8b57); }
     .form-control:focus { border-color: var(--islamic-green); box-shadow: 0 0 0 3px rgba(26,95,62,0.12); outline: none; }
@@ -415,307 +401,272 @@
       .whatsapp-float { bottom: 20px; right: 20px; }
       .area-filter-btn { padding: 5px 12px; font-size: 0.8rem; }
     }
-    /* Member List Styles */
-.members-list-container {
-  min-height: 400px;
-}
+    
+    .members-list-container {
+      min-height: 400px;
+    }
 
-.member-list-item {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border-left-width: 4px !important;
-}
+    .member-list-item {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border-left-width: 4px !important;
+    }
 
-.member-list-item:hover {
-  transform: translateX(5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-}
+    .member-list-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+    }
 
-.member-avatar i {
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
-  border-radius: 50%;
-}
+    .member-avatar i {
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      border-radius: 50%;
+    }
 
-.member-details {
-  font-size: 0.85rem;
-  color: #6c757d;
-}
+    .member-details {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
 
-.member-card {
-  transition: all 0.3s ease;
-  background: white;
-  border-radius: 12px;
-  cursor: pointer;
-}
+    .member-card {
+      transition: all 0.3s ease;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+    }
 
-.member-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-}
+    .member-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
 
-/* Custom Select Styling */
-.form-select.border-success:focus {
-  border-color: var(--islamic-green);
-  box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25);
-}
+    .form-select.border-success:focus {
+      border-color: var(--islamic-green);
+      box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25);
+    }
 
-/* Button Group Styling */
-.btn-group .btn-outline-success {
-  color: var(--islamic-green);
-  border-color: var(--islamic-green);
-}
+    .btn-group .btn-outline-success {
+      color: var(--islamic-green);
+      border-color: var(--islamic-green);
+    }
 
-.btn-group .btn-outline-success:hover,
-.btn-group .btn-outline-success.active {
-  background-color: var(--islamic-green);
-  color: white;
-}
+    .btn-group .btn-outline-success:hover,
+    .btn-group .btn-outline-success.active {
+      background-color: var(--islamic-green);
+      color: white;
+    }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .member-list-item .d-flex {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .member-avatar {
-    margin-bottom: 10px;
-  }
-  
-  .member-badge {
-    margin-top: 10px;
-  }
-  
-  .member-details span {
-    display: inline-block;
-    margin: 5px 0;
-  }
-/* ========================
-   DONATION MODAL STYLES
-   ======================== */
+    @media (max-width: 768px) {
+      .member-list-item .d-flex {
+        flex-direction: column;
+        text-align: center;
+      }
+      .member-avatar {
+        margin-bottom: 10px;
+      }
+      .member-badge {
+        margin-top: 10px;
+      }
+      .member-details span {
+        display: inline-block;
+        margin: 5px 0;
+      }
+    }
 
-/* QR Code Container */
-.qr-code-container {
-  background: white !important;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-  transition: transform 0.3s;
-  display: inline-block;
-  padding: 15px;
-}
+    /* DONATION MODAL STYLES */
+    .qr-code-container {
+      background: white !important;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+      display: inline-block;
+      padding: 15px;
+    }
 
-.qr-code-container:hover {
-  transform: scale(1.02);
-}
+    .qr-code-container:hover {
+      transform: scale(1.02);
+    }
 
-/* Tab Navigation - GOLD for both active and inactive */
-.nav-tabs {
-  border-bottom: 2px solid rgba(201, 160, 61, 0.3);
-  background: transparent;
-  margin-bottom: 20px;
-}
+    .nav-tabs {
+      border-bottom: 2px solid rgba(201, 160, 61, 0.3);
+      background: transparent;
+      margin-bottom: 20px;
+    }
 
-.nav-tabs .nav-link {
-  color: var(--islamic-gold) !important;  /* Gold color for all tabs */
-  background: transparent !important;
-  border: none !important;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 12px 24px;
-  transition: all 0.3s ease;
-  position: relative;
-}
+    .nav-tabs .nav-link {
+      color: var(--islamic-gold) !important;
+      background: transparent !important;
+      border: none !important;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 12px 24px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
 
-.nav-tabs .nav-link i {
-  margin-right: 8px;
-  font-size: 1rem;
-}
+    .nav-tabs .nav-link i {
+      margin-right: 8px;
+      font-size: 1rem;
+    }
 
-/* Hover effect */
-.nav-tabs .nav-link:hover {
-  color: var(--islamic-gold) !important;
-  background: rgba(201, 160, 61, 0.1) !important;
-  border-radius: 8px 8px 0 0;
-}
+    .nav-tabs .nav-link:hover {
+      color: var(--islamic-gold) !important;
+      background: rgba(201, 160, 61, 0.1) !important;
+      border-radius: 8px 8px 0 0;
+    }
 
-/* Active tab - Gold with bottom border */
-.nav-tabs .nav-link.active {
-  color: var(--islamic-gold) !important;
-  background: transparent !important;
-  font-weight: 700;
-}
+    .nav-tabs .nav-link.active {
+      color: var(--islamic-gold) !important;
+      background: transparent !important;
+      font-weight: 700;
+    }
 
-.nav-tabs .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--islamic-gold);
-  border-radius: 3px;
-}
+    .nav-tabs .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--islamic-gold);
+      border-radius: 3px;
+    }
 
-/* Tab content styling */
-.tab-content {
-  padding: 10px 5px;
-}
+    .tab-content {
+      padding: 10px 5px;
+    }
 
-/* Form styling */
-#donationForm .form-label {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
+    #donationForm .form-label {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
 
-#donationForm .form-control {
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  padding: 10px 15px;
-  transition: all 0.3s;
-}
+    #donationForm .form-control {
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      padding: 10px 15px;
+      transition: all 0.3s;
+    }
 
-#donationForm .form-control:focus {
-  border-color: var(--islamic-gold);
-  box-shadow: 0 0 0 3px rgba(201, 160, 61, 0.2);
-}
+    #donationForm .form-control:focus {
+      border-color: var(--islamic-gold);
+      box-shadow: 0 0 0 3px rgba(201, 160, 61, 0.2);
+    }
 
-#donationForm .input-group-text {
-  background-color: #f8f9fa;
-  border-radius: 10px 0 0 10px;
-  font-weight: 600;
-  color: var(--islamic-green);
-}
+    #donationForm .input-group-text {
+      background-color: #f8f9fa;
+      border-radius: 10px 0 0 10px;
+      font-weight: 600;
+      color: var(--islamic-green);
+    }
 
-/* Submit button */
-.btn-success {
-  background: linear-gradient(135deg, var(--islamic-green), #2e8b57);
-  border: none;
-  border-radius: 50px;
-  padding: 12px;
-  font-weight: 600;
-  transition: all 0.3s;
-}
+    .btn-success {
+      background: linear-gradient(135deg, var(--islamic-green), #2e8b57);
+      border: none;
+      border-radius: 50px;
+      padding: 12px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
 
-.btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(26, 95, 62, 0.3);
-}
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(26, 95, 62, 0.3);
+    }
 
-/* QR Tab styling */
-#qrTab p {
-  margin-bottom: 10px;
-}
+    #qrTab p {
+      margin-bottom: 10px;
+    }
 
-#qrTab code {
-  background-color: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: var(--islamic-green);
-  font-weight: 600;
-}
+    #qrTab code {
+      background-color: #f8f9fa;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: var(--islamic-green);
+      font-weight: 600;
+    }
 
-#qrTab .badge {
-  background-color: #f8f9fa !important;
-  color: #333 !important;
-  border: 1px solid #ddd;
-  padding: 6px 12px;
-}
+    #qrTab .badge {
+      background-color: #f8f9fa !important;
+      color: #333 !important;
+      border: 1px solid #ddd;
+      padding: 6px 12px;
+    }
 
-/* Instructions box */
-#qrTab .bg-light {
-  background-color: #f8f9fa !important;
-  border-radius: 12px;
-  border-left: 4px solid var(--islamic-gold);
-}
+    #qrTab .bg-light {
+      background-color: #f8f9fa !important;
+      border-radius: 12px;
+      border-left: 4px solid var(--islamic-gold);
+    }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .qr-code-container {
-    padding: 10px;
-  }
-  
-  .qr-code-container img {
-    width: 150px !important;
-    height: 150px !important;
-  }
-  
-  .nav-tabs .nav-link {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
-  
-  .nav-tabs .nav-link i {
-    margin-right: 5px;
-    font-size: 12px;
-  }
-  
-  .modal-header h5 {
-    font-size: 1.1rem;
-  }
-  
-  #qrTab .bg-light {
-    padding: 12px !important;
-  }
-  
-  #qrTab .bg-light small {
-    font-size: 11px;
-  }
-}
+    @media (max-width: 768px) {
+      .qr-code-container {
+        padding: 10px;
+      }
+      .qr-code-container img {
+        width: 150px !important;
+        height: 150px !important;
+      }
+      .nav-tabs .nav-link {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+      .nav-tabs .nav-link i {
+        margin-right: 5px;
+        font-size: 12px;
+      }
+      .modal-header h5 {
+        font-size: 1.1rem;
+      }
+      #qrTab .bg-light {
+        padding: 12px !important;
+      }
+      #qrTab .bg-light small {
+        font-size: 11px;
+      }
+    }
 
-/* Small mobile devices */
-@media (max-width: 480px) {
-  .nav-tabs .nav-link {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-  
-  .qr-code-container img {
-    width: 120px !important;
-    height: 120px !important;
-  }
-  
-  .modal-body {
-    padding: 20px !important;
-  }
-}
+    @media (max-width: 480px) {
+      .nav-tabs .nav-link {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+      .qr-code-container img {
+        width: 120px !important;
+        height: 120px !important;
+      }
+      .modal-body {
+        padding: 20px !important;
+      }
+    }
 
-/* Modal header styling */
-.modal-header {
-  background: linear-gradient(135deg, var(--islamic-green), #2e8b57);
-  border-bottom: none;
-}
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+    }
 
-.modal-header .btn-close {
-  filter: brightness(0) invert(1);
-}
+    .modal-body {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
 
-/* Modal body */
-.modal-body {
-  max-height: 80vh;
-  overflow-y: auto;
-}
+    .modal-body::-webkit-scrollbar {
+      width: 5px;
+    }
 
-/* Custom scrollbar for modal body */
-.modal-body::-webkit-scrollbar {
-  width: 5px;
-}
+    .modal-body::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
 
-.modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-  background: var(--islamic-gold);
-  border-radius: 10px;
-}
-  }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: var(--islamic-gold);
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
@@ -801,8 +752,6 @@
   </div>
 </section>
 
-<!-- Members Section with Area Filter -->
-<!-- Members Section -->
 <!-- Members Section -->
 <section id="members" class="py-5 bg-white">
   <div class="container">
@@ -829,17 +778,17 @@
               </select>
             </div>
             
-            <!-- Search Box -->
+            <!-- Search Box - Updated to search by name OR phone -->
             <div class="col-md-5">
               <label class="form-label fw-semibold mb-1">
                 <i class="fas fa-search text-success me-1"></i>
-                <span data-en="Search by Name" data-as="নাম অনুসৰি সন্ধান কৰক">Search by Name</span>
+                <span data-en="Search by Name or Phone" data-as="নাম বা ফোন নম্বৰ অনুসৰি সন্ধান কৰক">Search by Name or Phone</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-white border-end-0">
                   <i class="fas fa-search text-success"></i>
                 </span>
-                <input type="text" id="memberSearch" class="form-control border-start-0" placeholder="Type name..." data-en-placeholder="Type name..." data-as-placeholder="নাম টাইপ কৰক...">
+                <input type="text" id="memberSearch" class="form-control border-start-0" placeholder="Search by name or phone..." data-en-placeholder="Search by name or phone..." data-as-placeholder="নাম বা ফোন নম্বৰ অনুসৰি সন্ধান কৰক...">
                 <button class="btn btn-outline-secondary" onclick="clearSearch()" type="button">
                   <i class="fas fa-times"></i>
                 </button>
@@ -882,6 +831,7 @@
     </div>
   </div>
 </section>
+
 <!-- Events Section -->
 <section id="events" class="py-5" style="background: var(--light-cream);">
   <div class="container">
@@ -914,7 +864,7 @@
           <div id="donationProgress" class="progress-bar" style="width: 0%;">0%</div>
         </div>
         <button class="btn btn-donate btn-lg px-5 py-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#donationModal">
-          <i class="fas fa-hand-holding-heart me-2"></i> Donate Now
+          <i class="fas fa-hand-holding-heart me-2"></i> <span data-en="Donate Now" data-as="এতিয়া দান কৰক">Donate Now</span>
         </button>
       </div>
     </div>
@@ -962,24 +912,24 @@
   <i class="fab fa-whatsapp"></i>
 </a>
 
-<!-- Donation Modal with QR Code - Fixed Tab Colors -->
+<!-- Donation Modal with Dynamic UPI Settings -->
 <div class="modal fade" id="donationModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title"><i class="fas fa-hand-holding-heart me-2"></i>Make a Donation</h5>
+        <h5 class="modal-title"><i class="fas fa-hand-holding-heart me-2"></i><span data-en="Make a Donation" data-as="দান কৰক">Make a Donation</span></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <ul class="nav nav-tabs mb-3" id="donationTab" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#formTab" type="button" role="tab">
-              <i class="fas fa-edit me-1"></i> Form
+              <i class="fas fa-edit me-1"></i> <span data-en="Form" data-as="ফৰ্ম">Form</span>
             </button>
           </li>
           <li class="nav-item" role="presentation">
             <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qrTab" type="button" role="tab">
-              <i class="fas fa-qrcode me-1"></i> Scan QR
+              <i class="fas fa-qrcode me-1"></i> <span data-en="Scan QR" data-as="QR স্কেন কৰক">Scan QR</span>
             </button>
           </li>
         </ul>
@@ -989,34 +939,34 @@
           <div class="tab-pane fade show active" id="formTab" role="tabpanel">
             <form id="donationForm">
               <div class="mb-3">
-                <label class="form-label fw-600">Full Name *</label>
+                <label class="form-label fw-600"><span data-en="Full Name" data-as="পূর্ণ নাম">Full Name</span> *</label>
                 <input type="text" class="form-control" id="donorName" placeholder="Enter your full name" required>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-600">Amount (₹) *</label>
+                <label class="form-label fw-600"><span data-en="Amount (₹)" data-as="পৰিমাণ (₹)">Amount (₹)</span> *</label>
                 <div class="input-group">
                   <span class="input-group-text">₹</span>
                   <input type="number" class="form-control" id="donorAmount" placeholder="Enter amount" required>
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-600">UPI Transaction ID <small class="text-muted">(optional)</small></label>
+                <label class="form-label fw-600"><span data-en="UPI Transaction ID" data-as="UPI লেনদেন আইডি">UPI Transaction ID</span> <small class="text-muted">(optional)</small></label>
                 <input type="text" class="form-control" id="transactionId" placeholder="Transaction ID from UPI app">
               </div>
               <button type="submit" class="btn btn-success w-100 py-2 rounded-pill fw-600">
-                <i class="fas fa-hand-holding-heart me-2"></i>Submit Donation
+                <i class="fas fa-hand-holding-heart me-2"></i> <span data-en="Submit Donation" data-as="দান জমা দিয়ক">Submit Donation</span>
               </button>
             </form>
           </div>
           
-          <!-- QR Tab -->
+          <!-- QR Tab - Dynamically updated from settings -->
           <div class="tab-pane fade" id="qrTab" role="tabpanel">
             <div class="text-center">
               <div class="qr-code-container p-3 bg-light rounded-4 d-inline-block mb-3">
                 <img id="qrCodeImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=committee@bank&pn=Darandha%20Eidgah%20Committee&cu=INR" alt="UPI QR Code" style="width: 180px; height: 180px;">
               </div>
-              <p class="mb-2"><strong>UPI ID:</strong> <code class="bg-light p-1 rounded">committee@bank</code></p>
-              <p class="text-muted small">Scan this QR code using any UPI app (Google Pay, PhonePe, Paytm, BHIM)</p>
+              <p class="mb-2"><strong><span data-en="UPI ID" data-as="UPI আইডি">UPI ID</span>:</strong> <code id="upiIdDisplay" class="bg-light p-1 rounded">committee@bank</code></p>
+              <p class="text-muted small"><span data-en="Scan this QR code using any UPI app" data-as="যিকোনো UPI এপ ব্যৱহাৰ কৰি এই QR কোড স্কেন কৰক">Scan this QR code using any UPI app</span> (Google Pay, PhonePe, Paytm, BHIM)</p>
               <div class="d-flex justify-content-center gap-3 mt-2">
                 <span class="badge bg-light text-dark p-2"><i class="fab fa-google"></i> Google Pay</span>
                 <span class="badge bg-light text-dark p-2"><i class="fas fa-mobile-alt"></i> PhonePe</span>
@@ -1024,11 +974,11 @@
               </div>
               <hr class="my-3">
               <div class="text-start bg-light p-3 rounded-3">
-                <small class="text-muted d-block mb-2"><strong><i class="fas fa-info-circle me-1"></i> Instructions:</strong></small>
-                <small class="text-muted d-block">1️⃣ Scan QR code or send payment to <strong>committee@bank</strong></small>
-                <small class="text-muted d-block">2️⃣ Enter the amount you wish to donate</small>
-                <small class="text-muted d-block">3️⃣ Copy the Transaction ID from your UPI app</small>
-                <small class="text-muted d-block">4️⃣ Go to "Form" tab and submit with Transaction ID</small>
+                <small class="text-muted d-block mb-2"><strong><i class="fas fa-info-circle me-1"></i> <span data-en="Instructions" data-as="নির্দেশনা">Instructions</span>:</strong></small>
+                <small class="text-muted d-block">1️⃣ <span data-en="Scan QR code or send payment to" data-as="QR কোড স্কেন কৰক বা লৈ পেমেন্ট পঠিয়াওক">Scan QR code or send payment to</span> <strong id="upiInstructionId">committee@bank</strong></small>
+                <small class="text-muted d-block">2️⃣ <span data-en="Enter the amount you wish to donate" data-as="আপুনি দান কৰিব বিচৰা পৰিমাণ লিখক">Enter the amount you wish to donate</span></small>
+                <small class="text-muted d-block">3️⃣ <span data-en="Copy the Transaction ID from your UPI app" data-as="আপোনাৰ UPI এপৰ পৰা লেনদেন আইডি কপি কৰক">Copy the Transaction ID from your UPI app</span></small>
+                <small class="text-muted d-block">4️⃣ <span data-en="Go to 'Form' tab and submit with Transaction ID" data-as="'ফৰ্ম' টেবলৈ যাওক আৰু লেনদেন আইডিৰ সৈতে জমা দিয়ক">Go to "Form" tab and submit with Transaction ID</span></small>
               </div>
             </div>
           </div>
@@ -1037,6 +987,7 @@
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="script.js"></script>
 <script>
