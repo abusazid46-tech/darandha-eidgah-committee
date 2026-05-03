@@ -11,6 +11,7 @@
   <!-- Add to the <head> section -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1a5f3e">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Darandha Eidgah">
@@ -1340,52 +1341,83 @@
   resize();
   draw();
 })();
-
-// PWA Installation Prompt
+// PWA Installation - FIXED VERSION
 let deferredPrompt;
+let installButton = null;
 
+// Create install button dynamically if it doesn't exist
+function createInstallButton() {
+  if (document.getElementById('installAppBtn')) return;
+  
+  const btn = document.createElement('button');
+  btn.id = 'installAppBtn';
+  btn.className = 'btn-install';
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 1000;
+    background: linear-gradient(135deg, #1a5f3e, #2e8b57);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: none;
+  `;
+  btn.innerHTML = '<i class="fas fa-download me-2"></i>Install App';
+  document.body.appendChild(btn);
+  return btn;
+}
+
+// Before install prompt - DO NOT call preventDefault immediately
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
+  console.log('beforeinstallprompt fired');
+  // Store the event for later use
   deferredPrompt = e;
-  const installBtn = document.getElementById('installAppBtn');
-  if (installBtn) {
-    installBtn.style.display = 'inline-flex';
-    installBtn.addEventListener('click', () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-          } else {
-            console.log('User dismissed the install prompt');
-          }
-          deferredPrompt = null;
-          installBtn.style.display = 'none';
-        });
-      }
-    });
-  }
+  
+  // Create and show install button
+  installButton = createInstallButton();
+  installButton.style.display = 'flex';
+  
+  // Remove any existing event listeners to avoid duplicates
+  const newBtn = installButton.cloneNode(true);
+  installButton.parentNode.replaceChild(newBtn, installButton);
+  installButton = newBtn;
+  
+  installButton.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      // Show the install prompt
+      deferredPrompt.prompt();
+      // Wait for user choice
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to install prompt: ${outcome}`);
+      // Hide the button after user responds
+      installButton.style.display = 'none';
+      deferredPrompt = null;
+    }
+  });
 });
 
+// Handle app installed
 window.addEventListener('appinstalled', () => {
   console.log('PWA was installed');
-  const installBtn = document.getElementById('installAppBtn');
-  if (installBtn) installBtn.style.display = 'none';
+  if (installButton) {
+    installButton.style.display = 'none';
+  }
   deferredPrompt = null;
 });
 
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      })
-      .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
-      });
-  });
-}
+// Also hide button if user already has the app installed
+window.addEventListener('load', () => {
+  // Check if app is already installed (standalone mode)
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (installButton) installButton.style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>
