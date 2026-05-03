@@ -416,59 +416,56 @@ async function loadEvents() {
     }
   }
 }
-
-// Load donation progress - FIXED VERSION (uses stats endpoint which already exists)
+// Load donation progress - USING CORRECT PUBLIC ENDPOINT
 async function loadDonationProgress() {
   try {
-    // Use the existing stats endpoint to get total donations
-    const res = await fetch(`${API_URL}/stats`);
+    // Use the public stats endpoint (already added to your backend)
+    const response = await fetch(`${API_URL}/stats/public`);
     
-    if (res.ok) {
-      const stats = await res.json();
-      // stats.totalDonations should be available from the backend
-      const total = stats.totalDonations || 0;
-      updateProgressBar(total);
-    } else {
-      // If stats endpoint fails, try donations endpoint
-      const donationRes = await fetch(`${API_URL}/donations`);
-      if (donationRes.ok) {
-        const donations = await donationRes.json();
-        if (Array.isArray(donations)) {
-          const total = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
-          updateProgressBar(total);
+    if (response.ok) {
+      const data = await response.json();
+      const totalDonated = data.totalDonations || 0;
+      const goal = 500000;
+      const percentage = Math.min((totalDonated / goal) * 100, 100);
+      
+      const progressBar = document.getElementById('donationProgress');
+      if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+        if (totalDonated > 0) {
+          progressBar.innerText = `₹${totalDonated.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
         } else {
-          updateProgressBar(0);
-        }
-      } else {
-        // Try public donations endpoint
-        const publicRes = await fetch(`${API_URL}/donations/public`).catch(() => null);
-        if (publicRes && publicRes.ok) {
-          const data = await publicRes.json();
-          const total = data.total || 0;
-          updateProgressBar(total);
-        } else {
-          // Fallback to cached value
-          const cachedTotal = localStorage.getItem('cachedDonationTotal');
-          if (cachedTotal) {
-            updateProgressBar(parseInt(cachedTotal));
-          } else {
-            updateProgressBar(0);
-          }
+          progressBar.innerText = '0%';
         }
       }
+      
+      // Cache for offline/fallback use
+      localStorage.setItem('cachedDonationTotal', totalDonated);
+    } else {
+      // Fallback to cached data
+      const cachedTotal = localStorage.getItem('cachedDonationTotal');
+      updateProgressBarFallback(cachedTotal ? parseInt(cachedTotal) : 0);
     }
   } catch (error) {
     console.error('Error loading donation progress:', error);
-    // Fallback to cached value
     const cachedTotal = localStorage.getItem('cachedDonationTotal');
-    if (cachedTotal) {
-      updateProgressBar(parseInt(cachedTotal));
-    } else {
-      updateProgressBar(0);
-    }
+    updateProgressBarFallback(cachedTotal ? parseInt(cachedTotal) : 0);
   }
 }
 
+// Fallback helper function
+function updateProgressBarFallback(total) {
+  const goal = 500000;
+  const percentage = Math.min((total / goal) * 100, 100);
+  const progressBar = document.getElementById('donationProgress');
+  if (progressBar) {
+    progressBar.style.width = `${percentage}%`;
+    if (total > 0) {
+      progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
+    } else {
+      progressBar.innerText = '0%';
+    }
+  }
+}
 // Helper function to update progress bar
 function updateProgressBar(total) {
   const goal = 500000;
