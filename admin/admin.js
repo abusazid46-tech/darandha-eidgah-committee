@@ -1,4 +1,4 @@
-// admin/admin.js
+// admin/admin.js (Updated - Fix House Number Display)
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
@@ -12,9 +12,14 @@ let currentEventFilter = 'all';
 // Helper functions for address handling
 function parseAddress(address) {
     if (!address) return { houseNumber: '', fullAddress: '' };
-    const parts = address.split(',');
-    const houseNumber = parts[0].trim();
-    const fullAddress = parts.slice(1).join(',').trim();
+    // Check if address has comma separator
+    const firstCommaIndex = address.indexOf(',');
+    if (firstCommaIndex === -1) {
+        // No comma - treat whole as house number or full address
+        return { houseNumber: address, fullAddress: '' };
+    }
+    const houseNumber = address.substring(0, firstCommaIndex).trim();
+    const fullAddress = address.substring(firstCommaIndex + 1).trim();
     return { houseNumber, fullAddress };
 }
 
@@ -83,6 +88,7 @@ function showDashboard() {
     const dashboardContent = document.getElementById('dashboardContent');
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardContent) dashboardContent.style.display = 'block';
+    document.getElementById('dashboardSection').style.display = 'block';
     loadDashboard();
     loadMembers();
     filterEvents('all');
@@ -214,7 +220,7 @@ function animateValue(element) {
     }, 200);
 }
 
-// ========== MEMBERS MANAGEMENT WITH BULK ACTIONS ==========
+// ========== MEMBERS MANAGEMENT WITH PROPER HOUSE NUMBER DISPLAY ==========
 
 async function loadMembers() {
     try {
@@ -224,7 +230,20 @@ async function loadMembers() {
         if (!tbody) return;
         
         tbody.innerHTML = members.map(m => {
+            // Parse address to separate house number and full address
             const { houseNumber, fullAddress } = parseAddress(m.address || '');
+            
+            // Display house number with badge and full address separately
+            let addressHtml = '';
+            if (houseNumber) {
+                addressHtml += `<span class="badge bg-info me-1"><i class="fas fa-home me-1"></i>${escapeHtml(houseNumber)}</span>`;
+            }
+            if (fullAddress) {
+                addressHtml += `<span class="text-muted small">${escapeHtml(fullAddress)}</span>`;
+            }
+            if (!houseNumber && !fullAddress) {
+                addressHtml = '-';
+            }
             
             return `
                 <tr>
@@ -235,17 +254,13 @@ async function loadMembers() {
                     </td>
                     <td>${m.nameAs ? escapeHtml(m.nameAs) : '-'}</td>
                     <td>${m.phone || '-'}</td>
-                    <td>
-                        ${houseNumber ? `<span class="badge bg-info me-1">House: ${escapeHtml(houseNumber)}</span>` : ''}
-                        ${fullAddress ? `<small class="text-muted">${escapeHtml(fullAddress)}</small>` : ''}
-                        ${!houseNumber && !fullAddress ? '-' : ''}
-                     </td>
+                    <td>${addressHtml}</td>
                     <td><span class="badge bg-success">${m.role || 'Member'}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')">
+                        <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')">
+                        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')" title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -331,9 +346,9 @@ async function bulkDeleteMembers() {
 }
 
 // CSV/Excel Import Functions
-function importMembersCSV() {
+window.importMembersCSV = function() {
     new bootstrap.Modal(document.getElementById('importCSVModal')).show();
-}
+};
 
 async function processImport() {
     const fileInput = document.getElementById('csvFileInput');
@@ -434,7 +449,7 @@ async function processImport() {
     }
 }
 
-function downloadSampleCSV() {
+window.downloadSampleCSV = function() {
     const sampleData = [
         ['name', 'nameAs', 'phone', 'houseNumber', 'fullAddress', 'role'],
         ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha, Dist- Morigaon, PIN-782001', 'Committee Head'],
@@ -450,7 +465,7 @@ function downloadSampleCSV() {
     a.download = 'member_template.csv';
     a.click();
     URL.revokeObjectURL(url);
-}
+};
 
 // Open member modal
 window.openMemberModal = function() {
@@ -598,7 +613,7 @@ window.filterEvents = async function(category) {
         if (!tbody) return;
         
         if (events.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No events found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>No ${category !== 'all' ? category : ''} events found</td></tr>`;
             return;
         }
         
@@ -626,11 +641,11 @@ window.filterEvents = async function(category) {
                     <td><span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">${event.category}</span></td>
                     <td><span class="badge bg-${statusBadgeClass}">${statusText}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')"><i class="fas fa-sync-alt"></i></button>
-                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')"><i class="fas fa-trash"></i></button>
-                     </td>
-                </tr>
+                        <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status"><i class="fas fa-sync-alt"></i></button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                      </td>
+                </table>
             `;
         }).join('');
     } catch (error) {
@@ -640,11 +655,20 @@ window.filterEvents = async function(category) {
 
 window.toggleEventStatus = async function(id, currentStatus) {
     let newStatus = '';
-    if (currentStatus === 'active') newStatus = 'cancelled';
-    else if (currentStatus === 'cancelled') newStatus = 'completed';
-    else if (currentStatus === 'completed') newStatus = 'active';
+    let confirmMessage = '';
     
-    if (!confirm(`Change event status to ${newStatus}?`)) return;
+    if (currentStatus === 'active') {
+        newStatus = 'cancelled';
+        confirmMessage = 'Cancel this event?';
+    } else if (currentStatus === 'cancelled') {
+        newStatus = 'completed';
+        confirmMessage = 'Mark this event as completed?';
+    } else if (currentStatus === 'completed') {
+        newStatus = 'active';
+        confirmMessage = 'Reactivate this event?';
+    }
+    
+    if (!confirm(confirmMessage)) return;
     
     try {
         const getRes = await fetch(`${API_URL}/events/${id}`);
@@ -693,7 +717,7 @@ window.editEvent = async function(id) {
         document.getElementById('eventTitleAs').value = event.titleAs || '';
         document.getElementById('eventDesc').value = event.description || '';
         document.getElementById('eventDescAs').value = event.descriptionAs || '';
-        document.getElementById('eventDate').value = event.date.split('T')[0];
+        document.getElementById('eventDate').value = event.date ? event.date.split('T')[0] : '';
         document.getElementById('eventTime').value = event.time || '';
         document.getElementById('eventEndTime').value = event.endTime || '';
         document.getElementById('eventLocation').value = event.location || '';
@@ -776,7 +800,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 });
 
 window.manualSync = async function() {
-    if (!confirm('Sync event categories?')) return;
+    if (!confirm('Sync event categories? This will update all event statuses based on current date.')) return;
     try {
         const res = await fetch(`${API_URL}/events/sync`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
@@ -798,6 +822,11 @@ async function loadDonations() {
         const tbody = document.getElementById('donationsTable');
         if (!tbody) return;
         
+        if (donations.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No donations yet</td></tr>`;
+            return;
+        }
+        
         tbody.innerHTML = donations.map(d => `
             <tr>
                 <td>${escapeHtml(d.name || 'Anonymous')}</td>
@@ -805,7 +834,7 @@ async function loadDonations() {
                 <td>${d.transactionId || '-'}</td>
                 <td>${new Date(d.date).toLocaleDateString()}</td>
                 <td><span class="badge ${d.status === 'approved' ? 'bg-success' : d.status === 'pending' ? 'bg-warning' : 'bg-danger'}">${d.status || 'pending'}</span></td>
-                <td>${d.status === 'pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')">Approve</button><button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')">Reject</button>` : (d.status === 'approved' ? '✓ Approved' : '✗ Rejected')}</td>
+                <td>${d.status === 'pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')">Approve</button><button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')">Reject</button>` : (d.status === 'approved' ? '<i class="fas fa-check-circle text-success"></i> Approved' : '<i class="fas fa-times-circle text-danger"></i> Rejected')}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -818,7 +847,7 @@ window.approveDonation = async function(id) {
     try {
         const res = await fetch(`${API_URL}/donations/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Donation approved');
+            alert('Donation approved! It will now appear in public stats.');
             loadDonations();
             loadDashboard();
         }
@@ -832,7 +861,7 @@ window.rejectDonation = async function(id) {
     try {
         const res = await fetch(`${API_URL}/donations/${id}/reject`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Donation rejected');
+            alert('Donation rejected!');
             loadDonations();
             loadDashboard();
         }
@@ -885,9 +914,9 @@ document.getElementById('settingsForm')?.addEventListener('submit', async (e) =>
         for (const up of updates) {
             await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
         }
-        alert('Settings saved!');
+        alert('Contact settings saved!');
     } catch (error) {
-        alert('Error: ' + error.message);
+        alert('Error saving settings: ' + error.message);
     }
 });
 
@@ -906,9 +935,9 @@ document.getElementById('upiSettingsForm')?.addEventListener('submit', async (e)
         for (const up of updates) {
             await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
         }
-        alert('UPI settings saved!');
+        alert('UPI settings saved! QR code will update on frontend.');
     } catch (error) {
-        alert('Error: ' + error.message);
+        alert('Error saving UPI settings: ' + error.message);
     }
 });
 
@@ -919,4 +948,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Make functions globally available
+window.bulkDeleteMembers = bulkDeleteMembers;
+window.toggleSelectAll = toggleSelectAll;
+window.clearSelection = clearSelection;
+window.processImport = processImport;
+window.downloadSampleCSV = downloadSampleCSV;
+
+// Initialize
 checkAuth();
