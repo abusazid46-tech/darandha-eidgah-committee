@@ -416,77 +416,128 @@ async function loadEvents() {
     }
   }
 }
-// Load donation progress - COMPLETELY FIXED VERSION
+
+// Load donation progress - FIXED VERSION (uses stats endpoint which already exists)
 async function loadDonationProgress() {
   try {
-    // Try multiple endpoints to get donation data
-    let total = 0;
-    let success = false;
+    // Use the existing stats endpoint to get total donations
+    const res = await fetch(`${API_URL}/stats`);
     
-    // Try 1: Public stats endpoint
-    try {
-      const res = await fetch(`${API_URL}/stats/public`);
-      if (res.ok) {
-        const stats = await res.json();
-        total = stats.totalDonations || 0;
-        success = true;
-      }
-    } catch (e) {
-      console.log('Stats endpoint not available');
-    }
-    
-    // Try 2: Direct donations public endpoint
-    if (!success) {
-      try {
-        const res = await fetch(`${API_URL}/donations/public`);
-        if (res.ok) {
-          const data = await res.json();
-          total = data.total || 0;
-          success = true;
+    if (res.ok) {
+      const stats = await res.json();
+      // stats.totalDonations should be available from the backend
+      const total = stats.totalDonations || 0;
+      updateProgressBar(total);
+    } else {
+      // If stats endpoint fails, try donations endpoint
+      const donationRes = await fetch(`${API_URL}/donations`);
+      if (donationRes.ok) {
+        const donations = await donationRes.json();
+        if (Array.isArray(donations)) {
+          const total = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+          updateProgressBar(total);
+        } else {
+          updateProgressBar(0);
         }
-      } catch (e) {
-        console.log('Donations public endpoint not available');
-      }
-    }
-    
-    // Try 3: Use local storage cache as fallback
-    if (!success) {
-      const cachedTotal = localStorage.getItem('cachedDonationTotal');
-      if (cachedTotal) {
-        total = parseInt(cachedTotal) || 0;
-        console.log('Using cached donation total:', total);
-      }
-    }
-    
-    // Update progress bar
-    const goal = 500000;
-    const percentage = Math.min((total / goal) * 100, 100);
-    
-    const progressBar = document.getElementById('donationProgress');
-    if (progressBar) {
-      progressBar.style.width = `${percentage}%`;
-      if (total > 0) {
-        progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
       } else {
-        progressBar.innerText = '0%';
+        // Try public donations endpoint
+        const publicRes = await fetch(`${API_URL}/donations/public`).catch(() => null);
+        if (publicRes && publicRes.ok) {
+          const data = await publicRes.json();
+          const total = data.total || 0;
+          updateProgressBar(total);
+        } else {
+          // Fallback to cached value
+          const cachedTotal = localStorage.getItem('cachedDonationTotal');
+          if (cachedTotal) {
+            updateProgressBar(parseInt(cachedTotal));
+          } else {
+            updateProgressBar(0);
+          }
+        }
       }
     }
-    
-    // Cache the total for future use
-    if (total > 0) {
-      localStorage.setItem('cachedDonationTotal', total);
-    }
-    
   } catch (error) {
     console.error('Error loading donation progress:', error);
-    // Don't show error to user, just show default
-    const progressBar = document.getElementById('donationProgress');
-    if (progressBar) {
-      progressBar.style.width = '0%';
-      progressBar.innerText = '0%';
+    // Fallback to cached value
+    const cachedTotal = localStorage.getItem('cachedDonationTotal');
+    if (cachedTotal) {
+      updateProgressBar(parseInt(cachedTotal));
+    } else {
+      updateProgressBar(0);
     }
   }
 }
+
+// Helper function to update progress bar
+function updateProgressBar(total) {
+  const goal = 500000;
+  const percentage = Math.min((total / goal) * 100, 100);
+  
+  const progressBar = document.getElementById('donationProgress');
+  if (progressBar) {
+    progressBar.style.width = `${percentage}%`;
+    if (total > 0) {
+      progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
+    } else {
+      progressBar.innerText = '0%';
+    }
+  }
+  
+  // Cache the total for future use
+  if (total > 0) {
+    localStorage.setItem('cachedDonationTotal', total);
+  }
+}
+
+// Submit donation
+const donationForm = document.getElementById('donationForm');
+if (donationForm) {
+  donationForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const donorName = document.getElementById('donorName');
+    const donorAmount = document.getElementById('donorAmount');
+    const transactionId = document.getElementById('transactionId');
+    
+    if (!donorName || !donorAmount) return;
+    
+    const donation = {
+      name: donorName.value,
+      amount: parseInt(donorAmount.value),
+      transactionId: transactionId?.value || '',
+      status: 'completed'
+    };
+    
+    if (!donation.name || !donation.amount || donation.amount <= 0) {
+      alert('Please enter valid name and amount');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${API_URL}/donations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(donation)
+      });
+      
+      if (res.ok) {
+        alert('Thank you for your donation! May Allah reward you abundantly.');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('donationModal'));
+        if (modal) modal.hide();
+        donationForm.reset();
+        loadDonationProgress();
+      } else {
+        const error = await res.json();
+        alert('Error: ' + (error.error || 'Failed to submit donation. Please try again.'));
+      }
+    } catch (error) {
+      console.error('Donation error:', error);
+      alert('Network error. Please check your connection and try again.');
+    }
+  });
+}
+
 // Escape HTML helper
 function escapeHtml(text) {
   if (!text) return '';
