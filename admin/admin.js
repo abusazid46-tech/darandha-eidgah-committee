@@ -48,6 +48,8 @@ function startAutoRefresh() {
             loadEventStats();
         } else if (currentSection === 'members') {
             loadMembers();
+        } else if (currentSection === 'donations') {
+            loadDonations();
         }
     }, 30000);
 }
@@ -70,6 +72,7 @@ function showDashboard() {
     filterEvents('all');
     loadDonations();
     loadSettings();
+    loadUpiSettings();
     loadEventStats();
 }
 
@@ -133,7 +136,10 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         if (section === 'members') loadMembers();
         if (section === 'events') filterEvents(currentEventFilter);
         if (section === 'donations') loadDonations();
-        if (section === 'settings') loadSettings();
+        if (section === 'settings') {
+            loadSettings();
+            loadUpiSettings();
+        }
     });
 });
 
@@ -436,7 +442,7 @@ window.filterEvents = async function(category) {
         console.error('Error filtering events:', error);
         const tbody = document.getElementById('eventsTable');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></td>';
         }
     }
 };
@@ -702,7 +708,7 @@ window.manualSync = async function() {
     }
 };
 
-// ========== DONATIONS MANAGEMENT ==========
+// ========== DONATIONS MANAGEMENT WITH APPROVAL ==========
 
 async function loadDonations() {
     if (!token) return;
@@ -714,69 +720,231 @@ async function loadDonations() {
         const tbody = document.getElementById('donationsTable');
         if (!tbody) return;
         
-        tbody.innerHTML = donations.map(d => `
-            <tr>
-                <td>${escapeHtml(d.name || 'Anonymous')}</td>
-                <td>₹${d.amount || 0}</td>
-                <td>${d.transactionId || '-'}</td>
-                <td>${new Date(d.date).toLocaleDateString()}</td>
-                <td>
-                    <span class="badge bg-${d.status === 'completed' ? 'success' : 'warning'}">
-                        ${d.status || 'pending'}
-                    </span>
-                </td>
-            </tr>
-        `).join('');
+        if (donations.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="fas fa-hand-holding-heart fa-2x mb-2 d-block"></i>
+                        No donations yet
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = donations.map(d => {
+            let statusClass = '';
+            let statusText = '';
+            let actionButtons = '';
+            
+            if (d.status === 'approved') {
+                statusClass = 'approved';
+                statusText = 'Approved';
+                actionButtons = '<span class="text-muted">✓ Approved</span>';
+            } else if (d.status === 'rejected') {
+                statusClass = 'rejected';
+                statusText = 'Rejected';
+                actionButtons = '<span class="text-muted">✗ Rejected</span>';
+            } else {
+                statusClass = 'pending';
+                statusText = 'Pending';
+                actionButtons = `
+                    <button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')" title="Approve">
+                        <i class="fas fa-check-circle"></i> Approve
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')" title="Reject">
+                        <i class="fas fa-times-circle"></i> Reject
+                    </button>
+                `;
+            }
+            
+            return `
+                <tr data-donation-id="${d._id}">
+                    <td>${escapeHtml(d.name || 'Anonymous')}</td>
+                    <td>₹${d.amount || 0}</td>
+                    <td>${d.transactionId || '-'}</td>
+                    <td>${new Date(d.date).toLocaleDateString()}</td>
+                    <td>
+                        <span class="badge badge-${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="table-actions">${actionButtons}</td>
+                </tr>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
+        const tbody = document.getElementById('donationsTable');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading donations</td></tr>';
+        }
     }
 }
 
-// ========== SETTINGS MANAGEMENT ==========
+// Approve donation
+window.approveDonation = async function(id) {
+    if (!confirm('Approve this donation? This will add it to the public donation total.')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/donations/${id}/approve`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (res.ok) {
+            alert('Donation approved successfully!');
+            loadDonations();
+            loadDashboard();
+        } else {
+            const error = await res.json();
+            alert('Failed to approve donation: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// Reject donation
+window.rejectDonation = async function(id) {
+    if (!confirm('Reject this donation? This will not be shown in public stats.')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/donations/${id}/reject`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (res.ok) {
+            alert('Donation rejected!');
+            loadDonations();
+            loadDashboard();
+        } else {
+            const error = await res.json();
+            alert('Failed to reject donation: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// ========== UPI SETTINGS MANAGEMENT ==========
+
+async function loadUpiSettings() {
+    try {
+        const res = await fetch(`${API_URL}/settings`);
+        const settings = await res.json();
+        
+        const upiIdInput = document.getElementById('settingUpiId');
+        const qrUrlInput = document.getElementById('settingQrUrl');
+        const bankNameInput = document.getElementById('settingBankName');
+        const bankAccountInput = document.getElementById('settingBankAccount');
+        const ifscInput = document.getElementById('settingIfsc');
+        const donationGoalInput = document.getElementById('settingDonationGoal');
+        
+        if (upiIdInput) upiIdInput.value = settings.upi_id?.value || 'committee@bank';
+        if (qrUrlInput) qrUrlInput.value = settings.qr_url?.value || '';
+        if (bankNameInput) bankNameInput.value = settings.bank_name?.value || 'Darandha Eidgah Committee';
+        if (bankAccountInput) bankAccountInput.value = settings.bank_account?.value || '';
+        if (ifscInput) ifscInput.value = settings.ifsc_code?.value || '';
+        if (donationGoalInput) donationGoalInput.value = settings.donation_goal?.value || '500000';
+    } catch (error) {
+        console.error('Error loading UPI settings:', error);
+    }
+}
+
+// Save UPI Settings
+const upiSettingsForm = document.getElementById('upiSettingsForm');
+if (upiSettingsForm) {
+    upiSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!token) return;
+        
+        const updates = [
+            { key: 'upi_id', value: document.getElementById('settingUpiId')?.value || 'committee@bank' },
+            { key: 'qr_url', value: document.getElementById('settingQrUrl')?.value || '' },
+            { key: 'bank_name', value: document.getElementById('settingBankName')?.value || '' },
+            { key: 'bank_account', value: document.getElementById('settingBankAccount')?.value || '' },
+            { key: 'ifsc_code', value: document.getElementById('settingIfsc')?.value || '' },
+            { key: 'donation_goal', value: document.getElementById('settingDonationGoal')?.value || '500000' }
+        ];
+        
+        try {
+            for (const up of updates) {
+                await fetch(`${API_URL}/settings/${up.key}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ value: up.value })
+                });
+            }
+            alert('UPI settings saved successfully!');
+        } catch (error) {
+            alert('Error saving UPI settings: ' + error.message);
+        }
+    });
+}
+
+// ========== CONTACT SETTINGS MANAGEMENT ==========
 
 async function loadSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
         const settings = await res.json();
         
-        document.getElementById('settingWhatsapp').value = settings.whatsapp_number?.value || '';
-        document.getElementById('settingEmail').value = settings.contact_email?.value || '';
-        document.getElementById('settingPhone').value = settings.contact_phone?.value || '';
-        document.getElementById('settingAboutEn').value = settings.about_content?.value || '';
-        document.getElementById('settingAboutAs').value = settings.about_content_as?.value || '';
+        const whatsappInput = document.getElementById('settingWhatsapp');
+        const emailInput = document.getElementById('settingEmail');
+        const phoneInput = document.getElementById('settingPhone');
+        const aboutEnInput = document.getElementById('settingAboutEn');
+        const aboutAsInput = document.getElementById('settingAboutAs');
+        
+        if (whatsappInput) whatsappInput.value = settings.whatsapp_number?.value || '';
+        if (emailInput) emailInput.value = settings.contact_email?.value || '';
+        if (phoneInput) phoneInput.value = settings.contact_phone?.value || '';
+        if (aboutEnInput) aboutEnInput.value = settings.about_content?.value || '';
+        if (aboutAsInput) aboutAsInput.value = settings.about_content_as?.value || '';
     } catch (error) {
         console.error('Error loading settings:', error);
     }
 }
 
-document.getElementById('settingsForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!token) return;
-    
-    const updates = [
-        { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
-        { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
-        { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
-        { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
-        { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
-    ];
-    
-    try {
-        for (const up of updates) {
-            await fetch(`${API_URL}/settings/${up.key}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ value: up.value })
-            });
+const settingsForm = document.getElementById('settingsForm');
+if (settingsForm) {
+    settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!token) return;
+        
+        const updates = [
+            { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
+            { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
+            { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
+            { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
+            { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
+        ];
+        
+        try {
+            for (const up of updates) {
+                await fetch(`${API_URL}/settings/${up.key}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ value: up.value })
+                });
+            }
+            alert('Contact settings saved successfully!');
+        } catch (error) {
+            alert('Error saving settings: ' + error.message);
         }
-        alert('Settings saved successfully!');
-    } catch (error) {
-        alert('Error saving settings: ' + error.message);
-    }
-});
+    });
+}
 
 // Escape HTML helper
 function escapeHtml(text) {
