@@ -867,7 +867,26 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
-
+// Add this after your existing stats endpoint
+app.get('/api/stats/public', async (req, res) => {
+  try {
+    const memberCount = await Member.countDocuments();
+    const eventCount = await Event.countDocuments();
+    const donationResult = await Donation.aggregate([
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalDonations = donationResult[0]?.total || 0;
+    
+    res.json({ 
+      memberCount, 
+      eventCount, 
+      totalDonations
+    });
+  } catch (error) {
+    console.error('Error fetching public stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
 // ========== ERROR HANDLING ==========
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
