@@ -40,7 +40,7 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ MongoDB connected successfully'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ========== ENHANCED EVENT SCHEMA ==========
+// ========== SCHEMAS ==========
 const memberSchema = new mongoose.Schema({
     name: { type: String, required: true },
     nameAs: String,
@@ -102,12 +102,13 @@ const settingSchema = new mongoose.Schema({
     valueAs: String,
 });
 
+// FIXED: Donation Schema with approval status (declared only once)
 const donationSchema = new mongoose.Schema({
     name: String,
     amount: Number,
     date: { type: Date, default: Date.now },
     transactionId: String,
-    status: { type: String, default: 'pending' },
+    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
 });
 
 const adminSchema = new mongoose.Schema({
@@ -188,34 +189,21 @@ async function autoUpdateEventCategories() {
         const todayEnd = new Date(now);
         todayEnd.setHours(23, 59, 59, 999);
         
-        // Update events that should be "today"
         await Event.updateMany(
-            { 
-                date: { $gte: todayStart, $lte: todayEnd },
-                status: 'active'
-            },
+            { date: { $gte: todayStart, $lte: todayEnd }, status: 'active' },
             { category: 'today' }
         );
         
-        // Update events that should be "upcoming" (future dates)
         await Event.updateMany(
-            { 
-                date: { $gt: todayEnd },
-                status: 'active'
-            },
+            { date: { $gt: todayEnd }, status: 'active' },
             { category: 'upcoming' }
         );
         
-        // Update events that should be "past" (past dates)
         await Event.updateMany(
-            { 
-                date: { $lt: todayStart },
-                status: 'active'
-            },
+            { date: { $lt: todayStart }, status: 'active' },
             { category: 'past' }
         );
         
-        // Update cancelled/completed events to past
         await Event.updateMany(
             { status: { $in: ['cancelled', 'completed'] } },
             { category: 'past' }
@@ -227,10 +215,7 @@ async function autoUpdateEventCategories() {
     }
 }
 
-// Run auto-update every hour
 setInterval(autoUpdateEventCategories, 60 * 60 * 1000);
-
-// Run on server startup
 autoUpdateEventCategories();
 
 // ========== DATABASE INITIALIZATION ==========
@@ -276,14 +261,7 @@ app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         message: 'Darandha Eidgah API is running',
-        timestamp: new Date().toISOString(),
-        endpoints: {
-            members: '/api/members',
-            events: '/api/events',
-            settings: '/api/settings',
-            donations: '/api/donations',
-            stats: '/api/stats'
-        }
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -297,18 +275,11 @@ app.post('/api/auth/login', async (req, res) => {
         }
         
         const admin = await Admin.findOne({ username });
-        if (!admin) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        
-        if (!admin.isActive) {
-            return res.status(401).json({ error: 'Account is deactivated' });
-        }
+        if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+        if (!admin.isActive) return res.status(401).json({ error: 'Account is deactivated' });
         
         const valid = await bcrypt.compare(password, admin.password);
-        if (!valid) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
+        if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
         
         admin.lastLogin = new Date();
         await admin.save();
@@ -319,13 +290,7 @@ app.post('/api/auth/login', async (req, res) => {
             { expiresIn: '7d' }
         );
         
-        res.json({ 
-            success: true,
-            token, 
-            username: admin.username, 
-            role: admin.role,
-            message: 'Login successful'
-        });
+        res.json({ success: true, token, username: admin.username, role: admin.role });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Login failed' });
@@ -364,36 +329,19 @@ app.get('/api/members/:id', async (req, res) => {
 app.post('/api/members', authMiddleware, async (req, res) => {
     try {
         const { name, nameAs, phone, address, role } = req.body;
+        if (!name) return res.status(400).json({ error: 'Name is required' });
         
-        if (!name) {
-            return res.status(400).json({ error: 'Name is required' });
-        }
-        
-        const member = new Member({
-            name,
-            nameAs: nameAs || '',
-            phone: phone || '',
-            address: address || '',
-            role: role || 'Member',
-            joinDate: new Date(),
-            status: 'active'
-        });
-        
+        const member = new Member({ name, nameAs: nameAs || '', phone: phone || '', address: address || '', role: role || 'Member', joinDate: new Date(), status: 'active' });
         await member.save();
         res.status(201).json(member);
     } catch (error) {
-        console.error('Error creating member:', error);
         res.status(500).json({ error: 'Failed to create member: ' + error.message });
     }
 });
 
 app.put('/api/members/:id', authMiddleware, async (req, res) => {
     try {
-        const member = await Member.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true, runValidators: true }
-        );
+        const member = await Member.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!member) return res.status(404).json({ error: 'Member not found' });
         res.json(member);
     } catch (error) {
@@ -411,16 +359,12 @@ app.delete('/api/members/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// ========== ENHANCED EVENTS CRUD WITH AUTO-UPDATE ==========
-
-// Get all events (auto-updated categories)
+// ========== EVENTS CRUD ==========
 app.get('/api/events', async (req, res) => {
     try {
         await autoUpdateEventCategories();
-        
         const { category, featured, limit, status } = req.query;
         let query = {};
-        
         if (category) query.category = category;
         if (featured) query.featured = featured === 'true';
         if (status) query.status = status;
@@ -428,35 +372,24 @@ app.get('/api/events', async (req, res) => {
         let eventsQuery = Event.find(query).sort({ date: category === 'past' ? -1 : 1 });
         if (limit) eventsQuery = eventsQuery.limit(parseInt(limit));
         
-        const events = await eventsQuery;
-        res.json(events);
+        res.json(await eventsQuery);
     } catch (error) {
-        console.error('Error fetching events:', error);
         res.status(500).json({ error: 'Failed to fetch events' });
     }
 });
 
-// Get upcoming events
 app.get('/api/events/upcoming', async (req, res) => {
     try {
         await autoUpdateEventCategories();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
-        const events = await Event.find({ 
-            date: { $gte: today },
-            status: 'active',
-            category: { $in: ['today', 'upcoming'] }
-        }).sort({ date: 1 });
-        
+        const events = await Event.find({ date: { $gte: today }, status: 'active', category: { $in: ['today', 'upcoming'] } }).sort({ date: 1 });
         res.json(events);
     } catch (error) {
-        console.error('Error fetching upcoming events:', error);
         res.status(500).json({ error: 'Failed to fetch upcoming events' });
     }
 });
 
-// Get today's events
 app.get('/api/events/today', async (req, res) => {
     try {
         await autoUpdateEventCategories();
@@ -464,279 +397,13 @@ app.get('/api/events/today', async (req, res) => {
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const events = await Event.find({
-            date: { $gte: today, $lt: tomorrow },
-            status: 'active'
-        }).sort({ time: 1 });
-        
+        const events = await Event.find({ date: { $gte: today, $lt: tomorrow }, status: 'active' }).sort({ time: 1 });
         res.json(events);
     } catch (error) {
-        console.error('Error fetching today\'s events:', error);
         res.status(500).json({ error: 'Failed to fetch today\'s events' });
     }
 });
 
-// Get events by category
-app.get('/api/events/category/:category', async (req, res) => {
-    try {
-        await autoUpdateEventCategories();
-        const { category } = req.params;
-        
-        let query = { category };
-        
-        if (category === 'upcoming') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            query.date = { $gte: today };
-            query.status = 'active';
-        } else if (category === 'past') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            query.date = { $lt: today };
-        }
-        
-        const events = await Event.find(query).sort({ date: category === 'past' ? -1 : 1 });
-        res.json(events);
-    } catch (error) {
-        console.error('Error fetching events by category:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-    }
-});
-
-// Get single event
-app.get('/api/events/:id', async (req, res) => {
-    try {
-        await autoUpdateEventCategories();
-        const event = await Event.findById(req.params.id);
-        if (!event) return res.status(404).json({ error: 'Event not found' });
-        res.json(event);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch event' });
-    }
-});
-
-// Create event
-app.post('/api/events', authMiddleware, upload.single('image'), async (req, res) => {
-    try {
-        let eventData;
-        if (req.body.data) {
-            eventData = JSON.parse(req.body.data);
-        } else {
-            eventData = req.body;
-        }
-        
-        if (!eventData.title) {
-            return res.status(400).json({ error: 'Title is required' });
-        }
-        
-        if (!eventData.date) {
-            return res.status(400).json({ error: 'Date is required' });
-        }
-        
-        if (req.file) {
-            eventData.image = `/uploads/${req.file.filename}`;
-            eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-        }
-        
-        // Auto-set category based on date
-        const eventDate = new Date(eventData.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (eventDate.toDateString() === today.toDateString()) {
-            eventData.category = 'today';
-        } else if (eventDate > today) {
-            eventData.category = 'upcoming';
-        } else {
-            eventData.category = 'past';
-        }
-        
-        const event = new Event(eventData);
-        await event.save();
-        
-        // Run auto-update after creation
-        await autoUpdateEventCategories();
-        
-        res.status(201).json(event);
-    } catch (error) {
-        console.error('Event creation error:', error);
-        res.status(500).json({ error: 'Failed to create event: ' + error.message });
-    }
-});
-
-// Update event
-app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, res) => {
-    try {
-        let eventData;
-        if (req.body.data) {
-            eventData = JSON.parse(req.body.data);
-        } else {
-            eventData = req.body;
-        }
-        
-        if (req.file) {
-            const oldEvent = await Event.findById(req.params.id);
-            if (oldEvent && oldEvent.image) {
-                const oldImagePath = path.join(__dirname, oldEvent.image);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
-                }
-            }
-            eventData.image = `/uploads/${req.file.filename}`;
-            eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-        }
-        
-        // Auto-set category based on date and status
-        const eventDate = new Date(eventData.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (eventData.status === 'cancelled' || eventData.status === 'completed') {
-            eventData.category = 'past';
-        } else if (eventDate.toDateString() === today.toDateString()) {
-            eventData.category = 'today';
-        } else if (eventDate > today) {
-            eventData.category = 'upcoming';
-        } else {
-            eventData.category = 'past';
-        }
-        
-        const event = await Event.findByIdAndUpdate(
-            req.params.id,
-            eventData,
-            { new: true, runValidators: true }
-        );
-        
-        if (!event) {
-            return res.status(404).json({ error: 'Event not found' });
-        }
-        
-        // Run auto-update after update
-        await autoUpdateEventCategories();
-        
-        res.json(event);
-    } catch (error) {
-        console.error('Event update error:', error);
-        res.status(500).json({ error: 'Failed to update event: ' + error.message });
-    }
-});
-
-// Delete event
-app.delete('/api/events/:id', authMiddleware, async (req, res) => {
-    try {
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ error: 'Event not found' });
-        }
-        
-        if (event.image) {
-            const imagePath = path.join(__dirname, event.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
-        }
-        
-        await Event.findByIdAndDelete(req.params.id);
-        await autoUpdateEventCategories();
-        
-        res.json({ success: true, message: 'Event deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting event:', error);
-        res.status(500).json({ error: 'Failed to delete event' });
-    }
-});
-
-// Manual sync endpoint (for admin to force update)
-app.post('/api/events/sync', authMiddleware, async (req, res) => {
-    try {
-        await autoUpdateEventCategories();
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const todayCount = await Event.countDocuments({ 
-            date: { $gte: today, $lt: tomorrow },
-            status: 'active'
-        });
-        const upcomingCount = await Event.countDocuments({ 
-            date: { $gt: tomorrow },
-            status: 'active'
-        });
-        const pastCount = await Event.countDocuments({ 
-            date: { $lt: today }
-        });
-        
-        res.json({ 
-            success: true, 
-            message: 'Events synchronized successfully',
-            stats: { today: todayCount, upcoming: upcomingCount, past: pastCount }
-        });
-    } catch (error) {
-        console.error('Sync error:', error);
-        res.status(500).json({ error: 'Failed to sync events' });
-    }
-});
-
-// Get event statistics
-app.get('/api/events/stats/summary', async (req, res) => {
-    try {
-        await autoUpdateEventCategories();
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const todayCount = await Event.countDocuments({ 
-            date: { $gte: today, $lt: tomorrow },
-            status: 'active'
-        });
-        const upcomingCount = await Event.countDocuments({ 
-            date: { $gt: tomorrow },
-            status: 'active'
-        });
-        const pastCount = await Event.countDocuments({ 
-            date: { $lt: today }
-        });
-        const totalCount = await Event.countDocuments();
-        const featuredCount = await Event.countDocuments({ featured: true });
-        
-        res.json({ 
-            today: todayCount, 
-            upcoming: upcomingCount, 
-            past: pastCount,
-            total: totalCount,
-            featured: featuredCount
-        });
-    } catch (error) {
-        console.error('Error fetching event stats:', error);
-        res.status(500).json({ error: 'Failed to fetch event stats' });
-    }
-});
-// ========== PAST EVENTS ENDPOINT ==========
-
-// Get past events (explicit endpoint)
-app.get('/api/events/past', async (req, res) => {
-    try {
-        await autoUpdateEventCategories();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const events = await Event.find({ 
-            date: { $lt: today }
-        }).sort({ date: -1 }); // Sort descending (most recent past first)
-        
-        res.json(events);
-    } catch (error) {
-        console.error('Error fetching past events:', error);
-        res.status(500).json({ error: 'Failed to fetch past events' });
-    }
-});
-
-// Get events by category - FIXED for past events
 app.get('/api/events/category/:category', async (req, res) => {
     try {
         await autoUpdateEventCategories();
@@ -751,24 +418,16 @@ app.get('/api/events/category/:category', async (req, res) => {
         
         switch(category) {
             case 'today':
-                query = {
-                    date: { $gte: today, $lt: tomorrow },
-                    status: 'active'
-                };
+                query = { date: { $gte: today, $lt: tomorrow }, status: 'active' };
                 sortOrder = { time: 1 };
                 break;
             case 'upcoming':
-                query = {
-                    date: { $gt: tomorrow },
-                    status: 'active'
-                };
+                query = { date: { $gt: tomorrow }, status: 'active' };
                 sortOrder = { date: 1 };
                 break;
             case 'past':
-                query = {
-                    date: { $lt: today }
-                };
-                sortOrder = { date: -1 }; // Most recent past first
+                query = { date: { $lt: today } };
+                sortOrder = { date: -1 };
                 break;
             default:
                 query = {};
@@ -778,68 +437,166 @@ app.get('/api/events/category/:category', async (req, res) => {
         const events = await Event.find(query).sort(sortOrder);
         res.json(events);
     } catch (error) {
-        console.error('Error fetching events by category:', error);
         res.status(500).json({ error: 'Failed to fetch events' });
     }
 });
+
+app.get('/api/events/:id', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const event = await Event.findById(req.params.id);
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+        res.json(event);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch event' });
+    }
+});
+
+app.post('/api/events', authMiddleware, upload.single('image'), async (req, res) => {
+    try {
+        let eventData = req.body.data ? JSON.parse(req.body.data) : req.body;
+        if (!eventData.title) return res.status(400).json({ error: 'Title is required' });
+        if (!eventData.date) return res.status(400).json({ error: 'Date is required' });
+        
+        if (req.file) {
+            eventData.image = `/uploads/${req.file.filename}`;
+            eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        
+        const eventDate = new Date(eventData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (eventDate.toDateString() === today.toDateString()) eventData.category = 'today';
+        else if (eventDate > today) eventData.category = 'upcoming';
+        else eventData.category = 'past';
+        
+        const event = new Event(eventData);
+        await event.save();
+        await autoUpdateEventCategories();
+        res.status(201).json(event);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create event: ' + error.message });
+    }
+});
+
+app.put('/api/events/:id', authMiddleware, upload.single('image'), async (req, res) => {
+    try {
+        let eventData = req.body.data ? JSON.parse(req.body.data) : req.body;
+        
+        if (req.file) {
+            const oldEvent = await Event.findById(req.params.id);
+            if (oldEvent && oldEvent.image) {
+                const oldImagePath = path.join(__dirname, oldEvent.image);
+                if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+            }
+            eventData.image = `/uploads/${req.file.filename}`;
+            eventData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
+        
+        const eventDate = new Date(eventData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (eventData.status === 'cancelled' || eventData.status === 'completed') eventData.category = 'past';
+        else if (eventDate.toDateString() === today.toDateString()) eventData.category = 'today';
+        else if (eventDate > today) eventData.category = 'upcoming';
+        else eventData.category = 'past';
+        
+        const event = await Event.findByIdAndUpdate(req.params.id, eventData, { new: true, runValidators: true });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+        
+        await autoUpdateEventCategories();
+        res.json(event);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update event: ' + error.message });
+    }
+});
+
+app.delete('/api/events/:id', authMiddleware, async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.id);
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+        
+        if (event.image) {
+            const imagePath = path.join(__dirname, event.image);
+            if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+        }
+        
+        await Event.findByIdAndDelete(req.params.id);
+        await autoUpdateEventCategories();
+        res.json({ success: true, message: 'Event deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete event' });
+    }
+});
+
+app.post('/api/events/sync', authMiddleware, async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        res.json({ 
+            success: true, 
+            message: 'Events synchronized successfully',
+            stats: { 
+                today: await Event.countDocuments({ date: { $gte: today, $lt: tomorrow }, status: 'active' }),
+                upcoming: await Event.countDocuments({ date: { $gt: tomorrow }, status: 'active' }),
+                past: await Event.countDocuments({ date: { $lt: today } })
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to sync events' });
+    }
+});
+
+app.get('/api/events/stats/summary', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        res.json({ 
+            today: await Event.countDocuments({ date: { $gte: today, $lt: tomorrow }, status: 'active' }),
+            upcoming: await Event.countDocuments({ date: { $gt: tomorrow }, status: 'active' }),
+            past: await Event.countDocuments({ date: { $lt: today } }),
+            total: await Event.countDocuments(),
+            featured: await Event.countDocuments({ featured: true })
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch event stats' });
+    }
+});
+
+app.get('/api/events/past', async (req, res) => {
+    try {
+        await autoUpdateEventCategories();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const events = await Event.find({ date: { $lt: today } }).sort({ date: -1 });
+        res.json(events);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch past events' });
+    }
+});
+
 // ========== SETTINGS CRUD ==========
 app.get('/api/settings', async (req, res) => {
     try {
         const settings = await Setting.find();
         const settingsObj = {};
-        settings.forEach(s => { 
-            settingsObj[s.key] = { value: s.value, valueAs: s.valueAs }; 
-        });
+        settings.forEach(s => { settingsObj[s.key] = { value: s.value, valueAs: s.valueAs }; });
         res.json(settingsObj);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
-// ========== DONATIONS WITH APPROVAL SYSTEM ==========
 
-// Approve donation (protected)
-app.put('/api/donations/:id/approve', authMiddleware, async (req, res) => {
-    try {
-        const donation = await Donation.findByIdAndUpdate(
-            req.params.id,
-            { status: 'approved' },
-            { new: true }
-        );
-        if (!donation) {
-            return res.status(404).json({ error: 'Donation not found' });
-        }
-        res.json({ success: true, message: 'Donation approved', donation });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to approve donation' });
-    }
-});
-
-// Reject donation (protected)
-app.put('/api/donations/:id/reject', authMiddleware, async (req, res) => {
-    try {
-        const donation = await Donation.findByIdAndUpdate(
-            req.params.id,
-            { status: 'rejected' },
-            { new: true }
-        );
-        if (!donation) {
-            return res.status(404).json({ error: 'Donation not found' });
-        }
-        res.json({ success: true, message: 'Donation rejected', donation });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to reject donation' });
-    }
-});
-
-// Update donation schema to include 'approved' and 'rejected' status
-// Update the donationSchema status enum
-const donationSchema = new mongoose.Schema({
-    name: String,
-    amount: Number,
-    date: { type: Date, default: Date.now },
-    transactionId: String,
-    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
-});
 app.put('/api/settings/:key', authMiddleware, async (req, res) => {
     try {
         const setting = await Setting.findOneAndUpdate(
@@ -853,7 +610,7 @@ app.put('/api/settings/:key', authMiddleware, async (req, res) => {
     }
 });
 
-// ========== DONATIONS ==========
+// ========== DONATIONS WITH APPROVAL SYSTEM ==========
 app.get('/api/donations', authMiddleware, async (req, res) => {
     try {
         const donations = await Donation.find().sort({ date: -1 });
@@ -866,15 +623,37 @@ app.get('/api/donations', authMiddleware, async (req, res) => {
 app.post('/api/donations', async (req, res) => {
     try {
         const donation = new Donation({
-            ...req.body,
-            status: 'completed',
+            name: req.body.name,
+            amount: req.body.amount,
+            transactionId: req.body.transactionId || '',
+            status: 'pending',
             date: new Date()
         });
         await donation.save();
-        res.status(201).json(donation);
+        res.status(201).json({ success: true, message: 'Donation recorded. Awaiting admin approval.', donation });
     } catch (error) {
         console.error('Error recording donation:', error);
         res.status(500).json({ error: 'Failed to record donation' });
+    }
+});
+
+app.put('/api/donations/:id/approve', authMiddleware, async (req, res) => {
+    try {
+        const donation = await Donation.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+        if (!donation) return res.status(404).json({ error: 'Donation not found' });
+        res.json({ success: true, message: 'Donation approved', donation });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to approve donation' });
+    }
+});
+
+app.put('/api/donations/:id/reject', authMiddleware, async (req, res) => {
+    try {
+        const donation = await Donation.findByIdAndUpdate(req.params.id, { status: 'rejected' }, { new: true });
+        if (!donation) return res.status(404).json({ error: 'Donation not found' });
+        res.json({ success: true, message: 'Donation rejected', donation });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to reject donation' });
     }
 });
 
@@ -883,54 +662,32 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
     try {
         const memberCount = await Member.countDocuments();
         const eventCount = await Event.countDocuments();
-        const donationResult = await Donation.aggregate([
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
+        const donationResult = await Donation.aggregate([{ $match: { status: 'approved' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
         const totalDonations = donationResult[0]?.total || 0;
-        
-        const recentDonations = await Donation.find()
-            .sort({ date: -1 })
-            .limit(5);
-        
+        const recentDonations = await Donation.find({ status: 'approved' }).sort({ date: -1 }).limit(5);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const upcomingEvents = await Event.countDocuments({ 
-            date: { $gt: today },
-            status: 'active'
-        });
+        const upcomingEvents = await Event.countDocuments({ date: { $gt: today }, status: 'active' });
         
-        res.json({ 
-            memberCount, 
-            eventCount, 
-            totalDonations,
-            upcomingEvents,
-            recentDonations
-        });
+        res.json({ memberCount, eventCount, totalDonations, upcomingEvents, recentDonations });
     } catch (error) {
-        console.error('Error fetching stats:', error);
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
-// Add this after your existing stats endpoint
+
 app.get('/api/stats/public', async (req, res) => {
-  try {
-    const memberCount = await Member.countDocuments();
-    const eventCount = await Event.countDocuments();
-    const donationResult = await Donation.aggregate([
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalDonations = donationResult[0]?.total || 0;
-    
-    res.json({ 
-      memberCount, 
-      eventCount, 
-      totalDonations
-    });
-  } catch (error) {
-    console.error('Error fetching public stats:', error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
-  }
+    try {
+        const memberCount = await Member.countDocuments();
+        const eventCount = await Event.countDocuments();
+        const donationResult = await Donation.aggregate([{ $match: { status: 'approved' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
+        const totalDonations = donationResult[0]?.total || 0;
+        
+        res.json({ memberCount, eventCount, totalDonations });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
 });
+
 // ========== ERROR HANDLING ==========
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
@@ -938,18 +695,11 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
     console.error('Global error:', err);
-    
     if (err instanceof multer.MulterError) {
-        if (err.code === 'FILE_TOO_LARGE') {
-            return res.status(400).json({ error: 'File too large. Maximum size is 5MB.' });
-        }
+        if (err.code === 'FILE_TOO_LARGE') return res.status(400).json({ error: 'File too large. Maximum size is 5MB.' });
         return res.status(400).json({ error: err.message });
     }
-    
-    res.status(500).json({ 
-        error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-    });
+    res.status(500).json({ error: 'Internal server error', message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong' });
 });
 
 // ========== START SERVER ==========
@@ -958,23 +708,4 @@ app.listen(PORT, () => {
     console.log(`📍 API URL: http://localhost:${PORT}/api`);
     console.log(`🔐 JWT Secret: ${JWT_SECRET ? 'Configured ✅' : 'Missing ❌'}`);
     console.log(`💾 MongoDB: ${MONGODB_URI.includes('localhost') ? 'Local ✅' : 'Atlas ✅'}`);
-    console.log(`\n📋 Available Endpoints:`);
-    console.log(`   GET    /api/health`);
-    console.log(`   POST   /api/auth/login`);
-    console.log(`   GET    /api/members`);
-    console.log(`   POST   /api/members (protected)`);
-    console.log(`   GET    /api/events`);
-    console.log(`   GET    /api/events/upcoming`);
-    console.log(`   GET    /api/events/today`);
-    console.log(`   GET    /api/events/category/:category`);
-    console.log(`   POST   /api/events/sync (protected) - Manual sync`);
-    console.log(`   POST   /api/events (protected)`);
-    console.log(`   PUT    /api/events/:id (protected)`);
-    console.log(`   DELETE /api/events/:id (protected)`);
-    console.log(`   GET    /api/settings`);
-    console.log(`   GET    /api/donations (protected)`);
-    console.log(`   POST   /api/donations`);
-    console.log(`   GET    /api/stats (protected)`);
-    console.log(`   GET    /api/events/stats/summary`);
-    console.log(`\n🔄 Auto-update: Event categories update every hour`);
 });
