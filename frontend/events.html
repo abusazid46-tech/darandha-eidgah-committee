@@ -1,392 +1,456 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events - Darandha Eidgah Committee</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --islamic-green: #1a5f3e;
-            --islamic-gold: #c9a03d;
-            --light-cream: #f5f0e8;
-            --dark-green: #0d3b26;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--light-cream);
-        }
-        
-        .navbar {
-            background-color: var(--islamic-green);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .navbar-brand, .nav-link {
-            color: white !important;
-        }
-        
-        .hero {
-            background: linear-gradient(135deg, var(--islamic-green), var(--dark-green));
-            color: white;
-            padding: 80px 0 60px;
-            margin-top: 56px;
-        }
-        
-        .event-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-bottom: 30px;
-            height: 100%;
-        }
-        
-        .event-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-        }
-        
-        .event-image {
-            height: 220px;
-            width: 100%;
-            object-fit: cover;
-        }
-        
-        .event-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 5px 15px;
-            border-radius: 25px;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 1;
-        }
-        
-        .badge-today { background: #dc3545; color: white; }
-        .badge-upcoming { background: #198754; color: white; }
-        .badge-past { background: #6c757d; color: white; }
-        
-        .category-tab {
-            cursor: pointer;
-            padding: 10px 25px;
-            border-radius: 30px;
-            transition: all 0.3s;
-            background: white;
-            border: none;
-            font-weight: 500;
-        }
-        
-        .category-tab.active {
-            background: var(--islamic-green);
-            color: white;
-        }
-        
-        .category-tab:not(.active):hover {
-            background: #e0d5c5;
-        }
-        
-        .event-time {
-            color: var(--islamic-gold);
-            font-weight: 600;
-        }
-        
-        footer {
-            background: var(--dark-green);
-            color: white;
-            padding: 40px 0;
-            margin-top: 50px;
-        }
-        
-        .language-toggle {
-            cursor: pointer;
-            background: rgba(255,255,255,0.2);
-            padding: 6px 15px;
-            border-radius: 30px;
-            transition: background 0.3s;
-        }
-        
-        .language-toggle:hover {
-            background: rgba(255,255,255,0.3);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Events & Programs – Darandha Eidgah Committee</title>
+  <meta name="description" content="Community events, programs and announcements from Darandha Eidgah & Graveyard Development Committee.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Amiri:wght@700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#1a5f3e">
+  <style>
+    :root {
+      --islamic-green: #1a5f3e;
+      --islamic-gold:  #c9a03d;
+      --light-cream:   #f5f0e8;
+      --dark-green:    #0d3b26;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--light-cream); scroll-behavior: smooth; overflow-x: hidden; }
+
+    /* NAVBAR */
+    .navbar {
+      background: rgba(13,59,38,0.55);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.18);
+    }
+    .navbar-brand { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.2rem; color: white !important; }
+    .nav-link { color: rgba(255,255,255,0.85) !important; font-weight: 500; transition: color 0.25s; }
+    .nav-link:hover, .nav-link.active-page { color: var(--islamic-gold) !important; }
+    .language-toggle {
+      cursor: pointer; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+      padding: 6px 16px; border-radius: 30px; color: white; font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.2); transition: background 0.2s; user-select: none;
+    }
+    .language-toggle:hover { background: rgba(255,255,255,0.25); }
+
+    /* HERO */
+    .hero {
+      position: relative; min-height: 44vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; padding-top: 56px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, #0b3322 0%, #1a5f3e 45%, #0d3b26 100%);
+      transform: scale(1.06);
+      animation: slowZoom 22s ease-in-out infinite alternate; z-index: 0;
+    }
+    @keyframes slowZoom { from{transform:scale(1.06)} to{transform:scale(1.12)} }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(26,95,62,0.15) 0%, transparent 65%),
+                  linear-gradient(160deg,rgba(13,59,38,0.38) 0%,rgba(26,95,62,0.22) 50%,rgba(13,59,38,0.42) 100%);
+      z-index: 1;
+    }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.10; z-index:1; animation:floatOrb 14s ease-in-out infinite alternate; }
+    .orb-1{width:460px;height:460px;background:var(--islamic-green);top:-90px;left:-100px;}
+    .orb-2{width:320px;height:320px;background:var(--islamic-gold);bottom:-60px;right:-50px;animation-delay:-5s;}
+    @keyframes floatOrb{from{transform:translate(0,0)}to{transform:translate(28px,-28px)}}
+    .hero-content {
+      position:relative; z-index:2; padding:52px 48px;
+      background:rgba(0,0,0,0.32); backdrop-filter:blur(16px) saturate(140%);
+      -webkit-backdrop-filter:blur(16px) saturate(140%);
+      border:1px solid rgba(255,255,255,0.18); border-radius:28px;
+      box-shadow:0 24px 80px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.2);
+      text-align:center; color:white; max-width:660px; margin:0 auto;
+      animation:heroReveal 0.9s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes heroReveal{from{opacity:0;transform:translateY(36px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:rgba(201,160,61,0.18); border:1px solid rgba(201,160,61,0.4);
+      color:var(--islamic-gold); padding:6px 18px; border-radius:50px;
+      font-size:0.78rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:18px;
+    }
+    .hero h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,5.5vw,3.4rem); font-weight:700; line-height:1.1; text-shadow:0 2px 24px rgba(0,0,0,0.4); margin-bottom:12px; }
+    .hero .lead { font-size:1.05rem; font-weight:300; opacity:0.85; }
+
+    /* TABS */
+    .category-tabs-wrap { background:white; box-shadow:0 4px 20px rgba(0,0,0,0.07); position:sticky; top:56px; z-index:100; padding:14px 0; }
+    .category-tab {
+      cursor:pointer; padding:9px 22px; border-radius:30px;
+      transition:all 0.25s; background:var(--light-cream); border:1.5px solid transparent;
+      font-weight:500; font-size:0.9rem; color:#444; white-space:nowrap;
+    }
+    .category-tab.active { background:var(--islamic-green); color:white; border-color:var(--islamic-green); }
+    .category-tab:not(.active):hover { border-color:var(--islamic-green); color:var(--islamic-green); }
+
+    /* EVENT CARDS */
+    .event-card { background:white; border-radius:18px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.07); transition:transform 0.3s,box-shadow 0.3s; height:100%; }
+    .event-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(0,0,0,0.12); }
+    .event-image { height:210px; width:100%; object-fit:cover; }
+    .event-img-placeholder { height:210px; width:100%; background:linear-gradient(135deg,#e8f5ee,#f5f0e8); display:flex; align-items:center; justify-content:center; }
+    .event-badge { position:absolute; top:14px; right:14px; padding:5px 14px; border-radius:25px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; z-index:1; }
+    .badge-today { background:#dc3545; color:white; }
+    .badge-upcoming { background:var(--islamic-green); color:white; }
+    .badge-past { background:#6c757d; color:white; }
+    .event-time { color:var(--islamic-gold); font-weight:600; }
+
+    .section-title { font-family:'Cormorant Garamond',serif; color:var(--islamic-green); font-weight:700; font-size:2.2rem; margin-bottom:36px; position:relative; display:inline-block; }
+    .section-title:after { content:''; position:absolute; bottom:-10px; left:0; width:56px; height:3px; background:linear-gradient(90deg,var(--islamic-gold),transparent); border-radius:2px; }
+
+    /* WA CTA */
+    .wa-cta {
+      background:linear-gradient(135deg,var(--dark-green),var(--islamic-green));
+      border-radius:22px; padding:44px 32px; text-align:center; color:white;
+      box-shadow:0 12px 40px rgba(13,59,38,0.2); position:relative; overflow:hidden;
+    }
+    .wa-cta::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 70% 30%,rgba(201,160,61,0.08) 0%,transparent 60%); pointer-events:none; }
+    .btn-wa {
+      background:linear-gradient(135deg,#25d366,#128c7e); color:white; font-weight:700;
+      border:none; padding:14px 36px; border-radius:50px; font-size:1.05rem;
+      transition:all 0.3s; box-shadow:0 6px 24px rgba(37,211,102,0.4);
+      text-decoration:none; display:inline-flex; align-items:center; gap:10px;
+    }
+    .btn-wa:hover { color:white; transform:scale(1.06); box-shadow:0 10px 32px rgba(37,211,102,0.55); }
+
+    /* FLOAT WA */
+    .whatsapp-float {
+      position:fixed; bottom:32px; right:32px;
+      background:linear-gradient(135deg,#25d366,#128c7e);
+      color:white; width:58px; height:58px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:28px;
+      box-shadow:0 6px 24px rgba(37,211,102,0.45); z-index:1000; text-decoration:none;
+      animation:waVibrate 3.5s ease-in-out infinite;
+    }
+    .whatsapp-float:hover { color:white; animation:none; transform:scale(1.14); }
+    .whatsapp-float::before { content:''; position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(37,211,102,0.4); animation:waPing 2.8s ease-out infinite; }
+    @keyframes waVibrate {
+      0%{transform:rotate(0)} 2%{transform:rotate(-12deg)} 4%{transform:rotate(12deg)}
+      6%{transform:rotate(-10deg)} 8%{transform:rotate(10deg)} 10%{transform:rotate(-7deg)}
+      12%{transform:rotate(7deg)} 14%{transform:rotate(-4deg)} 16%{transform:rotate(4deg)}
+      18%,100%{transform:rotate(0)}
+    }
+    @keyframes waPing { 0%{transform:scale(1);opacity:0.7} 100%{transform:scale(2.2);opacity:0} }
+
+    /* FOOTER */
+    footer { background:var(--dark-green); color:rgba(255,255,255,0.75); padding:36px 0 20px; }
+
+    /* REVEAL */
+    .reveal { opacity:0; transform:translateY(32px); transition:opacity 0.7s cubic-bezier(0.22,1,0.36,1),transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    @media (max-width:768px) {
+      .hero-content { padding:36px 22px; margin:0 16px; }
+      .whatsapp-float { bottom:20px; right:20px; }
+      .wa-cta { padding:30px 20px; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- Navigation -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container">
-        <a class="navbar-brand" href="index.html">
-            <i class="fas fa-mosque me-2"></i> Darandha Eidgah & Graveyard Development Committee
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                <li class="nav-item"><a class="nav-link active" href="events.html">Events</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
-                <li class="nav-item ms-3">
-                    <div class="language-toggle" id="languageToggle">
-                        <i class="fas fa-language me-1"></i> অসমীয়া
-                    </div>
-                </li>
-            </ul>
-        </div>
+  <div class="container">
+    <a class="navbar-brand" href="index.html">
+      <i class="fas fa-mosque me-2" style="color:var(--islamic-gold)"></i>
+      দ্ৱাৰান্ধা ঈদ্গাহ ও কবৰস্থান উন্নয়ন সমিতি
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon" style="filter:invert(1)"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        <li class="nav-item"><a class="nav-link" href="index.html" data-en="Home" data-as="মুখ্য পৃষ্ঠা">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html#about" data-en="About" data-as="আমাৰ বিষয়ে">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html#members" data-en="Members" data-as="সদস্যসকল">Members</a></li>
+        <li class="nav-item"><a class="nav-link active-page" href="events.html" data-en="Events" data-as="কাৰ্যসূচী">Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html#contact" data-en="Contact" data-as="যোগাযোগ">Contact</a></li>
+        <li class="nav-item ms-2">
+          <div class="language-toggle" id="languageToggle">
+            <i class="fas fa-language me-1"></i> অসমীয়া
+          </div>
+        </li>
+      </ul>
     </div>
+  </div>
 </nav>
 
-<!-- Hero Section -->
+<!-- HERO -->
 <section class="hero">
-    <div class="container text-center">
-        <h1><i class="fas fa-calendar-alt me-3"></i><span id="pageTitle">Events & Programs</span></h1>
-        <p class="lead" id="pageSubtitle">Stay updated with our community events and activities</p>
+  <div class="hero-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-overlay"></div>
+  <div class="container" style="position:relative;z-index:2;">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-calendar-alt"></i>
+        <span data-en="Community Programs" data-as="সম্প্ৰদায়ৰ কাৰ্যসূচী">Community Programs</span>
+      </div>
+      <h1 data-en="Events &amp; Programs" data-as="কাৰ্যসূচী আৰু অনুষ্ঠান">Events &amp; Programs</h1>
+      <p class="lead" data-en="Stay updated with our community events and activities." data-as="আমাৰ সম্প্ৰদায়ৰ কাৰ্যসূচীৰ সৈতে সংযুক্ত থাকক।">
+        Stay updated with our community events and activities.
+      </p>
     </div>
+  </div>
 </section>
 
-<!-- Category Navigation -->
-<section class="py-4">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-auto">
-                <div class="d-flex gap-3 flex-wrap justify-content-center">
-                    <button class="category-tab active" data-category="all">
-                        <i class="fas fa-list me-2"></i><span>All Events</span>
-                    </button>
-                    <button class="category-tab" data-category="today">
-                        <i class="fas fa-calendar-day me-2"></i><span>Today's Events</span>
-                    </button>
-                    <button class="category-tab" data-category="upcoming">
-                        <i class="fas fa-calendar-week me-2"></i><span>Upcoming Events</span>
-                    </button>
-                    <button class="category-tab" data-category="past">
-                        <i class="fas fa-history me-2"></i><span>Past Events</span>
-                    </button>
-                </div>
-            </div>
+<!-- STICKY TABS -->
+<div class="category-tabs-wrap">
+  <div class="container">
+    <div class="d-flex gap-2 flex-wrap justify-content-center">
+      <button class="category-tab active" data-category="all">
+        <i class="fas fa-list me-1"></i><span data-en="All Events" data-as="সকলো কাৰ্যসূচী">All Events</span>
+      </button>
+      <button class="category-tab" data-category="today">
+        <i class="fas fa-calendar-day me-1"></i><span data-en="Today" data-as="আজি">Today</span>
+      </button>
+      <button class="category-tab" data-category="upcoming">
+        <i class="fas fa-calendar-week me-1"></i><span data-en="Upcoming" data-as="আগন্তুক">Upcoming</span>
+      </button>
+      <button class="category-tab" data-category="past">
+        <i class="fas fa-history me-1"></i><span data-en="Past" data-as="অতীত">Past</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENTS GRID -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-4 reveal">
+      <h2 class="section-title" id="sectionHeading">All Events</h2>
+    </div>
+    <div id="eventsContainer" class="row g-4">
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border" style="color:var(--islamic-green);width:3rem;height:3rem;" role="status"></div>
+        <p class="mt-3 text-muted">Loading events…</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHATSAPP CTA SECTION -->
+<section class="py-4 py-md-5 reveal">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
+        <div class="wa-cta">
+          <div class="mb-3" style="font-size:3rem;"><i class="fab fa-whatsapp" style="color:#25d366;"></i></div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.85rem;margin-bottom:10px;"
+              data-en="Get Event Notifications" data-as="কাৰ্যসূচীৰ জাননী পাওক">
+            Get Event Notifications
+          </h3>
+          <p style="color:rgba(255,255,255,0.75);margin-bottom:26px;max-width:420px;margin-left:auto;margin-right:auto;"
+             data-en="Join our WhatsApp group to receive instant updates about upcoming events, announcements and community news."
+             data-as="আমাৰ WhatsApp গ্ৰুপত যোগ দিয়ক আৰু আগন্তুক কাৰ্যসূচী, ঘোষণা আৰু সমাজৰ খবৰ তুৰন্তে পাওক।">
+            Join our WhatsApp group to receive instant updates about upcoming events, announcements and community news.
+          </p>
+          <a href="https://wa.me/919999999999" id="waCtaLink" target="_blank" rel="noopener" class="btn-wa">
+            <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i>
+            <span data-en="Join WhatsApp Group" data-as="WhatsApp গ্ৰুপত যোগ দিয়ক">Join WhatsApp Group</span>
+          </a>
+          <p style="color:rgba(255,255,255,0.35);font-size:0.75rem;margin-top:18px;">
+            <i class="fas fa-lock me-1"></i>
+            <span data-en="We never spam. Only important community updates."
+                  data-as="মাত্ৰ গুৰুত্বপূৰ্ণ সম্প্ৰদায়ৰ খবৰ। কোনো স্পেম নাই।">
+              We never spam. Only important community updates.
+            </span>
+          </p>
         </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- Events Container -->
-<section class="py-4">
-    <div class="container">
-        <div id="eventsContainer" class="row">
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-success" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Footer -->
+<!-- FOOTER -->
 <footer>
-    <div class="container text-center">
-        <p>&copy; 2026 Darandha Eidgah & Graveyard Development Committee. All rights reserved.</p>
+  <div class="container text-center">
+    <i class="fas fa-mosque mb-3" style="color:var(--islamic-gold);font-size:1.6rem;display:block;"></i>
+    <p style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;">
+      &copy; 2026 Darandha Eidgah &amp; Graveyard Development Committee. All rights reserved.
+    </p>
+    <div class="mt-3 d-flex gap-4 justify-content-center flex-wrap">
+      <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.85rem;" data-en="Home" data-as="মুখ্য পৃষ্ঠা">Home</a>
+      <a href="index.html#about" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.85rem;" data-en="About" data-as="আমাৰ বিষয়ে">About</a>
+      <a href="index.html#members" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.85rem;" data-en="Members" data-as="সদস্যসকল">Members</a>
+      <a href="index.html#donate" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.85rem;" data-en="Donate" data-as="দান কৰক">Donate</a>
+      <a href="index.html#contact" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.85rem;" data-en="Contact" data-as="যোগাযোগ">Contact</a>
     </div>
+  </div>
 </footer>
+
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/919999999999" id="whatsappFloat" class="whatsapp-float" target="_blank" rel="noopener" title="Chat on WhatsApp">
+  <i class="fab fa-whatsapp"></i>
+</a>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
-    let currentCategory = 'all';
-    let currentLanguage = 'en';
+  const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
+  let currentCategory = 'all';
+  let currentLang = 'en';
 
-    // Translation data
-    const translations = {
-        en: {
-            pageTitle: 'Events & Programs',
-            pageSubtitle: 'Stay updated with our community events and activities',
-            allEvents: 'All Events',
-            todayEvents: "Today's Events",
-            upcomingEvents: 'Upcoming Events',
-            pastEvents: 'Past Events',
-            noEvents: 'No events found',
-            checkLater: 'Check back later for upcoming events',
-            errorLoading: 'Error loading events',
-            tryAgain: 'Please try again later',
-            timeTBA: 'Time TBA',
-            locationTBA: 'Location TBA',
-            noDescription: 'No description available'
-        },
-        as: {
-            pageTitle: 'কাৰ্যসূচী আৰু অনুষ্ঠান',
-            pageSubtitle: 'আমাৰ সম্প্ৰদায়ৰ কাৰ্যসূচীৰ সৈতে সংযুক্ত থাকক',
-            allEvents: 'সকলো কাৰ্যসূচী',
-            todayEvents: 'আজিৰ কাৰ্যসূচী',
-            upcomingEvents: 'আগন্তুক কাৰ্যসূচী',
-            pastEvents: 'অতীতৰ কাৰ্যসূচী',
-            noEvents: 'কোনো কাৰ্যসূচী পোৱা নগল',
-            checkLater: 'পাছত চাওক নতুন কাৰ্যসূচীৰ বাবে',
-            errorLoading: 'কাৰ্যসূচী লোড কৰাত সমস্যা',
-            tryAgain: 'পাছত চেষ্টা কৰক',
-            timeTBA: 'সময় ঘোষণা হব',
-            locationTBA: 'স্থান ঘোষণা হব',
-            noDescription: 'কোনো বিৱৰণ নাই'
-        }
-    };
-
-    function updateLanguage() {
-        currentLanguage = document.getElementById('languageToggle').innerHTML.includes('English') ? 'as' : 'en';
-        const t = translations[currentLanguage];
-        
-        document.getElementById('pageTitle').innerText = t.pageTitle;
-        document.getElementById('pageSubtitle').innerText = t.pageSubtitle;
-        
-        document.querySelectorAll('.category-tab').forEach(tab => {
-            const category = tab.getAttribute('data-category');
-            const span = tab.querySelector('span');
-            if (category === 'all') span.innerText = t.allEvents;
-            else if (category === 'today') span.innerText = t.todayEvents;
-            else if (category === 'upcoming') span.innerText = t.upcomingEvents;
-            else if (category === 'past') span.innerText = t.pastEvents;
-        });
-        
-        document.getElementById('languageToggle').innerHTML = currentLanguage === 'en' ? 
-            '<i class="fas fa-language me-1"></i> অসমীয়া' : 
-            '<i class="fas fa-language me-1"></i> English';
-        
-        loadEvents();
+  const T = {
+    en: {
+      headings: { all:'All Events', today:"Today's Events", upcoming:'Upcoming Events', past:'Past Events' },
+      catLabels: { today:'Today', upcoming:'Upcoming', past:'Past' },
+      noEvents:'No events found', noEventsHint:'Check back later for upcoming events.',
+      error:'Could not load events', errorHint:'Please check your connection and try again.',
+      retry:'Retry', timeTBA:'Time TBA', locationTBA:'Location TBA', noDesc:'No description available.',
+      toggleBtn:'অসমীয়া'
+    },
+    as: {
+      headings: { all:'সকলো কাৰ্যসূচী', today:'আজিৰ কাৰ্যসূচী', upcoming:'আগন্তুক কাৰ্যসূচী', past:'অতীতৰ কাৰ্যসূচী' },
+      catLabels: { today:'আজি', upcoming:'আগন্তুক', past:'অতীত' },
+      noEvents:'কোনো কাৰ্যসূচী পোৱা নগল', noEventsHint:'পাছত চাওক নতুন কাৰ্যসূচীৰ বাবে।',
+      error:'কাৰ্যসূচী লোড কৰাত সমস্যা', errorHint:'আপোনাৰ সংযোগ পৰীক্ষা কৰি পুনৰ চেষ্টা কৰক।',
+      retry:'পুনৰ চেষ্টা কৰক', timeTBA:'সময় ঘোষণা হব', locationTBA:'স্থান ঘোষণা হব', noDesc:'কোনো বিৱৰণ নাই।',
+      toggleBtn:'English'
     }
+  };
 
-    async function loadEvents() {
-        const container = document.getElementById('eventsContainer');
-        container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-success"></div></div>';
-        
-        try {
-            let url = `${API_URL}/events`;
-            if (currentCategory !== 'all') {
-                url = `${API_URL}/events/category/${currentCategory}`;
-            }
-            
-            console.log('Fetching events from:', url);
-            const res = await fetch(url);
-            
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            
-            const events = await res.json();
-            const t = translations[currentLanguage];
-            
-            if (!events || events.length === 0) {
-                container.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                        <h4>${t.noEvents}</h4>
-                        <p class="text-muted">${t.checkLater}</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = events.map(event => {
-                const eventDate = new Date(event.date);
-                const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
-                const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
-                const description = currentLanguage === 'en' ? (event.description || t.noDescription) : (event.descriptionAs || event.description || t.noDescription);
-                const location = currentLanguage === 'en' ? (event.location || t.locationTBA) : (event.locationAs || event.location || t.locationTBA);
-                const time = event.time || t.timeTBA;
-                
-                let categoryText = '';
-                let categoryClass = '';
-                if (event.category === 'today') {
-                    categoryText = currentLanguage === 'en' ? 'Today' : 'আজি';
-                    categoryClass = 'badge-today';
-                } else if (event.category === 'upcoming') {
-                    categoryText = currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক';
-                    categoryClass = 'badge-upcoming';
-                } else {
-                    categoryText = currentLanguage === 'en' ? 'Past' : 'অতীত';
-                    categoryClass = 'badge-past';
-                }
-                
-                return `
-                    <div class="col-md-6 col-lg-4">
-                        <div class="event-card">
-                            <div style="position: relative;">
-                                ${event.image ? 
-                                    `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
-                                    `<div class="event-image bg-light d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-calendar-alt fa-4x text-muted"></i>
-                                    </div>`
-                                }
-                                <span class="event-badge ${categoryClass}">
-                                    ${categoryText}
-                                </span>
-                            </div>
-                            <div class="p-4">
-                                <h4 class="mb-2">${escapeHtml(title)}</h4>
-                                <div class="event-time mb-2">
-                                    <i class="far fa-calendar-alt me-2"></i>${formattedDate}
-                                </div>
-                                <div class="mb-2">
-                                    <i class="far fa-clock me-2"></i>${escapeHtml(time)}
-                                    ${event.endTime ? ` - ${escapeHtml(event.endTime)}` : ''}
-                                </div>
-                                <div class="mb-3">
-                                    <i class="fas fa-location-dot me-2"></i>${escapeHtml(location)}
-                                </div>
-                                <p class="text-muted">${escapeHtml(description.substring(0, 150))}${description.length > 150 ? '...' : ''}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        } catch (error) {
-            console.error('Error loading events:', error);
-            const t = translations[currentLanguage];
-            container.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
-                    <h4>${t.errorLoading}</h4>
-                    <p class="text-muted">${t.tryAgain}</p>
-                    <button class="btn btn-success mt-3" onclick="loadEvents()">
-                        <i class="fas fa-sync-alt me-2"></i>Retry
-                    </button>
-                </div>
-            `;
-        }
-    }
+  function escapeHtml(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s; return d.innerHTML;
+  }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Category tabs
-    document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentCategory = tab.getAttribute('data-category');
-            loadEvents();
-        });
+  /* Apply language to all data-en/data-as elements */
+  function applyLanguage() {
+    const t = T[currentLang];
+    document.querySelectorAll('[data-en]').forEach(el => {
+      el.textContent = currentLang === 'en' ? el.dataset.en : (el.dataset.as || el.dataset.en);
     });
+    document.getElementById('languageToggle').innerHTML =
+      `<i class="fas fa-language me-1"></i> ${t.toggleBtn}`;
+    document.getElementById('sectionHeading').textContent = t.headings[currentCategory];
+  }
 
-    // Language toggle
-    document.getElementById('languageToggle').addEventListener('click', () => {
-        currentLanguage = currentLanguage === 'en' ? 'as' : 'en';
-        updateLanguage();
+  async function loadEvents() {
+    const container = document.getElementById('eventsContainer');
+    const t = T[currentLang];
+    container.innerHTML = `<div class="col-12 text-center py-5">
+      <div class="spinner-border" style="color:var(--islamic-green);width:3rem;height:3rem;" role="status"></div>
+      <p class="mt-3 text-muted">${currentLang === 'en' ? 'Loading events…' : 'কাৰ্যসূচী লোড হৈছে…'}</p>
+    </div>`;
+
+    try {
+      const url = currentCategory === 'all' ? `${API_URL}/events` : `${API_URL}/events/category/${currentCategory}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const events = await res.json();
+
+      // sync WhatsApp number from API if available
+      if (events.whatsapp) {
+        const n = events.whatsapp.replace(/\D/g,'');
+        document.getElementById('whatsappFloat').href = `https://wa.me/${n}`;
+        document.getElementById('waCtaLink').href = `https://wa.me/${n}`;
+      }
+
+      const list = Array.isArray(events) ? events : (events.data || []);
+
+      if (!list.length) {
+        container.innerHTML = `<div class="col-12 text-center py-5">
+          <i class="fas fa-calendar-times fa-3x mb-4" style="color:#c5b89a;"></i>
+          <h4 class="mb-2">${escapeHtml(t.noEvents)}</h4>
+          <p class="text-muted">${escapeHtml(t.noEventsHint)}</p>
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(ev => {
+        const locale = currentLang === 'en' ? 'en-US' : 'as-IN';
+        const date = new Date(ev.date);
+        const formattedDate = isNaN(date) ? '' : date.toLocaleDateString(locale, {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+        const title    = currentLang === 'en' ? ev.title : (ev.titleAs || ev.title);
+        const desc     = currentLang === 'en' ? (ev.description||t.noDesc) : (ev.descriptionAs||ev.description||t.noDesc);
+        const location = currentLang === 'en' ? (ev.location||t.locationTBA) : (ev.locationAs||ev.location||t.locationTBA);
+        const time     = ev.time || t.timeTBA;
+        const cat      = ev.category || 'past';
+        const catLabel = t.catLabels[cat] || cat;
+        const imgHtml  = ev.image
+          ? `<img src="${API_URL.replace('/api','')}${ev.image}" class="event-image" alt="${escapeHtml(ev.title)}">`
+          : `<div class="event-img-placeholder"><i class="fas fa-calendar-alt fa-3x" style="color:#c5b89a;"></i></div>`;
+
+        return `<div class="col-md-6 col-lg-4 reveal">
+          <div class="event-card">
+            <div style="position:relative;">
+              ${imgHtml}
+              <span class="event-badge badge-${cat}">${escapeHtml(catLabel)}</span>
+            </div>
+            <div class="p-4">
+              <h4 class="mb-2" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;">${escapeHtml(title)}</h4>
+              <div class="event-time mb-2 small"><i class="far fa-calendar-alt me-2"></i>${escapeHtml(formattedDate)}</div>
+              <div class="mb-2 small text-muted"><i class="far fa-clock me-2"></i>${escapeHtml(time)}${ev.endTime?` – ${escapeHtml(ev.endTime)}`:''}</div>
+              <div class="mb-3 small text-muted"><i class="fas fa-location-dot me-2" style="color:var(--islamic-green);"></i>${escapeHtml(location)}</div>
+              <p class="text-muted small mb-0" style="line-height:1.65;">${escapeHtml(desc.substring(0,160))}${desc.length>160?'…':''}</p>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      observeReveal();
+
+    } catch(err) {
+      console.error(err);
+      container.innerHTML = `<div class="col-12 text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x mb-4 text-danger"></i>
+        <h4 class="mb-2">${escapeHtml(t.error)}</h4>
+        <p class="text-muted mb-4">${escapeHtml(t.errorHint)}</p>
+        <button class="btn btn-outline-success rounded-pill px-4" onclick="loadEvents()">
+          <i class="fas fa-sync-alt me-2"></i>${escapeHtml(t.retry)}
+        </button>
+      </div>`;
+    }
+  }
+
+  function observeReveal() {
+    if (!window.IntersectionObserver) { document.querySelectorAll('.reveal').forEach(e=>e.classList.add('visible')); return; }
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+    },{threshold:0.1});
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el=>io.observe(el));
+  }
+
+  /* Category tabs */
+  document.querySelectorAll('.category-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.category-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCategory = tab.getAttribute('data-category');
+      document.getElementById('sectionHeading').textContent = T[currentLang].headings[currentCategory];
+      loadEvents();
     });
+  });
 
-    // Initial load
+  /* Language toggle */
+  document.getElementById('languageToggle').addEventListener('click',()=>{
+    currentLang = currentLang==='en'?'as':'en';
+    applyLanguage();
     loadEvents();
+  });
+
+  /* Close mobile navbar on outside click */
+  document.addEventListener('click',e=>{
+    const nb=document.getElementById('navbarNav'), tog=document.querySelector('.navbar-toggler');
+    if(nb&&nb.classList.contains('show')&&!nb.contains(e.target)&&!tog.contains(e.target)) tog.click();
+  });
+  document.querySelectorAll('#navbarNav .nav-link').forEach(l=>{
+    l.addEventListener('click',()=>{
+      const nb=document.getElementById('navbarNav');
+      if(nb&&nb.classList.contains('show')) document.querySelector('.navbar-toggler').click();
+    });
+  });
+
+  /* Init */
+  observeReveal();
+  loadEvents();
 </script>
 </body>
 </html>
