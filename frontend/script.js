@@ -11,8 +11,8 @@ let allMembersFiltered = [];
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
 
-// Dignitary roles (committee heads and leadership positions)
-const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
+// Change const to let - allows runtime modification
+let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
 
 // Helper function for case-insensitive role matching
 function isDignitary(role) {
@@ -21,6 +21,12 @@ function isDignitary(role) {
     return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
 }
 
+// Optional: Add a function to update dignitary roles dynamically
+function updateDignitaryRoles(newRoles) {
+    dignitaryRoles = newRoles;
+    applyFilters(); // Refresh the display
+    console.log('Dignitary roles updated:', dignitaryRoles);
+}
 // Helper function to extract area from full address
 function extractAreaFromAddress(address) {
     if (!address) return '';
