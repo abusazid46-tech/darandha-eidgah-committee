@@ -12,7 +12,7 @@ let allMembersFiltered = [];
 const MAX_MEMBERS_ON_HOMEPAGE = 12; // Show maximum 12 members initially
 
 // Dignitary roles (committee heads and leadership positions)
-const dignitaryRoles = ['Committee Head', 'Secretary', 'Treasurer', 'Vice President', 'President', 'Chairman', 'General Secretary'];
+const dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
 
 // Helper function to extract area from full address (everything after the first comma)
 function extractAreaFromAddress(address) {
