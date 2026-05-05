@@ -452,7 +452,7 @@ async function processImport() {
 window.downloadSampleCSV = function() {
     const sampleData = [
         ['name', 'nameAs', 'phone', 'houseNumber', 'fullAddress', 'role'],
-        ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha, Dist- Morigaon, PIN-782001', 'Committee Head'],
+        ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha, Dist- Morigaon, PIN-782001', 'President'],
         ['Smt. Ayesha Begum', 'শ্ৰীমতী আয়েশা বেগম', '9876543211', 'Flat 4B', 'Green Park, Darandha, PIN-782001', 'Secretary'],
         ['Md. Karim Uddin', 'মোঃ কৰিম উদ্দিন', '9876543212', 'House No. 45', 'Vill- Darandha, PO- Darandha, Dist- Morigaon', 'Member']
     ];
