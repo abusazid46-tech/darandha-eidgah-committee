@@ -1,29 +1,21 @@
-// admin/admin.js
+// admin/admin.js (Updated - Fix House Number Display)
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
 let selectedMembers = new Set();
-
-// Dignitary roles
-const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
-
+const dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
 let currentEventFilter = 'all';
 
-// Helper function for image URL
-function getEventImageUrl(imagePath) {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `https://darandha-eidgah-committee.onrender.com${imagePath}`;
-}
-
 // Helper functions for address handling
 function parseAddress(address) {
     if (!address) return { houseNumber: '', fullAddress: '' };
+    // Check if address has comma separator
     const firstCommaIndex = address.indexOf(',');
     if (firstCommaIndex === -1) {
+        // No comma - treat whole as house number or full address
         return { houseNumber: address, fullAddress: '' };
     }
     const houseNumber = address.substring(0, firstCommaIndex).trim();
@@ -96,15 +88,14 @@ function showDashboard() {
     const dashboardContent = document.getElementById('dashboardContent');
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardContent) dashboardContent.style.display = 'block';
-    
-    // Load all sections
+    document.getElementById('dashboardSection').style.display = 'block';
     loadDashboard();
     loadMembers();
+    filterEvents('all');
     loadDonations();
     loadSettings();
     loadUpiSettings();
     loadEventStats();
-    filterEvents('all');
 }
 
 // Login
@@ -229,7 +220,7 @@ function animateValue(element) {
     }, 200);
 }
 
-// ========== MEMBERS MANAGEMENT ==========
+// ========== MEMBERS MANAGEMENT WITH PROPER HOUSE NUMBER DISPLAY ==========
 
 async function loadMembers() {
     try {
@@ -239,8 +230,10 @@ async function loadMembers() {
         if (!tbody) return;
         
         tbody.innerHTML = members.map(m => {
+            // Parse address to separate house number and full address
             const { houseNumber, fullAddress } = parseAddress(m.address || '');
             
+            // Display house number with badge and full address separately
             let addressHtml = '';
             if (houseNumber) {
                 addressHtml += `<span class="badge bg-info me-1"><i class="fas fa-home me-1"></i>${escapeHtml(houseNumber)}</span>`;
@@ -255,19 +248,27 @@ async function loadMembers() {
             return `
                 <tr>
                     <td><input type="checkbox" class="member-select" value="${m._id}" onclick="updateSelection()"></td>
-                    <td><strong>${escapeHtml(m.name)}</strong>${m.nameAs ? `<br><small class="text-muted">${escapeHtml(m.nameAs)}</small>` : ''}</td>
+                    <td>
+                        <strong>${escapeHtml(m.name)}</strong>
+                        ${m.nameAs ? `<br><small class="text-muted">${escapeHtml(m.nameAs)}</small>` : ''}
+                    </td>
                     <td>${m.nameAs ? escapeHtml(m.nameAs) : '-'}</td>
                     <td>${m.phone || '-'}</td>
                     <td>${addressHtml}</td>
                     <td><span class="badge bg-success">${m.role || 'Member'}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `;
         }).join('');
         
+        // Clear selection after loading
         clearSelection();
     } catch (error) {
         console.error('Error loading members:', error);
@@ -302,7 +303,10 @@ function updateSelection() {
 function toggleSelectAll() {
     const selectAll = document.getElementById('selectAllCheckbox');
     const checkboxes = document.querySelectorAll('.member-select');
-    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
     updateSelection();
 }
 
@@ -319,7 +323,7 @@ async function bulkDeleteMembers() {
         return;
     }
     
-    if (!confirm(`Are you sure you want to delete ${selectedMembers.size} selected members?`)) return;
+    if (!confirm(`Are you sure you want to delete ${selectedMembers.size} selected members? This action cannot be undone.`)) return;
     
     const deletePromises = Array.from(selectedMembers).map(id =>
         fetch(`${API_URL}/members/${id}`, {
@@ -331,6 +335,7 @@ async function bulkDeleteMembers() {
     try {
         const results = await Promise.all(deletePromises);
         const successCount = results.filter(r => r.ok).length;
+        
         alert(`${successCount} members deleted successfully!`);
         loadMembers();
         loadDashboard();
@@ -340,6 +345,7 @@ async function bulkDeleteMembers() {
     }
 }
 
+// CSV/Excel Import Functions
 window.importMembersCSV = function() {
     new bootstrap.Modal(document.getElementById('importCSVModal')).show();
 };
@@ -360,6 +366,7 @@ async function processImport() {
             let members = [];
             
             if (file.name.endsWith('.csv')) {
+                // Parse CSV
                 const lines = data.split('\n');
                 const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
                 
@@ -383,6 +390,7 @@ async function processImport() {
                     }
                 }
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                // Parse Excel using SheetJS
                 const workbook = XLSX.read(data, { type: 'binary' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet);
@@ -404,6 +412,7 @@ async function processImport() {
                 return;
             }
             
+            // Import members one by one
             let successCount = 0;
             for (const member of members) {
                 try {
@@ -426,7 +435,9 @@ async function processImport() {
             fileInput.value = '';
             loadMembers();
             loadDashboard();
+            
         } catch (error) {
+            console.error('Import error:', error);
             alert('Error importing file: ' + error.message);
         }
     };
@@ -441,9 +452,9 @@ async function processImport() {
 window.downloadSampleCSV = function() {
     const sampleData = [
         ['name', 'nameAs', 'phone', 'houseNumber', 'fullAddress', 'role'],
-        ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha', 'President'],
-        ['Smt. Ayesha Begum', 'শ্ৰীমতী আয়েশা বেগম', '9876543211', 'Flat 4B', 'Green Park, Darandha', 'Secretary'],
-        ['Md. Karim Uddin', 'মোঃ কৰিম উদ্দিন', '9876543212', 'House No. 45', 'Vill- Darandha', 'Member']
+        ['Md. Abdul Rahman', 'মোঃ আব্দুল ৰহমান', '9876543210', 'H.No. 123', 'Main Road, Darandha, Dist- Morigaon, PIN-782001', 'Committee Head'],
+        ['Smt. Ayesha Begum', 'শ্ৰীমতী আয়েশা বেগম', '9876543211', 'Flat 4B', 'Green Park, Darandha, PIN-782001', 'Secretary'],
+        ['Md. Karim Uddin', 'মোঃ কৰিম উদ্দিন', '9876543212', 'House No. 45', 'Vill- Darandha, PO- Darandha, Dist- Morigaon', 'Member']
     ];
     
     let csvContent = sampleData.map(row => row.join(',')).join('\n');
@@ -456,12 +467,14 @@ window.downloadSampleCSV = function() {
     URL.revokeObjectURL(url);
 };
 
+// Open member modal
 window.openMemberModal = function() {
     try {
         document.getElementById('memberId').value = '';
         document.getElementById('memberForm').reset();
         document.getElementById('memberModalTitle').innerText = 'Add New Member';
         
+        // Clear house number and address fields
         const houseNumber = document.getElementById('memberHouseNumber');
         const fullAddress = document.getElementById('memberFullAddress');
         if (houseNumber) houseNumber.value = '';
@@ -499,6 +512,7 @@ window.editMember = async function(id) {
             modal.show();
         }
     } catch (error) {
+        console.error('Error loading member:', error);
         alert('Error loading member: ' + error.message);
     }
 };
@@ -571,12 +585,12 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
             alert('Failed to save member: ' + (error.error || 'Unknown error'));
         }
     } catch (error) {
+        console.error('Error saving member:', error);
         alert('Error: ' + error.message);
     }
 });
 
 // ========== EVENTS MANAGEMENT ==========
-
 window.filterEvents = async function(category) {
     currentEventFilter = category;
     
@@ -599,7 +613,7 @@ window.filterEvents = async function(category) {
         if (!tbody) return;
         
         if (events.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No ${category !== 'all' ? category : ''} events found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>No ${category !== 'all' ? category : ''} events found</td></tr>`;
             return;
         }
         
@@ -618,15 +632,9 @@ window.filterEvents = async function(category) {
                 statusText = 'Active';
             }
             
-            const imageUrl = getEventImageUrl(event.image);
-            
             return `
                 <tr>
-                    <td>
-                        ${imageUrl ? 
-                            `<img src="${imageUrl}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
-                            '<i class="fas fa-calendar fa-2x text-muted"></i>'}
-                     </td>
+                    <td>${event.image ? `<img src="${API_URL.replace('/api', '')}${event.image}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : '<i class="fas fa-calendar fa-2x text-muted"></i>'}</td>
                     <td><strong>${escapeHtml(event.title)}</strong>${event.titleAs ? `<br><small class="text-muted">${escapeHtml(event.titleAs)}</small>` : ''}</td>
                     <td>${new Date(event.date).toLocaleDateString()}<br><small>${event.time || 'TBA'}</small></td>
                     <td>${event.location ? escapeHtml(event.location) : 'TBA'}</td>
@@ -636,16 +644,12 @@ window.filterEvents = async function(category) {
                         <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status"><i class="fas fa-sync-alt"></i></button>
                         <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')" title="Edit"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')" title="Delete"><i class="fas fa-trash"></i></button>
-                     </td>
-                </tr>
+                      </td>
+                </table>
             `;
         }).join('');
     } catch (error) {
         console.error('Error filtering events:', error);
-        const tbody = document.getElementById('eventsTable');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading events</td></tr>';
-        }
     }
 };
 
@@ -724,8 +728,7 @@ window.editEvent = async function(id) {
         
         const preview = document.getElementById('eventImagePreview');
         if (event.image && preview) {
-            const imageUrl = getEventImageUrl(event.image);
-            preview.innerHTML = `<div class="text-center"><img src="${imageUrl}" style="max-width:200px; border-radius:8px;"><br><button class="btn btn-sm btn-danger mt-2" onclick="removeEventImage()">Remove</button></div>`;
+            preview.innerHTML = `<div class="text-center"><img src="${API_URL.replace('/api', '')}${event.image}" style="max-width:200px; border-radius:8px;"><br><button class="btn btn-sm btn-danger mt-2" onclick="removeEventImage()">Remove</button></div>`;
             preview.style.display = 'block';
         }
         new bootstrap.Modal(document.getElementById('eventModal')).show();
@@ -797,7 +800,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 });
 
 window.manualSync = async function() {
-    if (!confirm('Sync event categories?')) return;
+    if (!confirm('Sync event categories? This will update all event statuses based on current date.')) return;
     try {
         const res = await fetch(`${API_URL}/events/sync`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
@@ -811,7 +814,6 @@ window.manualSync = async function() {
 };
 
 // ========== DONATIONS MANAGEMENT ==========
-
 async function loadDonations() {
     if (!token) return;
     try {
@@ -833,7 +835,7 @@ async function loadDonations() {
                 <td>${new Date(d.date).toLocaleDateString()}</td>
                 <td><span class="badge ${d.status === 'approved' ? 'bg-success' : d.status === 'pending' ? 'bg-warning' : 'bg-danger'}">${d.status || 'pending'}</span></td>
                 <td>${d.status === 'pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')">Approve</button><button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')">Reject</button>` : (d.status === 'approved' ? '<i class="fas fa-check-circle text-success"></i> Approved' : '<i class="fas fa-times-circle text-danger"></i> Rejected')}</td>
-            </td>
+            </tr>
         `).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
@@ -845,7 +847,7 @@ window.approveDonation = async function(id) {
     try {
         const res = await fetch(`${API_URL}/donations/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-            alert('Donation approved!');
+            alert('Donation approved! It will now appear in public stats.');
             loadDonations();
             loadDashboard();
         }
@@ -869,7 +871,6 @@ window.rejectDonation = async function(id) {
 };
 
 // ========== SETTINGS MANAGEMENT ==========
-
 async function loadSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
@@ -934,7 +935,7 @@ document.getElementById('upiSettingsForm')?.addEventListener('submit', async (e)
         for (const up of updates) {
             await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
         }
-        alert('UPI settings saved!');
+        alert('UPI settings saved! QR code will update on frontend.');
     } catch (error) {
         alert('Error saving UPI settings: ' + error.message);
     }
@@ -956,3 +957,4 @@ window.downloadSampleCSV = downloadSampleCSV;
 
 // Initialize
 checkAuth();
+i cant find dignitaryRoles
