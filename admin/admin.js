@@ -1,4 +1,41 @@
 // admin/admin.js
+// Add this at the VERY TOP of admin.js
+window.searchMembers = function() {
+    console.log('searchMembers called - safe fallback');
+    const searchInput = document.getElementById('memberSearchInput');
+    if (searchInput) {
+        const term = searchInput.value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#membersTable tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            if (term === '' || text.includes(term)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        const resultCount = document.getElementById('searchResultCount');
+        if (resultCount) {
+            if (term) {
+                resultCount.innerHTML = `<i class="fas fa-search me-1"></i>Found ${visibleCount} members`;
+            } else {
+                resultCount.innerHTML = `<i class="fas fa-users me-1"></i>Total ${rows.length} members`;
+            }
+        }
+    }
+};
+
+window.clearMemberSearch = function() {
+    const searchInput = document.getElementById('memberSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        window.searchMembers();
+    }
+};
 const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
