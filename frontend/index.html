@@ -1717,40 +1717,65 @@
   draw();
 })();
 
-// ========== iOS BANNER FUNCTIONS ==========
+// ========== iOS BANNER FUNCTIONS (FIXED) ==========
 function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isRunningInPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
 }
 
 window.closeIOSBanner = function() {
-  document.getElementById('iosInstallBanner').style.display = 'none';
-  localStorage.setItem('iosBannerClosed', 'true');
+    var banner = document.getElementById('iosInstallBanner');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('iosBannerClosed', 'true');
 };
 
-// Show iOS banner only on iOS devices and if not closed before
-if (isIOS() && !localStorage.getItem('iosBannerClosed')) {
-  setTimeout(function() {
-    var banner = document.getElementById('iosInstallBanner');
-    if (banner) banner.style.display = 'block';
-  }, 3000);
-}
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking iOS banner...');
+    
+    var shouldShowBanner = isIOS() && 
+                          !isRunningInPWA() && 
+                          !localStorage.getItem('iosBannerClosed');
+    
+    console.log('isIOS:', isIOS());
+    console.log('isPWA:', isRunningInPWA());
+    console.log('bannerClosed:', localStorage.getItem('iosBannerClosed'));
+    console.log('Should show banner:', shouldShowBanner);
+    
+    if (shouldShowBanner) {
+        setTimeout(function() {
+            var banner = document.getElementById('iosInstallBanner');
+            if (banner) {
+                banner.style.display = 'block';
+                console.log('iOS banner displayed successfully!');
+            } else {
+                console.error('iOS banner element not found!');
+            }
+        }, 3000);
+    }
+});
 
 // ========== SCROLL REVEAL ==========
 (function(){
-  var els = document.querySelectorAll('.reveal');
-  if (!window.IntersectionObserver) {
-    els.forEach(function(e){ e.classList.add('visible'); });
-    return;
-  }
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        io.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-  els.forEach(function(el){ io.observe(el); });
+    var els = document.querySelectorAll('.reveal');
+    if (!window.IntersectionObserver) {
+        els.forEach(function(e){ e.classList.add('visible'); });
+        return;
+    }
+    var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                io.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    els.forEach(function(el){ io.observe(el); });
 })();
 
 // ========== CLOSE MOBILE NAVBAR ==========
