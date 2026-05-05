@@ -3,17 +3,14 @@ const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let currentLanguage = 'as';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
-let currentViewMode = 'dignitaries'; // Default to 'dignitaries' to show leaders first
+let currentViewMode = 'dignitaries';
 let allMembers = [];
 let uniqueAreas = [];
 let allMembersFiltered = [];
 
-// Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
-// Dignitary roles - will be loaded from database
 let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
 
-// Function to load dignitary roles from database
 async function loadDignitaryRolesFromDB() {
     try {
         const res = await fetch(`${API_URL}/settings`);
@@ -25,25 +22,20 @@ async function loadDignitaryRolesFromDB() {
             loadedRoles.forEach(role => dignitaryRoles.push(role));
             console.log('✅ Dignitary roles loaded from DB:', dignitaryRoles);
             return true;
-        } else {
-            console.log('⚠️ No dignitary roles in DB, using defaults');
-            return false;
         }
+        return false;
     } catch (error) {
         console.error('❌ Error loading dignitary roles:', error);
         return false;
     }
 }
 
-// Helper function for case-insensitive role matching
 function isDignitary(role) {
     if (!role) return false;
     const roleLower = role.toLowerCase();
     return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
 }
 
-
-// Helper function to extract area from full address
 function extractAreaFromAddress(address) {
     if (!address) return '';
     const firstCommaIndex = address.indexOf(',');
@@ -51,7 +43,6 @@ function extractAreaFromAddress(address) {
     return address.substring(firstCommaIndex + 1).trim();
 }
 
-// Helper function to parse address into house number and area
 function parseAddress(address) {
     if (!address) return { houseNumber: '', area: '' };
     const firstCommaIndex = address.indexOf(',');
@@ -63,22 +54,13 @@ function parseAddress(address) {
     return { houseNumber, area };
 }
 
-// Translation helper
 function updateLanguage() {
     document.querySelectorAll('[data-en]').forEach(el => {
-        if (currentLanguage === 'en') {
-            el.innerText = el.getAttribute('data-en');
-        } else {
-            el.innerText = el.getAttribute('data-as');
-        }
+        el.innerText = currentLanguage === 'en' ? el.getAttribute('data-en') : el.getAttribute('data-as');
     });
     
     document.querySelectorAll('[data-en-placeholder]').forEach(el => {
-        if (currentLanguage === 'en') {
-            el.placeholder = el.getAttribute('data-en-placeholder');
-        } else {
-            el.placeholder = el.getAttribute('data-as-placeholder');
-        }
+        el.placeholder = currentLanguage === 'en' ? el.getAttribute('data-en-placeholder') : el.getAttribute('data-as-placeholder');
     });
     
     const languageToggle = document.getElementById('languageToggle');
@@ -89,7 +71,6 @@ function updateLanguage() {
     }
 }
 
-// Load settings and about content
 async function loadSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
@@ -98,8 +79,8 @@ async function loadSettings() {
         const aboutText = document.getElementById('aboutText');
         if (aboutText) {
             aboutText.innerHTML = currentLanguage === 'en' ? 
-                settings.about_content?.value || 'Darandha Eidgah Committee is dedicated to serving the Muslim community by maintaining the graveyard with dignity and respect.' : 
-                settings.about_content_as?.value || 'দৰংদহ ঈদগাহ কমিটিয়ে মুছলমান সমাজক মৰ্যাদা আৰু সন্মানেৰে কবৰস্থান পৰিচালনা কৰি সেৱা আগবঢ়োৱাত নিয়োজিত।';
+                settings.about_content?.value || 'Darandha Eidgah Committee is dedicated to serving the Muslim community...' : 
+                settings.about_content_as?.value || 'দৰংদহ ঈদগাহ কমিটিয়ে মুছলমান সমাজক মৰ্যাদা আৰু সন্মানেৰে...';
         }
         
         const contactPhone = document.getElementById('contactPhone');
@@ -114,7 +95,6 @@ async function loadSettings() {
         if (whatsappNumber) whatsappNumber.innerText = whatsappNum;
         if (whatsappLink) whatsappLink.href = `https://wa.me/${whatsappNum.replace(/\+/g, '')}`;
         
-        // UPI Settings
         const upiId = settings.upi_id?.value || 'committee@bank';
         const upiIdDisplay = document.getElementById('upiIdDisplay');
         const upiInstructionId = document.getElementById('upiInstructionId');
@@ -134,16 +114,13 @@ async function loadSettings() {
     }
 }
 
-// Load members
 async function loadMembers() {
     try {
         const res = await fetch(`${API_URL}/members`);
         allMembers = await res.json();
         
-        // Load dignitary roles from database - USE THE CORRECT FUNCTION NAME
         await loadDignitaryRolesFromDB();
         
-        // Extract unique areas from member addresses
         const areasSet = new Set();
         allMembers.forEach(member => {
             if (member.address && member.address.trim()) {
@@ -166,7 +143,6 @@ async function loadMembers() {
     }
 }
 
-// Populate area dropdown
 function populateAreaDropdown() {
     const select = document.getElementById('areaFilterSelect');
     if (!select) return;
@@ -188,11 +164,9 @@ function populateAreaDropdown() {
     select.value = currentAreaFilter;
 }
 
-// Apply all filters
 function applyFilters() {
     let filteredMembers = [...allMembers];
     
-    // Apply area filter
     if (currentAreaFilter !== 'all') {
         filteredMembers = filteredMembers.filter(member => {
             if (!member.address) return false;
@@ -201,7 +175,6 @@ function applyFilters() {
         });
     }
     
-    // Apply search filter
     if (currentSearchTerm) {
         filteredMembers = filteredMembers.filter(member => 
             member.name.toLowerCase().includes(currentSearchTerm) ||
@@ -210,18 +183,15 @@ function applyFilters() {
         );
     }
     
-    // Store original filtered count
     allMembersFiltered = [...filteredMembers];
     let displayMembers = [...filteredMembers];
     let isLimited = false;
     let totalAvailable = displayMembers.length;
     
-    // Apply view mode filter - USING CASE-INSENSITIVE MATCHING
     if (currentViewMode === 'dignitaries') {
         displayMembers = displayMembers.filter(member => isDignitary(member.role));
     }
     
-    // Apply limits only for homepage initial view
     if (currentViewMode === 'dignitaries' && currentSearchTerm === '' && currentAreaFilter === 'all') {
         if (displayMembers.length > 6) {
             displayMembers = displayMembers.slice(0, 6);
@@ -240,7 +210,6 @@ function applyFilters() {
     updateResultCount(displayMembers.length, isLimited, totalAvailable);
 }
 
-// Display members list
 function displayMembersList(members) {
     const container = document.getElementById('membersListContainer');
     if (!container) return;
@@ -256,21 +225,18 @@ function displayMembersList(members) {
         return;
     }
     
-    // CASE-INSENSITIVE role matching for dignitaries
     const dignitaries = members.filter(m => isDignitary(m.role));
     const regularMembers = members.filter(m => !isDignitary(m.role));
     
     let html = '';
     
     if (currentViewMode === 'dignitaries') {
-        // List view for leaders
         html = `
             <div class="members-decorated-list">
                 ${members.map(member => createMemberListItem(member)).join('')}
             </div>
         `;
     } else {
-        // Grid view for all members
         if (dignitaries.length > 0) {
             html += `
                 <div class="mb-4">
@@ -305,21 +271,17 @@ function displayMembersList(members) {
     container.innerHTML = html;
 }
 
-// Create member card
 function createMemberCard(member) {
     const isDignitaryRole = isDignitary(member.role);
     const roleClass = isDignitaryRole ? 'border-warning' : 'border-success';
     const roleIcon = isDignitaryRole ? 'fa-crown text-warning' : 'fa-user-circle text-success';
-    
     const { houseNumber, area } = parseAddress(member.address || '');
     
     return `
         <div class="col-md-6 col-lg-4 mb-3">
             <div class="member-card border-start border-3 ${roleClass} shadow-sm p-3">
                 <div class="d-flex align-items-start">
-                    <div class="flex-shrink-0">
-                        <i class="fas ${roleIcon} fa-3x me-3"></i>
-                    </div>
+                    <div class="flex-shrink-0"><i class="fas ${roleIcon} fa-3x me-3"></i></div>
                     <div class="flex-grow-1">
                         <h5 class="mb-1">${escapeHtml(member.name)}</h5>
                         ${member.nameAs ? `<p class="text-muted small mb-1">${escapeHtml(member.nameAs)}</p>` : ''}
@@ -336,26 +298,20 @@ function createMemberCard(member) {
     `;
 }
 
-// Create member list item for leaders view
 function createMemberListItem(member) {
     const isDignitaryRole = isDignitary(member.role);
     const roleIcon = isDignitaryRole ? 'fa-crown text-warning' : 'fa-user-circle text-success';
-    
     const { houseNumber, area } = parseAddress(member.address || '');
     
     return `
         <div class="member-list-item p-3 mb-2 bg-white rounded-3 shadow-sm border-start border-3 ${isDignitaryRole ? 'border-warning' : 'border-success'}">
             <div class="d-flex align-items-center flex-wrap flex-md-nowrap">
-                <div class="member-avatar me-3">
-                    <i class="fas ${roleIcon} fa-2x"></i>
-                </div>
+                <div class="member-avatar me-3"><i class="fas ${roleIcon} fa-2x"></i></div>
                 <div class="member-info flex-grow-1">
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <h5 class="mb-0">${escapeHtml(member.name)}</h5>
                         ${member.nameAs ? `<small class="text-muted">(${escapeHtml(member.nameAs)})</small>` : ''}
-                        <span class="badge ${isDignitaryRole ? 'bg-warning text-dark' : 'bg-success'}">
-                            ${member.role || 'Member'}
-                        </span>
+                        <span class="badge ${isDignitaryRole ? 'bg-warning text-dark' : 'bg-success'}">${member.role || 'Member'}</span>
                     </div>
                     <div class="member-details mt-2">
                         ${member.phone ? `<span class="me-3"><i class="fas fa-phone text-success me-1"></i> ${member.phone}</span>` : ''}
@@ -371,7 +327,6 @@ function createMemberListItem(member) {
     `;
 }
 
-// Update result count
 function updateResultCount(displayCount, isLimited, totalCount) {
     const resultCountEl = document.getElementById('resultCount');
     if (!resultCountEl) return;
@@ -393,7 +348,6 @@ function updateResultCount(displayCount, isLimited, totalCount) {
     }
 }
 
-// Load all members
 window.loadAllMembers = function() {
     let displayMembers;
     if (currentViewMode === 'dignitaries') {
@@ -408,12 +362,9 @@ window.loadAllMembers = function() {
 
 function hideViewAllButton() {
     const viewAllContainer = document.getElementById('viewAllContainer');
-    if (viewAllContainer) {
-        viewAllContainer.innerHTML = '';
-    }
+    if (viewAllContainer) viewAllContainer.innerHTML = '';
 }
 
-// Filter by area
 function filterByArea() {
     const select = document.getElementById('areaFilterSelect');
     if (select) {
@@ -422,7 +373,6 @@ function filterByArea() {
     }
 }
 
-// Clear search
 window.clearSearch = function() {
     const searchInput = document.getElementById('memberSearch');
     if (searchInput) {
@@ -432,10 +382,8 @@ window.clearSearch = function() {
     }
 };
 
-// Toggle view mode
 window.toggleView = function(viewMode) {
     currentViewMode = viewMode;
-    
     const dignitariesBtn = document.getElementById('viewDignitariesBtn');
     const allBtn = document.getElementById('viewAllBtn');
     
@@ -448,17 +396,14 @@ window.toggleView = function(viewMode) {
             allBtn.classList.add('active');
         }
     }
-    
     applyFilters();
 };
 
-// Load events
 async function loadEvents() {
     try {
         const res = await fetch(`${API_URL}/events/upcoming`);
         const events = await res.json();
         const container = document.getElementById('eventsContainer');
-        
         if (!container) return;
         
         if (!events || events.length === 0) {
@@ -467,16 +412,11 @@ async function loadEvents() {
         }
         
         const displayEvents = events.slice(0, 3);
-        
         container.innerHTML = displayEvents.map(event => {
             const eventDate = new Date(event.date);
             const formattedDate = eventDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'as-IN', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
-            
             const title = currentLanguage === 'en' ? event.title : (event.titleAs || event.title);
             const description = currentLanguage === 'en' ? (event.description || '') : (event.descriptionAs || event.description || '');
             const location = currentLanguage === 'en' ? (event.location || '') : (event.locationAs || event.location || '');
@@ -486,21 +426,13 @@ async function loadEvents() {
                 <div class="col-md-4 mb-4">
                     <div class="event-card">
                         <div style="position: relative;">
-                            ${event.image ? 
-                                `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
-                                `<div class="event-image bg-light d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-calendar-alt fa-4x text-muted"></i>
-                                </div>`
-                            }
-                            <span class="event-badge badge-upcoming">
-                                ${currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক'}
-                            </span>
+                            ${event.image ? `<img src="${API_URL.replace('/api', '')}${event.image}" class="event-image" alt="${event.title}">` : 
+                                `<div class="event-image bg-light d-flex align-items-center justify-content-center"><i class="fas fa-calendar-alt fa-4x text-muted"></i></div>`}
+                            <span class="event-badge badge-upcoming">${currentLanguage === 'en' ? 'Upcoming' : 'আগন্তুক'}</span>
                         </div>
                         <div class="p-4">
                             <h4 class="mb-2">${escapeHtml(title)}</h4>
-                            <div class="event-time mb-2">
-                                <i class="far fa-calendar-alt me-2"></i>${formattedDate}
-                            </div>
+                            <div class="event-time mb-2"><i class="far fa-calendar-alt me-2"></i>${formattedDate}</div>
                             ${event.time ? `<div class="mb-2"><i class="far fa-clock me-2"></i>${time}</div>` : ''}
                             ${location ? `<div class="mb-3"><i class="fas fa-location-dot me-2"></i>${escapeHtml(location)}</div>` : ''}
                             <p class="text-muted">${escapeHtml(description.substring(0, 100))}${description.length > 100 ? '...' : ''}</p>
@@ -511,42 +443,28 @@ async function loadEvents() {
         }).join('');
     } catch (error) {
         console.error('Error loading events:', error);
-        const container = document.getElementById('eventsContainer');
-        if (container) {
-            container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Error loading events. Please try again later.</p></div>';
-        }
     }
 }
 
-// Load donation progress
 async function loadDonationProgress() {
     try {
         const response = await fetch(`${API_URL}/stats/public`);
-        
         if (response.ok) {
             const data = await response.json();
             const totalDonated = data.totalDonations || 0;
             const goal = 500000;
             const percentage = Math.min((totalDonated / goal) * 100, 100);
-            
             const progressBar = document.getElementById('donationProgress');
             if (progressBar) {
                 progressBar.style.width = `${percentage}%`;
-                if (totalDonated > 0) {
-                    progressBar.innerText = `₹${totalDonated.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
-                } else {
-                    progressBar.innerText = '0%';
-                }
+                progressBar.innerText = totalDonated > 0 ? `₹${totalDonated.toLocaleString()} raised of ₹${goal.toLocaleString()}` : '0%';
             }
             localStorage.setItem('cachedDonationTotal', totalDonated);
-        } else {
-            const cachedTotal = localStorage.getItem('cachedDonationTotal');
-            updateProgressBarFallback(cachedTotal ? parseInt(cachedTotal) : 0);
         }
     } catch (error) {
         console.error('Error loading donation progress:', error);
         const cachedTotal = localStorage.getItem('cachedDonationTotal');
-        updateProgressBarFallback(cachedTotal ? parseInt(cachedTotal) : 0);
+        if (cachedTotal) updateProgressBarFallback(parseInt(cachedTotal));
     }
 }
 
@@ -556,24 +474,17 @@ function updateProgressBarFallback(total) {
     const progressBar = document.getElementById('donationProgress');
     if (progressBar) {
         progressBar.style.width = `${percentage}%`;
-        if (total > 0) {
-            progressBar.innerText = `₹${total.toLocaleString()} raised of ₹${goal.toLocaleString()}`;
-        } else {
-            progressBar.innerText = '0%';
-        }
+        progressBar.innerText = total > 0 ? `₹${total.toLocaleString()} raised` : '0%';
     }
 }
 
-// Submit donation
 const donationForm = document.getElementById('donationForm');
 if (donationForm) {
     donationForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const donorName = document.getElementById('donorName');
         const donorAmount = document.getElementById('donorAmount');
         const transactionId = document.getElementById('transactionId');
-        
         if (!donorName || !donorAmount) return;
         
         const donation = {
@@ -594,16 +505,12 @@ if (donationForm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(donation)
             });
-            
             if (res.ok) {
-                alert('Thank you for your donation! Your donation will be visible after admin approval. May Allah reward you abundantly.');
+                alert('Thank you for your donation! Your donation will be visible after admin approval.');
                 const modal = bootstrap.Modal.getInstance(document.getElementById('donationModal'));
                 if (modal) modal.hide();
                 donationForm.reset();
                 loadDonationProgress();
-            } else {
-                const error = await res.json();
-                alert('Error: ' + (error.error || 'Failed to submit donation.'));
             }
         } catch (error) {
             console.error('Donation error:', error);
@@ -612,7 +519,6 @@ if (donationForm) {
     });
 }
 
-// Escape HTML
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -620,7 +526,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ========== PWA INSTALLATION ==========
+// ========== PWA INSTALLATION (ONLY ONCE) ==========
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -629,16 +535,15 @@ window.addEventListener('beforeinstallprompt', (e) => {
     const installBtn = document.getElementById('installAppBtn');
     if (installBtn) {
         installBtn.style.display = 'inline-flex';
-        installBtn.addEventListener('click', () => {
+        const newBtn = installBtn.cloneNode(true);
+        installBtn.parentNode.replaceChild(newBtn, installBtn);
+        newBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                    installBtn.style.display = 'none';
-                });
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`Install prompt result: ${outcome}`);
+                newBtn.style.display = 'none';
+                deferredPrompt = null;
             }
         });
     }
@@ -659,10 +564,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
     loadDonationProgress();
     
-    // Set initial button states (Leaders active by default)
     const dignitariesBtn = document.getElementById('viewDignitariesBtn');
     const allBtn = document.getElementById('viewAllBtn');
-    
     if (dignitariesBtn && allBtn) {
         if (currentViewMode === 'dignitaries') {
             dignitariesBtn.classList.add('active');
@@ -673,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Search input
     const memberSearch = document.getElementById('memberSearch');
     if (memberSearch) {
         memberSearch.addEventListener('input', (e) => {
@@ -682,13 +584,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Area filter
     const areaFilterSelect = document.getElementById('areaFilterSelect');
     if (areaFilterSelect) {
         areaFilterSelect.addEventListener('change', filterByArea);
     }
     
-    // Language toggle
     const languageToggle = document.getElementById('languageToggle');
     if (languageToggle) {
         languageToggle.addEventListener('click', () => {
@@ -702,57 +602,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Styles
 const style = document.createElement('style');
 style.textContent = `
-    .member-card {
-        transition: all 0.3s ease;
-        background: white;
-        border-radius: 12px;
-        cursor: pointer;
-    }
-    .member-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-    }
-    .btn-group .btn-outline-success.active {
-        background-color: #1a5f3e;
-        color: white;
-        border-color: #1a5f3e;
-    }
-    .btn-outline-success {
-        color: #1a5f3e;
-        border-color: #1a5f3e;
-    }
-    .btn-outline-success:hover {
-        background-color: #1a5f3e;
-        color: white;
-    }
-    .form-select.border-success:focus {
-        border-color: #1a5f3e;
-        box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25);
-    }
-    .members-decorated-list {
-        max-height: 600px;
-        overflow-y: auto;
-        padding-right: 5px;
-    }
-    .member-list-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    .member-list-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-    }
-    .member-avatar i {
-        width: 45px;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 50%;
-    }
+    .member-card { transition: all 0.3s ease; background: white; border-radius: 12px; cursor: pointer; }
+    .member-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; }
+    .btn-group .btn-outline-success.active { background-color: #1a5f3e; color: white; border-color: #1a5f3e; }
+    .btn-outline-success { color: #1a5f3e; border-color: #1a5f3e; }
+    .btn-outline-success:hover { background-color: #1a5f3e; color: white; }
+    .form-select.border-success:focus { border-color: #1a5f3e; box-shadow: 0 0 0 0.2rem rgba(26, 95, 62, 0.25); }
+    .members-decorated-list { max-height: 600px; overflow-y: auto; padding-right: 5px; }
+    .member-list-item { transition: all 0.3s ease; cursor: pointer; }
+    .member-list-item:hover { transform: translateX(5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important; }
+    .member-avatar i { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 50%; }
 `;
 document.head.appendChild(style);
