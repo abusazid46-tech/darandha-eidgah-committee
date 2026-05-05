@@ -346,7 +346,21 @@
                             </button>
                         </div>
                     </div>
-                    
+                        <!-- Search Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="fas fa-search text-success"></i>
+                </span>
+                <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name, phone or address..." onkeyup="searchMembers()">
+                <button class="btn btn-outline-secondary" onclick="clearMemberSearch()" type="button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <small class="text-muted" id="searchResultCount"></small>
+        </div>
+    </div>
                     <!-- Bulk Actions Bar -->
                     <div id="bulkActionsBar" class="bulk-actions-bar align-items-center justify-content-between">
                         <div>
