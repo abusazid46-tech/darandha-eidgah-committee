@@ -299,21 +299,21 @@ function updateSelection() {
     }
 }
 
-function toggleSelectAll() {
+window.toggleSelectAll = function() {
     const selectAll = document.getElementById('selectAllCheckbox');
     const checkboxes = document.querySelectorAll('.member-select');
     checkboxes.forEach(cb => cb.checked = selectAll.checked);
     updateSelection();
-}
+};
 
-function clearSelection() {
+window.clearSelection = function() {
     const checkboxes = document.querySelectorAll('.member-select');
     checkboxes.forEach(cb => cb.checked = false);
     selectedMembers.clear();
     updateSelection();
-}
+};
 
-async function bulkDeleteMembers() {
+window.bulkDeleteMembers = async function() {
     if (selectedMembers.size === 0) {
         alert('Please select members to delete');
         return;
@@ -338,13 +338,14 @@ async function bulkDeleteMembers() {
     } catch (error) {
         alert('Error deleting members: ' + error.message);
     }
-}
+};
 
+// CSV/Excel Import Functions
 window.importMembersCSV = function() {
     new bootstrap.Modal(document.getElementById('importCSVModal')).show();
 };
 
-async function processImport() {
+window.processImport = async function() {
     const fileInput = document.getElementById('csvFileInput');
     if (!fileInput.files.length) {
         alert('Please select a file');
@@ -436,7 +437,7 @@ async function processImport() {
     } else {
         reader.readAsText(file);
     }
-}
+};
 
 window.downloadSampleCSV = function() {
     const sampleData = [
@@ -636,7 +637,7 @@ window.filterEvents = async function(category) {
                         <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status"><i class="fas fa-sync-alt"></i></button>
                         <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')" title="Edit"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')" title="Delete"><i class="fas fa-trash"></i></button>
-                     </td>
+                      </td>
                 </tr>
             `;
         }).join('');
@@ -833,7 +834,7 @@ async function loadDonations() {
                 <td>${new Date(d.date).toLocaleDateString()}</td>
                 <td><span class="badge ${d.status === 'approved' ? 'bg-success' : d.status === 'pending' ? 'bg-warning' : 'bg-danger'}">${d.status || 'pending'}</span></td>
                 <td>${d.status === 'pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveDonation('${d._id}')">Approve</button><button class="btn btn-sm btn-danger" onclick="rejectDonation('${d._id}')">Reject</button>` : (d.status === 'approved' ? '<i class="fas fa-check-circle text-success"></i> Approved' : '<i class="fas fa-times-circle text-danger"></i> Rejected')}</td>
-            </td>
+            </tr>
         `).join('');
     } catch (error) {
         console.error('Error loading donations:', error);
@@ -946,13 +947,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-// Make functions globally available
-window.bulkDeleteMembers = bulkDeleteMembers;
-window.toggleSelectAll = toggleSelectAll;
-window.clearSelection = clearSelection;
-window.processImport = processImport;
-window.downloadSampleCSV = downloadSampleCSV;
 
 // Initialize
 checkAuth();
