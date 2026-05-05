@@ -1860,7 +1860,14 @@ window.addEventListener('load', () => {
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
+  // Add this to your inline scripts
+const dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
 
+function isDignitary(role) {
+    if (!role) return false;
+    const roleLower = role.toLowerCase();
+    return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
+}
 function closeIOSBanner() {
   document.getElementById('iosInstallBanner').style.display = 'none';
   localStorage.setItem('iosBannerClosed', 'true');
@@ -1900,6 +1907,7 @@ document.addEventListener('click', function(e) {
     toggler.click();
   }
 }); 
+  
 </script>
 </body>
 </html>
