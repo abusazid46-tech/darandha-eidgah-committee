@@ -10,16 +10,8 @@ let allMembersFiltered = [];
 
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
-
 // Dignitary roles - will be loaded from database
 let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
-
-// Helper function for case-insensitive role matching
-function isDignitary(role) {
-    if (!role) return false;
-    const roleLower = role.toLowerCase();
-    return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
-}
 
 // Function to load dignitary roles from database
 async function loadDignitaryRolesFromDB() {
@@ -42,6 +34,14 @@ async function loadDignitaryRolesFromDB() {
         return false;
     }
 }
+
+// Helper function for case-insensitive role matching
+function isDignitary(role) {
+    if (!role) return false;
+    const roleLower = role.toLowerCase();
+    return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
+}
+
 
 // Helper function to extract area from full address
 function extractAreaFromAddress(address) {
@@ -140,7 +140,7 @@ async function loadMembers() {
         const res = await fetch(`${API_URL}/members`);
         allMembers = await res.json();
         
-        // Load dignitary roles from database
+        // Load dignitary roles from database - USE THE CORRECT FUNCTION NAME
         await loadDignitaryRolesFromDB();
         
         // Extract unique areas from member addresses
