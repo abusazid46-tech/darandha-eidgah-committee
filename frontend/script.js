@@ -11,8 +11,8 @@ let allMembersFiltered = [];
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
 
-// Change this line in script.js
-let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
+// Replace this:
+let dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
 // Helper function for case-insensitive role matching
 function isDignitary(role) {
     if (!role) return false;
