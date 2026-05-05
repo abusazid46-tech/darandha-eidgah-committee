@@ -964,7 +964,127 @@ if (settingsForm) {
         }
     });
 }
+// ========== MEMBER SEARCH FUNCTIONALITY ==========
 
+let allMembersData = []; // Store all members for searching
+let currentSearchTerm = '';
+
+// Load members with search capability
+async function loadMembers() {
+    try {
+        const res = await fetch(`${API_URL}/members`);
+        allMembersData = await res.json();
+        displayFilteredMembers();
+    } catch (error) {
+        console.error('Error loading members:', error);
+    }
+}
+
+// Display members based on search filter
+function displayFilteredMembers() {
+    let filteredMembers = [...allMembersData];
+    
+    // Apply search filter
+    if (currentSearchTerm) {
+        const searchLower = currentSearchTerm.toLowerCase();
+        filteredMembers = filteredMembers.filter(m => 
+            m.name.toLowerCase().includes(searchLower) ||
+            (m.nameAs && m.nameAs.toLowerCase().includes(searchLower)) ||
+            (m.phone && m.phone.includes(searchLower)) ||
+            (m.address && m.address.toLowerCase().includes(searchLower)) ||
+            (m.role && m.role.toLowerCase().includes(searchLower))
+        );
+    }
+    
+    // Update search result count
+    const resultCount = document.getElementById('searchResultCount');
+    if (resultCount) {
+        if (currentSearchTerm) {
+            resultCount.innerHTML = `Found ${filteredMembers.length} of ${allMembersData.length} members`;
+        } else {
+            resultCount.innerHTML = `Total ${allMembersData.length} members`;
+        }
+    }
+    
+    // Render table
+    const tbody = document.getElementById('membersTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = filteredMembers.map(m => {
+        const { houseNumber, fullAddress } = parseAddress(m.address || '');
+        
+        let addressHtml = '';
+        if (houseNumber) {
+            addressHtml += `<span class="badge bg-info me-1"><i class="fas fa-home me-1"></i>${escapeHtml(houseNumber)}</span>`;
+        }
+        if (fullAddress) {
+            addressHtml += `<span class="text-muted small">${escapeHtml(fullAddress)}</span>`;
+        }
+        if (!houseNumber && !fullAddress) {
+            addressHtml = '-';
+        }
+        
+        // Highlight search term in name
+        let displayName = m.name;
+        if (currentSearchTerm) {
+            const regex = new RegExp(`(${currentSearchTerm})`, 'gi');
+            displayName = m.name.replace(regex, '<mark>$1</mark>');
+        }
+        
+        return `
+            <tr>
+                <td><input type="checkbox" class="member-select" value="${m._id}" onclick="updateSelection()"></td>
+                <td><strong>${displayName}</strong>${m.nameAs ? `<br><small class="text-muted">${escapeHtml(m.nameAs)}</small>` : ''}</td>
+                <td>${m.nameAs ? escapeHtml(m.nameAs) : '-'}</td>
+                <td>${m.phone || '-'}</td>
+                <td>${addressHtml}</td>
+                <td><span class="badge bg-success">${m.role || 'Member'}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary me-1" onclick="editMember('${m._id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteMember('${m._id}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Clear selection after search
+    clearSelection();
+}
+
+// Search members function
+window.searchMembers = function() {
+    const searchInput = document.getElementById('memberSearchInput');
+    if (searchInput) {
+        currentSearchTerm = searchInput.value.trim();
+        displayFilteredMembers();
+    }
+};
+
+// Clear search
+window.clearMemberSearch = function() {
+    const searchInput = document.getElementById('memberSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        currentSearchTerm = '';
+        displayFilteredMembers();
+    }
+};
+
+// Add enter key support for search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('memberSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchMembers();
+            }
+        });
+    }
+});
 // UPI Settings Form Submit
 const upiSettingsForm = document.getElementById('upiSettingsForm');
 if (upiSettingsForm) {
