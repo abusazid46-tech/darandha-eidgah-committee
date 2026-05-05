@@ -3,7 +3,8 @@ const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
 let selectedMembers = new Set();
-const dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
+// admin/admin.js - Update dignitaryRoles to match
+const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
