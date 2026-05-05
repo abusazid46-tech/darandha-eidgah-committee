@@ -3,7 +3,7 @@ const API_URL = 'https://darandha-eidgah-committee.onrender.com/api';
 let currentLanguage = 'as';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
-let currentViewMode = 'dignitaries'; // CHANGED: Default to 'dignitaries' to show leaders first
+let currentViewMode = 'dignitaries'; // Default to 'dignitaries' to show leaders first
 let allMembers = [];
 let uniqueAreas = [];
 let allMembersFiltered = [];
@@ -11,8 +11,17 @@ let allMembersFiltered = [];
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
 
-// Replace this:
+// Dignitary roles - will be loaded from database
 let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
+
+// Helper function for case-insensitive role matching
+function isDignitary(role) {
+    if (!role) return false;
+    const roleLower = role.toLowerCase();
+    return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
+}
+
+// Function to load dignitary roles from database
 async function loadDignitaryRolesFromDB() {
     try {
         const res = await fetch(`${API_URL}/settings`);
@@ -23,13 +32,17 @@ async function loadDignitaryRolesFromDB() {
             dignitaryRoles.length = 0;
             loadedRoles.forEach(role => dignitaryRoles.push(role));
             console.log('✅ Dignitary roles loaded from DB:', dignitaryRoles);
+            return true;
         } else {
             console.log('⚠️ No dignitary roles in DB, using defaults');
+            return false;
         }
     } catch (error) {
         console.error('❌ Error loading dignitary roles:', error);
+        return false;
     }
 }
+
 // Helper function to extract area from full address
 function extractAreaFromAddress(address) {
     if (!address) return '';
@@ -75,26 +88,7 @@ function updateLanguage() {
             '<i class="fas fa-language me-1"></i> English';
     }
 }
-// Add this function to load dignitary roles from settings
-async function loadDignitaryRoles() {
-    try {
-        const res = await fetch(`${API_URL}/settings`);
-        const settings = await res.json();
-        
-        if (settings.dignitary_roles && settings.dignitary_roles.value) {
-            const loadedRoles = JSON.parse(settings.dignitary_roles.value);
-            // Update the dignitaryRoles array
-            dignitaryRoles.length = 0;
-            loadedRoles.forEach(role => dignitaryRoles.push(role));
-            console.log('Loaded dignitary roles from database:', dignitaryRoles);
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('Error loading dignitary roles:', error);
-        return false;
-    }
-}
+
 // Load settings and about content
 async function loadSettings() {
     try {
@@ -140,13 +134,14 @@ async function loadSettings() {
     }
 }
 
+// Load members
 async function loadMembers() {
     try {
         const res = await fetch(`${API_URL}/members`);
         allMembers = await res.json();
         
         // Load dignitary roles from database
-        await loadDignitaryRoles();
+        await loadDignitaryRolesFromDB();
         
         // Extract unique areas from member addresses
         const areasSet = new Set();
@@ -164,8 +159,13 @@ async function loadMembers() {
         applyFilters();
     } catch (error) {
         console.error('Error loading members:', error);
+        const container = document.getElementById('membersListContainer');
+        if (container) {
+            container.innerHTML = '<div class="alert alert-danger text-center">Error loading members. Please try again later.</div>';
+        }
     }
 }
+
 // Populate area dropdown
 function populateAreaDropdown() {
     const select = document.getElementById('areaFilterSelect');
