@@ -364,21 +364,22 @@
                     </div>
                     
                     <div class="table-responsive">
-    <table class="table table-hover table-bordered">
-        <thead class="table-success">
-            <tr>
-                <th width="40"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()"></th>
-                <th>Name</th>
-                <th>Name (Assamese)</th>
-                <th>Phone</th>
-                <th>Address (House No. & Full Address)</th>
-                <th>Role</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="membersTable"></tbody>
-    </table>
-</div>
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th width="40"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()"></th>
+                                    <th>Name</th>
+                                    <th>Name (Assamese)</th>
+                                    <th>Phone</th>
+                                    <th>Address (House No. & Full Address)</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTable"></tbody>
+                        </table>
+                    </div>
+                </div> <!-- END membersSection -->
 
                 <!-- Events Section -->
                 <div id="eventsSection" style="display: none;">
@@ -425,7 +426,7 @@
                             <tbody id="eventsTable"></tbody>
                         </table>
                     </div>
-                </div>
+                </div> <!-- END eventsSection -->
 
                 <!-- Donations Section -->
                 <div id="donationsSection" style="display: none;">
@@ -445,7 +446,7 @@
                             <tbody id="donationsTable"></tbody>
                         </table>
                     </div>
-                </div>
+                </div> <!-- END donationsSection -->
 
                 <!-- Settings Section -->
                 <div id="settingsSection" style="display: none;">
@@ -524,7 +525,7 @@
                             </form>
                         </div>
                     </div>
-                </div>
+                </div> <!-- END settingsSection -->
             </div>
         </div>
     </div>
@@ -595,14 +596,15 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Role</label>
-                           <select class="form-control" id="memberRole">
-                               <option>President</option>
-                               <option>Vice President</option>
-                               <option>Secretary</option>
-                               <option>Joint Secretary</option>
-                               <option>Cashier</option>
-                               <option>Adviser</option><option>Member</option>
-                           </select>
+                            <select class="form-control" id="memberRole">
+                                <option>President</option>
+                                <option>Vice President</option>
+                                <option>Secretary</option>
+                                <option>Joint Secretary</option>
+                                <option>Cashier</option>
+                                <option>Adviser</option>
+                                <option>Member</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -744,9 +746,9 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         }
     });
 });
+
 // Ensure sections are properly initialized
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug: Log which section is active
     console.log('Admin panel loaded');
     
     // Fix any broken image links
@@ -761,6 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 2000);
 });
+
 // Address preview for member modal
 document.addEventListener('DOMContentLoaded', function() {
     const houseNumber = document.getElementById('memberHouseNumber');
