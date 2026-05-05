@@ -351,7 +351,7 @@ window.bulkDeleteMembers = async function() {
 let allMembersData = []; // Store all members for searching
 let currentSearchTerm = '';
 
-// Load members with search capability
+// Updated loadMembers function with search capability
 async function loadMembers() {
     try {
         const res = await fetch(`${API_URL}/members`);
@@ -359,6 +359,10 @@ async function loadMembers() {
         displayFilteredMembers();
     } catch (error) {
         console.error('Error loading members:', error);
+        const tbody = document.getElementById('membersTable');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading members</td></tr>';
+        }
     }
 }
 
@@ -382,15 +386,20 @@ function displayFilteredMembers() {
     const resultCount = document.getElementById('searchResultCount');
     if (resultCount) {
         if (currentSearchTerm) {
-            resultCount.innerHTML = `Found ${filteredMembers.length} of ${allMembersData.length} members`;
+            resultCount.innerHTML = `<i class="fas fa-search me-1"></i>Found ${filteredMembers.length} of ${allMembersData.length} members`;
         } else {
-            resultCount.innerHTML = `Total ${allMembersData.length} members`;
+            resultCount.innerHTML = `<i class="fas fa-users me-1"></i>Total ${allMembersData.length} members`;
         }
     }
     
     // Render table
     const tbody = document.getElementById('membersTable');
     if (!tbody) return;
+    
+    if (filteredMembers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No members found matching your search</td></tr>';
+        return;
+    }
     
     tbody.innerHTML = filteredMembers.map(m => {
         const { houseNumber, fullAddress } = parseAddress(m.address || '');
@@ -409,8 +418,8 @@ function displayFilteredMembers() {
         // Highlight search term in name
         let displayName = m.name;
         if (currentSearchTerm) {
-            const regex = new RegExp(`(${currentSearchTerm})`, 'gi');
-            displayName = m.name.replace(regex, '<mark>$1</mark>');
+            const regex = new RegExp(`(${currentSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            displayName = m.name.replace(regex, '<mark class="bg-warning">$1</mark>');
         }
         
         return `
@@ -437,7 +446,7 @@ function displayFilteredMembers() {
     clearSelection();
 }
 
-// Search members function
+// Search members function (called from input)
 window.searchMembers = function() {
     const searchInput = document.getElementById('memberSearchInput');
     if (searchInput) {
@@ -456,17 +465,17 @@ window.clearMemberSearch = function() {
     }
 };
 
-// Add enter key support for search
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('memberSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchMembers();
-            }
-        });
+// Make sure parseAddress function exists
+function parseAddress(address) {
+    if (!address) return { houseNumber: '', fullAddress: '' };
+    const firstCommaIndex = address.indexOf(',');
+    if (firstCommaIndex === -1) {
+        return { houseNumber: address, fullAddress: '' };
     }
-});
+    const houseNumber = address.substring(0, firstCommaIndex).trim();
+    const fullAddress = address.substring(firstCommaIndex + 1).trim();
+    return { houseNumber, fullAddress };
+}
 // CSV/Excel Import Functions
 window.importMembersCSV = function() {
     new bootstrap.Modal(document.getElementById('importCSVModal')).show();
