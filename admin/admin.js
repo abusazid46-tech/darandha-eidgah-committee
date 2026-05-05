@@ -97,7 +97,7 @@ function showDashboard() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardContent) dashboardContent.style.display = 'block';
     
-    // IMPORTANT: Initially show dashboard section
+    // Show dashboard section by default
     document.getElementById('dashboardSection').style.display = 'block';
     document.getElementById('membersSection').style.display = 'none';
     document.getElementById('eventsSection').style.display = 'none';
@@ -111,8 +111,6 @@ function showDashboard() {
     loadSettings();
     loadUpiSettings();
     loadEventStats();
-    
-    // Load events data into the table
     filterEvents('all');
 }
 
@@ -152,36 +150,48 @@ document.getElementById('logoutBtn')?.addEventListener('click', () => {
     if (autoRefreshInterval) clearInterval(autoRefreshInterval);
 });
 
-// Navigation
+// Navigation - FIXED VERSION
 document.querySelectorAll('.sidebar .nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Update active class
         document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         
         const section = link.getAttribute('data-section');
         currentSection = section;
         
-        // Hide all sections
-        document.getElementById('dashboardSection').style.display = 'none';
-        document.getElementById('membersSection').style.display = 'none';
-        document.getElementById('eventsSection').style.display = 'none';
-        document.getElementById('donationsSection').style.display = 'none';
-        document.getElementById('settingsSection').style.display = 'none';
+        // Hide ALL sections first
+        const dashboardSection = document.getElementById('dashboardSection');
+        const membersSection = document.getElementById('membersSection');
+        const eventsSection = document.getElementById('eventsSection');
+        const donationsSection = document.getElementById('donationsSection');
+        const settingsSection = document.getElementById('settingsSection');
+        
+        if (dashboardSection) dashboardSection.style.display = 'none';
+        if (membersSection) membersSection.style.display = 'none';
+        if (eventsSection) eventsSection.style.display = 'none';
+        if (donationsSection) donationsSection.style.display = 'none';
+        if (settingsSection) settingsSection.style.display = 'none';
         
         // Show selected section
         if (section === 'dashboard') {
-            document.getElementById('dashboardSection').style.display = 'block';
+            if (dashboardSection) dashboardSection.style.display = 'block';
         } else if (section === 'members') {
-            document.getElementById('membersSection').style.display = 'block';
+            if (membersSection) membersSection.style.display = 'block';
             loadMembers();
         } else if (section === 'events') {
-            document.getElementById('eventsSection').style.display = 'block';
-            filterEvents(currentEventFilter);
+            if (eventsSection) eventsSection.style.display = 'block';
+            console.log('Events section shown, loading events...');
+            filterEvents('all');
         } else if (section === 'donations') {
-            document.getElementById('donationsSection').style.display = 'block';
+            if (donationsSection) donationsSection.style.display = 'block';
+            console.log('Donations section shown, loading donations...');
             loadDonations();
         } else if (section === 'settings') {
-            document.getElementById('settingsSection').style.display = 'block';
+            if (settingsSection) settingsSection.style.display = 'block';
+            console.log('Settings section shown, loading settings...');
             loadSettings();
             loadUpiSettings();
         }
@@ -396,10 +406,12 @@ window.processImport = async function() {
                     });
                 });
             }
+            
             if (members.length === 0) {
                 alert('No valid members found in file');
                 return;
             }
+            
             let successCount = 0;
             for (const member of members) {
                 try {
@@ -416,6 +428,7 @@ window.processImport = async function() {
                     console.error('Import error:', err);
                 }
             }
+            
             alert(`${successCount} out of ${members.length} members imported successfully!`);
             bootstrap.Modal.getInstance(document.getElementById('importCSVModal')).hide();
             fileInput.value = '';
@@ -881,11 +894,17 @@ async function loadSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
         const settings = await res.json();
-        document.getElementById('settingWhatsapp').value = settings.whatsapp_number?.value || '';
-        document.getElementById('settingEmail').value = settings.contact_email?.value || '';
-        document.getElementById('settingPhone').value = settings.contact_phone?.value || '';
-        document.getElementById('settingAboutEn').value = settings.about_content?.value || '';
-        document.getElementById('settingAboutAs').value = settings.about_content_as?.value || '';
+        const whatsappInput = document.getElementById('settingWhatsapp');
+        const emailInput = document.getElementById('settingEmail');
+        const phoneInput = document.getElementById('settingPhone');
+        const aboutEnInput = document.getElementById('settingAboutEn');
+        const aboutAsInput = document.getElementById('settingAboutAs');
+        
+        if (whatsappInput) whatsappInput.value = settings.whatsapp_number?.value || '';
+        if (emailInput) emailInput.value = settings.contact_email?.value || '';
+        if (phoneInput) phoneInput.value = settings.contact_phone?.value || '';
+        if (aboutEnInput) aboutEnInput.value = settings.about_content?.value || '';
+        if (aboutAsInput) aboutAsInput.value = settings.about_content_as?.value || '';
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -895,57 +914,90 @@ async function loadUpiSettings() {
     try {
         const res = await fetch(`${API_URL}/settings`);
         const settings = await res.json();
-        document.getElementById('settingUpiId').value = settings.upi_id?.value || 'committee@bank';
-        document.getElementById('settingQrUrl').value = settings.qr_url?.value || '';
-        document.getElementById('settingBankName').value = settings.bank_name?.value || '';
-        document.getElementById('settingBankAccount').value = settings.bank_account?.value || '';
-        document.getElementById('settingIfsc').value = settings.ifsc_code?.value || '';
-        document.getElementById('settingDonationGoal').value = settings.donation_goal?.value || '500000';
+        const upiIdInput = document.getElementById('settingUpiId');
+        const qrUrlInput = document.getElementById('settingQrUrl');
+        const bankNameInput = document.getElementById('settingBankName');
+        const bankAccountInput = document.getElementById('settingBankAccount');
+        const ifscInput = document.getElementById('settingIfsc');
+        const donationGoalInput = document.getElementById('settingDonationGoal');
+        
+        if (upiIdInput) upiIdInput.value = settings.upi_id?.value || 'committee@bank';
+        if (qrUrlInput) qrUrlInput.value = settings.qr_url?.value || '';
+        if (bankNameInput) bankNameInput.value = settings.bank_name?.value || '';
+        if (bankAccountInput) bankAccountInput.value = settings.bank_account?.value || '';
+        if (ifscInput) ifscInput.value = settings.ifsc_code?.value || '';
+        if (donationGoalInput) donationGoalInput.value = settings.donation_goal?.value || '500000';
     } catch (error) {
         console.error('Error loading UPI settings:', error);
     }
 }
 
-document.getElementById('settingsForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!token) return;
-    const updates = [
-        { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
-        { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
-        { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
-        { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
-        { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
-    ];
-    try {
-        for (const up of updates) {
-            await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
+// Settings Form Submit
+const settingsForm = document.getElementById('settingsForm');
+if (settingsForm) {
+    settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!token) return;
+        
+        const updates = [
+            { key: 'whatsapp_number', value: document.getElementById('settingWhatsapp')?.value || '' },
+            { key: 'contact_email', value: document.getElementById('settingEmail')?.value || '' },
+            { key: 'contact_phone', value: document.getElementById('settingPhone')?.value || '' },
+            { key: 'about_content', value: document.getElementById('settingAboutEn')?.value || '' },
+            { key: 'about_content_as', value: document.getElementById('settingAboutAs')?.value || '' }
+        ];
+        
+        try {
+            for (const up of updates) {
+                await fetch(`${API_URL}/settings/${up.key}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ value: up.value })
+                });
+            }
+            alert('Contact settings saved successfully!');
+        } catch (error) {
+            alert('Error saving settings: ' + error.message);
         }
-        alert('Contact settings saved!');
-    } catch (error) {
-        alert('Error saving settings: ' + error.message);
-    }
-});
+    });
+}
 
-document.getElementById('upiSettingsForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!token) return;
-    const updates = [
-        { key: 'upi_id', value: document.getElementById('settingUpiId')?.value || 'committee@bank' },
-        { key: 'qr_url', value: document.getElementById('settingQrUrl')?.value || '' },
-        { key: 'bank_name', value: document.getElementById('settingBankName')?.value || '' },
-        { key: 'bank_account', value: document.getElementById('settingBankAccount')?.value || '' },
-        { key: 'ifsc_code', value: document.getElementById('settingIfsc')?.value || '' },
-        { key: 'donation_goal', value: document.getElementById('settingDonationGoal')?.value || '500000' }
-    ];
-    try {
-        for (const up of updates) {
-            await fetch(`${API_URL}/settings/${up.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ value: up.value }) });
+// UPI Settings Form Submit
+const upiSettingsForm = document.getElementById('upiSettingsForm');
+if (upiSettingsForm) {
+    upiSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!token) return;
+        
+        const updates = [
+            { key: 'upi_id', value: document.getElementById('settingUpiId')?.value || 'committee@bank' },
+            { key: 'qr_url', value: document.getElementById('settingQrUrl')?.value || '' },
+            { key: 'bank_name', value: document.getElementById('settingBankName')?.value || '' },
+            { key: 'bank_account', value: document.getElementById('settingBankAccount')?.value || '' },
+            { key: 'ifsc_code', value: document.getElementById('settingIfsc')?.value || '' },
+            { key: 'donation_goal', value: document.getElementById('settingDonationGoal')?.value || '500000' }
+        ];
+        
+        try {
+            for (const up of updates) {
+                await fetch(`${API_URL}/settings/${up.key}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ value: up.value })
+                });
+            }
+            alert('UPI settings saved successfully!');
+        } catch (error) {
+            alert('Error saving UPI settings: ' + error.message);
         }
-        alert('UPI settings saved!');
-    } catch (error) {
-        alert('Error saving UPI settings: ' + error.message);
-    }
-});
+    });
+}
 
 function escapeHtml(text) {
     if (!text) return '';
