@@ -12,7 +12,7 @@ let allMembersFiltered = [];
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
 
 // Replace this:
-let dignitaryRoles = ['President', 'Secretary', 'Cashier', 'Vice President', 'Adviser', 'Joint Secretary', 'Member'];
+let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
 // Helper function for case-insensitive role matching
 function isDignitary(role) {
     if (!role) return false;
