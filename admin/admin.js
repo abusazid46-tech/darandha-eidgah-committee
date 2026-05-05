@@ -97,13 +97,22 @@ function showDashboard() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardContent) dashboardContent.style.display = 'block';
     
-    // Load all sections
+    // IMPORTANT: Initially show dashboard section
+    document.getElementById('dashboardSection').style.display = 'block';
+    document.getElementById('membersSection').style.display = 'none';
+    document.getElementById('eventsSection').style.display = 'none';
+    document.getElementById('donationsSection').style.display = 'none';
+    document.getElementById('settingsSection').style.display = 'none';
+    
+    // Load all data
     loadDashboard();
     loadMembers();
     loadDonations();
     loadSettings();
     loadUpiSettings();
     loadEventStats();
+    
+    // Load events data into the table
     filterEvents('all');
 }
 
@@ -152,22 +161,27 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         const section = link.getAttribute('data-section');
         currentSection = section;
         
-        const dashboardSection = document.getElementById('dashboardSection');
-        const membersSection = document.getElementById('membersSection');
-        const eventsSection = document.getElementById('eventsSection');
-        const donationsSection = document.getElementById('donationsSection');
-        const settingsSection = document.getElementById('settingsSection');
+        // Hide all sections
+        document.getElementById('dashboardSection').style.display = 'none';
+        document.getElementById('membersSection').style.display = 'none';
+        document.getElementById('eventsSection').style.display = 'none';
+        document.getElementById('donationsSection').style.display = 'none';
+        document.getElementById('settingsSection').style.display = 'none';
         
-        if (dashboardSection) dashboardSection.style.display = section === 'dashboard' ? 'block' : 'none';
-        if (membersSection) membersSection.style.display = section === 'members' ? 'block' : 'none';
-        if (eventsSection) eventsSection.style.display = section === 'events' ? 'block' : 'none';
-        if (donationsSection) donationsSection.style.display = section === 'donations' ? 'block' : 'none';
-        if (settingsSection) settingsSection.style.display = section === 'settings' ? 'block' : 'none';
-        
-        if (section === 'members') loadMembers();
-        if (section === 'events') filterEvents(currentEventFilter);
-        if (section === 'donations') loadDonations();
-        if (section === 'settings') {
+        // Show selected section
+        if (section === 'dashboard') {
+            document.getElementById('dashboardSection').style.display = 'block';
+        } else if (section === 'members') {
+            document.getElementById('membersSection').style.display = 'block';
+            loadMembers();
+        } else if (section === 'events') {
+            document.getElementById('eventsSection').style.display = 'block';
+            filterEvents(currentEventFilter);
+        } else if (section === 'donations') {
+            document.getElementById('donationsSection').style.display = 'block';
+            loadDonations();
+        } else if (section === 'settings') {
+            document.getElementById('settingsSection').style.display = 'block';
             loadSettings();
             loadUpiSettings();
         }
@@ -204,29 +218,12 @@ async function loadEventStats() {
         const upcomingEventsCount = document.getElementById('upcomingEventsCount');
         const pastEventsCount = document.getElementById('pastEventsCount');
         
-        if (todayEventsCount) {
-            todayEventsCount.innerText = stats.today || 0;
-            animateValue(todayEventsCount);
-        }
-        if (upcomingEventsCount) {
-            upcomingEventsCount.innerText = stats.upcoming || 0;
-            animateValue(upcomingEventsCount);
-        }
-        if (pastEventsCount) {
-            pastEventsCount.innerText = stats.past || 0;
-            animateValue(pastEventsCount);
-        }
+        if (todayEventsCount) todayEventsCount.innerText = stats.today || 0;
+        if (upcomingEventsCount) upcomingEventsCount.innerText = stats.upcoming || 0;
+        if (pastEventsCount) pastEventsCount.innerText = stats.past || 0;
     } catch (error) {
         console.error('Error loading event stats:', error);
     }
-}
-
-function animateValue(element) {
-    if (!element) return;
-    element.style.transform = 'scale(1.1)';
-    setTimeout(() => {
-        if (element) element.style.transform = 'scale(1)';
-    }, 200);
 }
 
 // ========== MEMBERS MANAGEMENT ==========
@@ -399,12 +396,10 @@ window.processImport = async function() {
                     });
                 });
             }
-            
             if (members.length === 0) {
                 alert('No valid members found in file');
                 return;
             }
-            
             let successCount = 0;
             for (const member of members) {
                 try {
@@ -421,7 +416,6 @@ window.processImport = async function() {
                     console.error('Import error:', err);
                 }
             }
-            
             alert(`${successCount} out of ${members.length} members imported successfully!`);
             bootstrap.Modal.getInstance(document.getElementById('importCSVModal')).hide();
             fileInput.value = '';
@@ -581,6 +575,7 @@ document.getElementById('memberForm')?.addEventListener('submit', async (e) => {
 window.filterEvents = async function(category) {
     currentEventFilter = category;
     
+    // Update active button styling
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-filter') === category) {
@@ -628,10 +623,21 @@ window.filterEvents = async function(category) {
                             `<img src="${imageUrl}" width="50" height="50" style="object-fit:cover; border-radius:8px;">` : 
                             '<i class="fas fa-calendar fa-2x text-muted"></i>'}
                      </td>
-                    <td><strong>${escapeHtml(event.title)}</strong>${event.titleAs ? `<br><small class="text-muted">${escapeHtml(event.titleAs)}</small>` : ''}</td>
-                    <td>${new Date(event.date).toLocaleDateString()}<br><small>${event.time || 'TBA'}</small></td>
+                    <td>
+                        <strong>${escapeHtml(event.title)}</strong>
+                        ${event.titleAs ? `<br><small class="text-muted">${escapeHtml(event.titleAs)}</small>` : ''}
+                     </td>
+                    <td>
+                        ${new Date(event.date).toLocaleDateString()}<br>
+                        <small class="text-muted">${event.time || 'TBA'}</small>
+                     </td>
                     <td>${event.location ? escapeHtml(event.location) : 'TBA'}</td>
-                    <td><span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">${event.category}</span></td>
+                    <td>
+                        <span class="badge ${event.category === 'today' ? 'bg-danger' : event.category === 'upcoming' ? 'bg-success' : 'bg-secondary'}">
+                            ${event.category === 'today' ? 'Today' : event.category === 'upcoming' ? 'Upcoming' : 'Past'}
+                        </span>
+                        ${event.featured ? '<span class="badge bg-warning ms-1">Featured</span>' : ''}
+                     </td>
                     <td><span class="badge bg-${statusBadgeClass}">${statusText}</span></td>
                     <td>
                         <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')" title="Change Status"><i class="fas fa-sync-alt"></i></button>
@@ -947,6 +953,13 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Make functions globally available
+window.bulkDeleteMembers = bulkDeleteMembers;
+window.toggleSelectAll = toggleSelectAll;
+window.clearSelection = clearSelection;
+window.processImport = processImport;
+window.downloadSampleCSV = downloadSampleCSV;
 
 // Initialize
 checkAuth();
