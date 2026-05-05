@@ -744,7 +744,23 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         }
     });
 });
-
+// Ensure sections are properly initialized
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug: Log which section is active
+    console.log('Admin panel loaded');
+    
+    // Fix any broken image links
+    setTimeout(() => {
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            if (img.src && img.src.includes('/uploads/') && !img.complete) {
+                console.log('Broken image detected:', img.src);
+                img.style.opacity = '0.3';
+                img.title = 'Image not found';
+            }
+        });
+    }, 2000);
+});
 // Address preview for member modal
 document.addEventListener('DOMContentLoaded', function() {
     const houseNumber = document.getElementById('memberHouseNumber');
