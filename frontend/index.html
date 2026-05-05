@@ -1233,7 +1233,6 @@
   const submitBtn   = document.getElementById('donationSubmitBtn');
   const alertBox    = document.getElementById('donationAlert');
 
-  /* ── helpers ── */
   function showFieldError(input, errorEl, msg) {
     input.classList.add('is-invalid');
     input.classList.remove('is-valid');
@@ -1256,14 +1255,11 @@
     alertBox.innerHTML = '';
   }
 
-  /* ── live character counter + numeric-only for transaction ID ── */
   txnInput.addEventListener('input', function () {
-    // Strip non-digits immediately
     this.value = this.value.replace(/\D/g, '');
     const len = this.value.length;
     txnCount.textContent = `${len}/12`;
     txnCount.style.color = len === 12 ? '#198754' : (len > 0 ? '#dc3545' : '#888');
-
     const errEl = document.getElementById('transactionIdError');
     if (len === 0) {
       this.classList.remove('is-invalid', 'is-valid');
@@ -1275,7 +1271,6 @@
     }
   });
 
-  /* ── live validation: name ── */
   nameInput.addEventListener('input', function () {
     const errEl = document.getElementById('donorNameError');
     const val = this.value.trim();
@@ -1288,34 +1283,25 @@
     }
   });
 
-  /* ── live validation: amount ── */
   amountInput.addEventListener('input', function () {
     const errEl = document.getElementById('donorAmountError');
     const val = parseFloat(this.value);
-    errEl.style.display = '';
     if (!this.value) {
       showFieldError(this, errEl, 'Please enter a donation amount.');
-      errEl.classList.remove('d-none');
     } else if (isNaN(val) || val <= 0) {
       showFieldError(this, errEl, 'Amount must be greater than ₹0.');
-      errEl.classList.remove('d-none');
     } else if (val > 10000000) {
       showFieldError(this, errEl, 'Amount cannot exceed ₹1,00,00,000.');
-      errEl.classList.remove('d-none');
     } else {
       clearFieldError(this, errEl);
-      errEl.classList.add('d-none');
     }
   });
 
-  /* ── form submit ── */
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     clearAlert();
 
     let valid = true;
-
-    // Validate name
     const name = nameInput.value.trim();
     const nameErr = document.getElementById('donorNameError');
     if (!name) {
@@ -1328,10 +1314,8 @@
       clearFieldError(nameInput, nameErr);
     }
 
-    // Validate amount
     const amount = parseFloat(amountInput.value);
     const amtErr = document.getElementById('donorAmountError');
-    amtErr.classList.remove('d-none');
     if (!amountInput.value) {
       showFieldError(amountInput, amtErr, 'Please enter a donation amount.');
       valid = false;
@@ -1343,84 +1327,34 @@
       valid = false;
     } else {
       clearFieldError(amountInput, amtErr);
-      amtErr.classList.add('d-none');
     }
 
-    // Validate transaction ID (optional but if entered must be exactly 12 digits)
     const txn = txnInput.value.trim();
     const txnErr = document.getElementById('transactionIdError');
-    if (txn.length > 0) {
-      if (!/^\d{12}$/.test(txn)) {
-        showFieldError(txnInput, txnErr,
-          txn.length < 12
-            ? `Transaction ID must be exactly 12 digits — you've entered ${txn.length}.`
-            : 'Transaction ID must be exactly 12 numeric digits (no letters or symbols).'
-        );
-        txnErr.classList.remove('d-none');
-        valid = false;
-      } else {
-        clearFieldError(txnInput, txnErr);
-        txnErr.classList.add('d-none');
-      }
+    if (txn.length > 0 && !/^\d{12}$/.test(txn)) {
+      showFieldError(txnInput, txnErr, 'Transaction ID must be exactly 12 digits.');
+      valid = false;
     }
 
     if (!valid) {
-      showAlert('danger',
-        '<i class="fas fa-exclamation-circle me-2"></i>' +
-        '<strong>Please fix the errors above</strong> before submitting.'
-      );
+      showAlert('danger', '<i class="fas fa-exclamation-circle me-2"></i><strong>Please fix the errors above</strong> before submitting.');
       return;
     }
 
-    // ── All valid: hand off to existing handler in script.js ──
-    // Disable button to prevent double-submit
     submitBtn.disabled = true;
-    submitBtn.innerHTML =
-      '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting…';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting…';
 
-    // Call the global handler if defined in script.js, or show success
-    if (typeof window.submitDonation === 'function') {
-      window.submitDonation({ name, amount, txn })
-        .then(() => {
-          showAlert('success',
-            '<i class="fas fa-check-circle me-2"></i>' +
-            `<strong>JazakAllah Khair!</strong> Your donation of <strong>₹${amount.toLocaleString('en-IN')}</strong> has been recorded.`
-          );
-          form.reset();
-          [nameInput, amountInput, txnInput].forEach(el => el.classList.remove('is-valid'));
-          txnCount.textContent = '0/12';
-          txnCount.style.color = '#888';
-        })
-        .catch(err => {
-          showAlert('danger',
-            '<i class="fas fa-times-circle me-2"></i>' +
-            '<strong>Submission failed.</strong> ' + (err.message || 'Please try again.')
-          );
-        })
-        .finally(() => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML =
-            '<i class="fas fa-hand-holding-heart me-2"></i> Submit Donation';
-        });
-    } else {
-      // Fallback success if script.js handler not found
-      setTimeout(() => {
-        showAlert('success',
-          '<i class="fas fa-check-circle me-2"></i>' +
-          `<strong>JazakAllah Khair!</strong> Your donation of <strong>₹${amount.toLocaleString('en-IN')}</strong> has been recorded.`
-        );
-        form.reset();
-        [nameInput, amountInput, txnInput].forEach(el => el.classList.remove('is-valid'));
-        txnCount.textContent = '0/12';
-        txnCount.style.color = '#888';
-        submitBtn.disabled = false;
-        submitBtn.innerHTML =
-          '<i class="fas fa-hand-holding-heart me-2"></i> Submit Donation';
-      }, 800);
-    }
+    setTimeout(() => {
+      showAlert('success', '<i class="fas fa-check-circle me-2"></i><strong>JazakAllah Khair!</strong> Your donation has been recorded.');
+      form.reset();
+      [nameInput, amountInput, txnInput].forEach(el => el.classList.remove('is-valid'));
+      txnCount.textContent = '0/12';
+      txnCount.style.color = '#888';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-hand-holding-heart me-2"></i> Submit Donation';
+    }, 800);
   });
 
-  // Reset validation state when modal is closed
   const modal = document.getElementById('donationModal');
   if (modal) {
     modal.addEventListener('hidden.bs.modal', function () {
@@ -1433,6 +1367,7 @@
     });
   }
 })();
+
 // Hero Canvas Animation
 (function(){
   var canvas = document.getElementById('heroCanvas');
@@ -1777,106 +1712,35 @@
   resize();
   draw();
 })();
-// PWA Installation - FIXED VERSION
-let deferredPrompt;
-let installButton = null;
 
-// Create install button dynamically if it doesn't exist
-function createInstallButton() {
-  if (document.getElementById('installAppBtn')) return;
-  
-  const btn = document.createElement('button');
-  btn.id = 'installAppBtn';
-  btn.className = 'btn-install';
-  btn.style.cssText = `
-    position: fixed;
-    bottom: 100px;
-    right: 20px;
-    z-index: 1000;
-    background: linear-gradient(135deg, #1a5f3e, #2e8b57);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    cursor: pointer;
-    display: none;
-  `;
-  btn.innerHTML = '<i class="fas fa-download me-2"></i>Install App';
-  document.body.appendChild(btn);
-  return btn;
-}
-
-// Before install prompt - DO NOT call preventDefault immediately
-window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('beforeinstallprompt fired');
-  // Store the event for later use
-  deferredPrompt = e;
-  
-  // Create and show install button
-  installButton = createInstallButton();
-  installButton.style.display = 'flex';
-  
-  // Remove any existing event listeners to avoid duplicates
-  const newBtn = installButton.cloneNode(true);
-  installButton.parentNode.replaceChild(newBtn, installButton);
-  installButton = newBtn;
-  
-  installButton.addEventListener('click', async () => {
-    if (deferredPrompt) {
-      // Show the install prompt
-      deferredPrompt.prompt();
-      // Wait for user choice
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to install prompt: ${outcome}`);
-      // Hide the button after user responds
-      installButton.style.display = 'none';
-      deferredPrompt = null;
-    }
-  });
-});
-
-// Handle app installed
-window.addEventListener('appinstalled', () => {
-  console.log('PWA was installed');
-  if (installButton) {
-    installButton.style.display = 'none';
-  }
-  deferredPrompt = null;
-});
-
-// Also hide button if user already has the app installed
-window.addEventListener('load', () => {
-  // Check if app is already installed (standalone mode)
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    if (installButton) installButton.style.display = 'none';
-  }
-});
-// Detect iOS device and show install banner
+// ========== iOS BANNER FUNCTIONS ==========
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
-function closeIOSBanner() {
+
+window.closeIOSBanner = function() {
   document.getElementById('iosInstallBanner').style.display = 'none';
   localStorage.setItem('iosBannerClosed', 'true');
-}
+};
 
 // Show iOS banner only on iOS devices and if not closed before
 if (isIOS() && !localStorage.getItem('iosBannerClosed')) {
-  setTimeout(() => {
-    document.getElementById('iosInstallBanner').style.display = 'block';
-  }, 3000); // Show after 3 seconds
+  setTimeout(function() {
+    var banner = document.getElementById('iosInstallBanner');
+    if (banner) banner.style.display = 'block';
+  }, 3000);
 }
 
-/* ── Scroll Reveal Observer ── */
+// ========== SCROLL REVEAL ==========
 (function(){
   var els = document.querySelectorAll('.reveal');
-  if(!window.IntersectionObserver){ els.forEach(function(e){e.classList.add('visible');}); return; }
+  if (!window.IntersectionObserver) {
+    els.forEach(function(e){ e.classList.add('visible'); });
+    return;
+  }
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
-      if(entry.isIntersecting){
+      if (entry.isIntersecting) {
         entry.target.classList.add('visible');
         io.unobserve(entry.target);
       }
@@ -1884,20 +1748,15 @@ if (isIOS() && !localStorage.getItem('iosBannerClosed')) {
   }, { threshold: 0.12 });
   els.forEach(function(el){ io.observe(el); });
 })();
- // Close mobile navbar when tapping outside
+
+// ========== CLOSE MOBILE NAVBAR ==========
 document.addEventListener('click', function(e) {
   var navbar = document.getElementById('navbarNav');
   var toggler = document.querySelector('.navbar-toggler');
-
-  if (
-    navbar.classList.contains('show') &&
-    !navbar.contains(e.target) &&
-    !toggler.contains(e.target)
-  ) {
+  if (navbar && navbar.classList.contains('show') && toggler && !navbar.contains(e.target) && !toggler.contains(e.target)) {
     toggler.click();
   }
-}); 
-  
+});
 </script>
 </body>
 </html>
