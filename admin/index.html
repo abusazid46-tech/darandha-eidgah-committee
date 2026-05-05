@@ -353,7 +353,7 @@
             <span class="input-group-text bg-white">
                 <i class="fas fa-search text-success"></i>
             </span>
-            <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name, phone or address..." oninput="searchMembers()">
+            <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name, phone or address..." oninput="if(typeof searchMembers === 'function') searchMembers()">
             <button class="btn btn-outline-secondary" onclick="clearMemberSearch()" type="button">
                 <i class="fas fa-times"></i>
             </button>
