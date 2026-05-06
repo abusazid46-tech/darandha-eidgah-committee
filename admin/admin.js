@@ -256,13 +256,13 @@ function displayFilteredMembers() {
     // Apply search filter
     if (currentSearchTerm) {
         const searchLower = currentSearchTerm.toLowerCase();
-        filteredMembers = filteredMembers.filter(m => 
-            m.name.toLowerCase().includes(searchLower) ||
-            (m.nameAs && m.nameAs.toLowerCase().includes(searchLower)) ||
-            (m.phone && m.phone.includes(searchLower)) ||
-            (m.address && m.address.toLowerCase().includes(searchLower)) ||
-            (m.role && m.role.toLowerCase().includes(searchLower))
-        );
+        filteredMembers = filteredMembers.filter(m =>
+    (m.name && m.name.toLowerCase().includes(searchLower)) ||
+    (m.nameAs && m.nameAs.toLowerCase().includes(searchLower)) ||
+    (m.phone && m.phone.includes(searchLower)) ||
+    (m.address && m.address.toLowerCase().includes(searchLower)) ||
+    (m.role && m.role.toLowerCase().includes(searchLower))
+);
     }
     
     // Update search result count
@@ -894,8 +894,6 @@ window.toggleSelectAll = toggleSelectAll;
 window.clearSelection = clearSelection;
 window.processImport = processImport;
 window.downloadSampleCSV = downloadSampleCSV;
-window.searchMembers = searchMembers;
-window.clearMemberSearch = clearMemberSearch;
 
 // Initialize
 checkAuth();
