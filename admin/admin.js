@@ -116,6 +116,7 @@ function showDashboard() {
     loadUpiSettings();
     loadEventStats();
     filterEvents('all');
+    loadAdminProfile();
 }
 
 // Login
