@@ -656,7 +656,76 @@ app.put('/api/donations/:id/reject', authMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Failed to reject donation' });
     }
 });
+// ========== ADMIN PROFILE MANAGEMENT ==========
 
+// Change password endpoint
+app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const adminId = req.admin.id;
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current password and new password are required' });
+        }
+        
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'New password must be at least 6 characters' });
+        }
+        
+        // Find admin
+        const admin = await Admin.findById(adminId);
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        
+        // Verify current password
+        const isValid = await bcrypt.compare(currentPassword, admin.password);
+        if (!isValid) {
+            return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+        
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        admin.password = hashedPassword;
+        await admin.save();
+        
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({ message: 'Failed to change password' });
+    }
+});
+
+// Update admin email
+app.put('/api/auth/update-email', authMiddleware, async (req, res) => {
+    try {
+        const { email } = req.body;
+        const adminId = req.admin.id;
+        
+        const admin = await Admin.findById(adminId);
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        
+        admin.email = email;
+        await admin.save();
+        
+        res.json({ success: true, message: 'Email updated successfully' });
+    } catch (error) {
+        console.error('Email update error:', error);
+        res.status(500).json({ message: 'Failed to update email' });
+    }
+});
+
+// Get admin profile
+app.get('/api/auth/profile', authMiddleware, async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.admin.id).select('-password -refreshToken');
+        res.json(admin);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get profile' });
+    }
+});
 // ========== STATISTICS ==========
 app.get('/api/stats', authMiddleware, async (req, res) => {
     try {
