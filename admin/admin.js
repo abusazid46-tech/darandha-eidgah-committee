@@ -887,7 +887,183 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+// ========== ADMIN PROFILE MANAGEMENT ==========
 
+// Load admin profile info
+async function loadAdminProfile() {
+    if (!token) return;
+    try {
+        const res = await fetch(`${API_URL}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            const admin = data.user;
+            
+            document.getElementById('currentUsername').value = admin.username || 'admin';
+            document.getElementById('adminEmail').value = admin.email || '';
+        }
+    } catch (error) {
+        console.error('Error loading admin profile:', error);
+    }
+}
+
+// Check password strength
+function checkPasswordStrength(password) {
+    let strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.length >= 10) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    const strengthDiv = document.getElementById('passwordStrength');
+    if (password.length === 0) {
+        strengthDiv.innerHTML = '';
+        return;
+    }
+    
+    let strengthText = '';
+    let strengthClass = '';
+    
+    if (strength <= 2) {
+        strengthText = 'Weak';
+        strengthClass = 'weak';
+    } else if (strength <= 4) {
+        strengthText = 'Medium';
+        strengthClass = 'medium';
+    } else {
+        strengthText = 'Strong';
+        strengthClass = 'strong';
+    }
+    
+    strengthDiv.innerHTML = `
+        <div class="password-strength ${strengthClass}"></div>
+        <small class="text-muted">Password strength: ${strengthText}</small>
+    `;
+}
+
+// Change password
+async function changePassword(currentPassword, newPassword) {
+    try {
+        const res = await fetch(`${API_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            })
+        });
+        
+        const data = await res.json();
+        return { success: res.ok, message: data.message || (res.ok ? 'Password changed successfully!' : 'Failed to change password') };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+}
+
+// Update admin email
+async function updateAdminEmail(email) {
+    try {
+        const res = await fetch(`${API_URL}/auth/update-email`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ email: email })
+        });
+        
+        const data = await res.json();
+        return { success: res.ok, message: data.message || (res.ok ? 'Email updated successfully!' : 'Failed to update email') };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+}
+
+// Admin profile form submit
+document.getElementById('adminProfileForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const email = document.getElementById('adminEmail').value;
+    const messageSpan = document.getElementById('profileMessage');
+    
+    messageSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    messageSpan.style.color = '#0d6efd';
+    
+    let hasError = false;
+    
+    // Update email if changed
+    if (email) {
+        const emailResult = await updateAdminEmail(email);
+        if (!emailResult.success) {
+            messageSpan.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> ${emailResult.message}`;
+            messageSpan.style.color = '#dc3545';
+            hasError = true;
+        }
+    }
+    
+    // Change password if new password provided
+    if (newPassword) {
+        if (newPassword !== confirmPassword) {
+            messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> New passwords do not match!';
+            messageSpan.style.color = '#dc3545';
+            hasError = true;
+        } else if (newPassword.length < 6) {
+            messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Password must be at least 6 characters!';
+            messageSpan.style.color = '#dc3545';
+            hasError = true;
+        } else if (!currentPassword) {
+            messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Current password is required to change password!';
+            messageSpan.style.color = '#dc3545';
+            hasError = true;
+        } else {
+            const passwordResult = await changePassword(currentPassword, newPassword);
+            if (!passwordResult.success) {
+                messageSpan.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> ${passwordResult.message}`;
+                messageSpan.style.color = '#dc3545';
+                hasError = true;
+            }
+        }
+    }
+    
+    if (!hasError) {
+        messageSpan.innerHTML = '<i class="fas fa-check-circle me-1"></i> Profile updated successfully!';
+        messageSpan.style.color = '#198754';
+        
+        // Clear password fields
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        document.getElementById('passwordStrength').innerHTML = '';
+        
+        // Refresh token if password was changed
+        if (newPassword) {
+            setTimeout(() => {
+                alert('Password changed! Please login again.');
+                document.getElementById('logoutBtn').click();
+            }, 1500);
+        }
+    }
+    
+    setTimeout(() => {
+        if (!hasError && !newPassword) {
+            messageSpan.innerHTML = '';
+        }
+    }, 3000);
+});
+
+// Password strength checker
+document.getElementById('newPassword')?.addEventListener('input', function() {
+    checkPasswordStrength(this.value);
+});
 // Make functions globally available
 window.bulkDeleteMembers = bulkDeleteMembers;
 window.toggleSelectAll = toggleSelectAll;
