@@ -190,6 +190,16 @@
                 font-size: 0.8rem;
             }
         }
+        /* Password Strength Meter */
+.password-strength {
+    height: 5px;
+    border-radius: 5px;
+    margin-top: 5px;
+    transition: all 0.3s;
+}
+.password-strength.weak { width: 33%; background: #dc3545; }
+.password-strength.medium { width: 66%; background: #ffc107; }
+.password-strength.strong { width: 100%; background: #198754; }
     </style>
 </head>
 <body>
@@ -539,12 +549,59 @@
                             </form>
                         </div>
                     </div>
+                    
                 </div> <!-- END settingsSection -->
             </div>
         </div>
     </div>
 </div>
-
+<!-- Admin Profile Settings Card -->
+<div class="card mt-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Admin Profile Settings</h5>
+    </div>
+    <div class="card-body">
+        <form id="adminProfileForm">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Current Username</label>
+                    <input type="text" class="form-control" id="currentUsername" readonly disabled>
+                    <small class="text-muted">Username cannot be changed</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="adminEmail" placeholder="admin@darandhaeidgah.org">
+                </div>
+            </div>
+            
+            <hr class="my-3">
+            <h6 class="mb-3"><i class="fas fa-key me-2"></i>Change Password</h6>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Current Password *</label>
+                    <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" placeholder="Enter new password">
+                    <small class="text-muted">Minimum 6 characters</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                </div>
+            </div>
+            
+            <div id="passwordStrength" class="mb-3"></div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Update Profile
+            </button>
+            <span id="profileMessage" class="ms-3"></span>
+        </form>
+    </div>
+</div>
 <!-- Import CSV Modal -->
 <div class="modal fade" id="importCSVModal" tabindex="-1">
     <div class="modal-dialog">
