@@ -10,6 +10,7 @@ let currentSearchTerm = '';
 
 // Dignitary roles
 const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser', 'Executive Member'];
+
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
@@ -22,7 +23,7 @@ function getEventImageUrl(imagePath) {
     return `https://darandha-eidgah-committee.onrender.com${imagePath}`;
 }
 
-// Helper functions for address handling (ONLY ONCE)
+// Helper functions for address handling
 function parseAddress(address) {
     if (!address) return { houseNumber: '', fullAddress: '' };
     const firstCommaIndex = address.indexOf(',');
@@ -100,14 +101,12 @@ function showDashboard() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardContent) dashboardContent.style.display = 'block';
     
-    // Show dashboard section by default
     document.getElementById('dashboardSection').style.display = 'block';
     document.getElementById('membersSection').style.display = 'none';
     document.getElementById('eventsSection').style.display = 'none';
     document.getElementById('donationsSection').style.display = 'none';
     document.getElementById('settingsSection').style.display = 'none';
     
-    // Load all data
     loadDashboard();
     loadMembers();
     loadDonations();
@@ -253,19 +252,17 @@ async function loadMembers() {
 function displayFilteredMembers() {
     let filteredMembers = [...allMembersData];
     
-    // Apply search filter
     if (currentSearchTerm) {
         const searchLower = currentSearchTerm.toLowerCase();
         filteredMembers = filteredMembers.filter(m =>
-    (m.name && m.name.toLowerCase().includes(searchLower)) ||
-    (m.nameAs && m.nameAs.toLowerCase().includes(searchLower)) ||
-    (m.phone && m.phone.includes(searchLower)) ||
-    (m.address && m.address.toLowerCase().includes(searchLower)) ||
-    (m.role && m.role.toLowerCase().includes(searchLower))
-);
+            (m.name && m.name.toLowerCase().includes(searchLower)) ||
+            (m.nameAs && m.nameAs.toLowerCase().includes(searchLower)) ||
+            (m.phone && m.phone.includes(searchLower)) ||
+            (m.address && m.address.toLowerCase().includes(searchLower)) ||
+            (m.role && m.role.toLowerCase().includes(searchLower))
+        );
     }
     
-    // Update search result count
     const resultCount = document.getElementById('searchResultCount');
     if (resultCount) {
         if (currentSearchTerm) {
@@ -297,7 +294,6 @@ function displayFilteredMembers() {
             addressHtml = '-';
         }
         
-        // Highlight search term in name
         let displayName = m.name;
         if (currentSearchTerm) {
             const regex = new RegExp(`(${currentSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
@@ -323,7 +319,6 @@ function displayFilteredMembers() {
     clearSelection();
 }
 
-// Search functions
 window.searchMembers = function() {
     const searchInput = document.getElementById('memberSearchInput');
     if (searchInput) {
@@ -700,7 +695,7 @@ window.filterEvents = async function(category) {
                         <button class="btn btn-sm btn-warning me-1" onclick="toggleEventStatus('${event._id}', '${event.status}')"><i class="fas fa-sync-alt"></i></button>
                         <button class="btn btn-sm btn-primary me-1" onclick="editEvent('${event._id}')"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteEvent('${event._id}')"><i class="fas fa-trash"></i></button>
-                     </td>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -709,8 +704,251 @@ window.filterEvents = async function(category) {
     }
 };
 
-// Add the rest of your event functions here (toggleEventStatus, openEventModal, editEvent, etc.)
-// ... (keep your existing event functions from lines 500-700)
+// ========== EVENT CRUD FUNCTIONS ==========
+
+window.openEventModal = function() {
+    try {
+        document.getElementById('eventId').value = '';
+        document.getElementById('eventForm').reset();
+        document.getElementById('eventModalTitle').innerText = 'Add New Event';
+        
+        const eventImagePreview = document.getElementById('eventImagePreview');
+        if (eventImagePreview) {
+            eventImagePreview.innerHTML = '';
+            eventImagePreview.style.display = 'none';
+        }
+        
+        const eventDate = document.getElementById('eventDate');
+        if (eventDate) {
+            const today = new Date().toISOString().split('T')[0];
+            eventDate.value = today;
+        }
+        
+        const eventTime = document.getElementById('eventTime');
+        if (eventTime) {
+            const now = new Date();
+            eventTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        const modalElement = document.getElementById('eventModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error opening event modal:', error);
+        alert('Error opening modal: ' + error.message);
+    }
+};
+
+window.editEvent = async function(id) {
+    try {
+        const res = await fetch(`${API_URL}/events/${id}`);
+        const event = await res.json();
+        
+        document.getElementById('eventId').value = event._id;
+        document.getElementById('eventTitle').value = event.title;
+        document.getElementById('eventTitleAs').value = event.titleAs || '';
+        document.getElementById('eventDesc').value = event.description || '';
+        document.getElementById('eventDescAs').value = event.descriptionAs || '';
+        document.getElementById('eventDate').value = event.date ? event.date.split('T')[0] : '';
+        document.getElementById('eventTime').value = event.time || '';
+        document.getElementById('eventEndTime').value = event.endTime || '';
+        document.getElementById('eventLocation').value = event.location || '';
+        document.getElementById('eventLocationAs').value = event.locationAs || '';
+        document.getElementById('eventStatus').value = event.status || 'active';
+        document.getElementById('eventFeatured').checked = event.featured || false;
+        document.getElementById('eventModalTitle').innerText = 'Edit Event';
+        
+        const preview = document.getElementById('eventImagePreview');
+        if (event.image && preview) {
+            const imageUrl = getEventImageUrl(event.image);
+            preview.innerHTML = `<div class="text-center">
+                <img src="${imageUrl}" style="max-width:200px; border-radius:8px; margin-bottom:10px;">
+                <br>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeEventImage()">Remove Image</button>
+            </div>`;
+            preview.style.display = 'block';
+        }
+        
+        const modalElement = document.getElementById('eventModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error loading event:', error);
+        alert('Error loading event: ' + error.message);
+    }
+};
+
+window.removeEventImage = function() {
+    const preview = document.getElementById('eventImagePreview');
+    if (preview) {
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+    }
+    const eventImage = document.getElementById('eventImage');
+    if (eventImage) eventImage.value = '';
+};
+
+window.deleteEvent = async function(id) {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            alert('Event deleted successfully');
+            await filterEvents(currentEventFilter);
+            await loadDashboard();
+            await loadEventStats();
+        } else {
+            alert('Failed to delete event');
+        }
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Error: ' + error.message);
+    }
+};
+
+window.toggleEventStatus = async function(id, currentStatus) {
+    let newStatus = '';
+    let confirmMessage = '';
+    
+    if (currentStatus === 'active') {
+        newStatus = 'cancelled';
+        confirmMessage = 'Cancel this event?';
+    } else if (currentStatus === 'cancelled') {
+        newStatus = 'completed';
+        confirmMessage = 'Mark this event as completed?';
+    } else if (currentStatus === 'completed') {
+        newStatus = 'active';
+        confirmMessage = 'Reactivate this event?';
+    }
+    
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+        const getRes = await fetch(`${API_URL}/events/${id}`);
+        const event = await getRes.json();
+        event.status = newStatus;
+        
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(event)
+        });
+        
+        if (res.ok) {
+            alert(`Event ${newStatus} successfully!`);
+            await filterEvents(currentEventFilter);
+            await loadEventStats();
+            await loadDashboard();
+            await fetch(`${API_URL}/events/sync`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } else {
+            const error = await res.json();
+            alert('Failed to update status: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error updating event status:', error);
+        alert('Error: ' + error.message);
+    }
+};
+
+window.manualSync = async function() {
+    if (!confirm('Manually sync event categories? This will update all event statuses based on current date.')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/events/sync`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            alert(`Sync completed! Today: ${data.stats.today}, Upcoming: ${data.stats.upcoming}, Past: ${data.stats.past}`);
+            await filterEvents(currentEventFilter);
+            await loadEventStats();
+            await loadDashboard();
+        } else {
+            alert('Sync failed');
+        }
+    } catch (error) {
+        console.error('Sync error:', error);
+        alert('Error: ' + error.message);
+    }
+};
+
+document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('eventId').value;
+    const formData = new FormData();
+    
+    const eventData = {
+        title: document.getElementById('eventTitle').value,
+        titleAs: document.getElementById('eventTitleAs')?.value || '',
+        description: document.getElementById('eventDesc').value,
+        descriptionAs: document.getElementById('eventDescAs')?.value || '',
+        date: document.getElementById('eventDate').value,
+        time: document.getElementById('eventTime').value,
+        endTime: document.getElementById('eventEndTime')?.value || '',
+        location: document.getElementById('eventLocation').value,
+        locationAs: document.getElementById('eventLocationAs')?.value || '',
+        status: document.getElementById('eventStatus').value,
+        featured: document.getElementById('eventFeatured')?.checked || false
+    };
+    
+    formData.append('data', JSON.stringify(eventData));
+    
+    const imageFile = document.getElementById('eventImage')?.files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+    
+    try {
+        const url = id ? `${API_URL}/events/${id}` : `${API_URL}/events`;
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+            method,
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        
+        if (res.ok) {
+            alert(id ? 'Event updated successfully' : 'Event added successfully');
+            const modalElement = document.getElementById('eventModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+            }
+            await filterEvents(currentEventFilter);
+            await loadDashboard();
+            await loadEventStats();
+            await fetch(`${API_URL}/events/sync`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } else {
+            const error = await res.json();
+            alert('Failed to save event: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving event:', error);
+        alert('Error: ' + error.message);
+    }
+});
 
 // ========== DONATIONS MANAGEMENT ==========
 
@@ -887,9 +1125,9 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 // ========== ADMIN PROFILE MANAGEMENT ==========
 
-// Load admin profile info
 async function loadAdminProfile() {
     if (!token) return;
     try {
@@ -909,7 +1147,6 @@ async function loadAdminProfile() {
     }
 }
 
-// Check password strength
 function checkPasswordStrength(password) {
     let strength = 0;
     if (password.length >= 6) strength++;
@@ -944,7 +1181,6 @@ function checkPasswordStrength(password) {
     `;
 }
 
-// Change password
 async function changePassword(currentPassword, newPassword) {
     try {
         const res = await fetch(`${API_URL}/auth/change-password`, {
@@ -966,7 +1202,6 @@ async function changePassword(currentPassword, newPassword) {
     }
 }
 
-// Update admin email
 async function updateAdminEmail(email) {
     try {
         const res = await fetch(`${API_URL}/auth/update-email`, {
@@ -985,7 +1220,6 @@ async function updateAdminEmail(email) {
     }
 }
 
-// Admin profile form submit
 document.getElementById('adminProfileForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -1000,7 +1234,6 @@ document.getElementById('adminProfileForm')?.addEventListener('submit', async (e
     
     let hasError = false;
     
-    // Update email if changed
     if (email) {
         const emailResult = await updateAdminEmail(email);
         if (!emailResult.success) {
@@ -1010,7 +1243,6 @@ document.getElementById('adminProfileForm')?.addEventListener('submit', async (e
         }
     }
     
-    // Change password if new password provided
     if (newPassword) {
         if (newPassword !== confirmPassword) {
             messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> New passwords do not match!';
@@ -1021,7 +1253,7 @@ document.getElementById('adminProfileForm')?.addEventListener('submit', async (e
             messageSpan.style.color = '#dc3545';
             hasError = true;
         } else if (!currentPassword) {
-            messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Current password is required to change password!';
+            messageSpan.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Current password is required!';
             messageSpan.style.color = '#dc3545';
             hasError = true;
         } else {
@@ -1038,13 +1270,11 @@ document.getElementById('adminProfileForm')?.addEventListener('submit', async (e
         messageSpan.innerHTML = '<i class="fas fa-check-circle me-1"></i> Profile updated successfully!';
         messageSpan.style.color = '#198754';
         
-        // Clear password fields
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
         document.getElementById('passwordStrength').innerHTML = '';
         
-        // Refresh token if password was changed
         if (newPassword) {
             setTimeout(() => {
                 alert('Password changed! Please login again.');
@@ -1060,16 +1290,18 @@ document.getElementById('adminProfileForm')?.addEventListener('submit', async (e
     }, 3000);
 });
 
-// Password strength checker
 document.getElementById('newPassword')?.addEventListener('input', function() {
     checkPasswordStrength(this.value);
 });
+
 // Make functions globally available
 window.bulkDeleteMembers = bulkDeleteMembers;
 window.toggleSelectAll = toggleSelectAll;
 window.clearSelection = clearSelection;
 window.processImport = processImport;
 window.downloadSampleCSV = downloadSampleCSV;
+window.searchMembers = searchMembers;
+window.clearMemberSearch = clearMemberSearch;
 
 // Initialize
 checkAuth();
