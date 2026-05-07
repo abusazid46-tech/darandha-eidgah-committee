@@ -12,8 +12,7 @@ let allMembersFiltered = [];
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
 // Dignitary roles - will be loaded from database
-let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
-
+let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser', 'Executive Member'];
 // Function to load dignitary roles from database
 async function loadDignitaryRolesFromDB() {
     try {
