@@ -9,8 +9,7 @@ let allMembersData = [];
 let currentSearchTerm = '';
 
 // Dignitary roles
-const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser'];
-
+const dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser', 'Executive Member'];
 // DOM Elements
 let currentSection = 'dashboard';
 let currentEventImage = null;
