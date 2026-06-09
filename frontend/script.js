@@ -11,8 +11,25 @@ let allMembersFiltered = [];
 
 // Configuration for homepage member display
 const MAX_MEMBERS_ON_HOMEPAGE = 12;
+const MAX_LEADERS_ON_HOMEPAGE = 10;
+const DIGNITARY_ROLE_ORDER = [
+    ['President'],
+    ['Vice President'],
+    ['Secretary'],
+    ['Joint Secretary'],
+    ['Cashier'],
+    ['Executive Member'],
+    ['Advise', 'Adviser', 'Advisor']
+];
 // Dignitary roles - will be loaded from database
-let dignitaryRoles = ['President', 'Vice President', 'Secretary', 'Joint Secretary', 'Cashier', 'Adviser', 'Executive Member'];
+let dignitaryRoles = DIGNITARY_ROLE_ORDER.flat();
+
+function addDignitaryRole(role) {
+    if (!dignitaryRoles.some(existing => normalizeRole(existing) === normalizeRole(role))) {
+        dignitaryRoles.push(role);
+    }
+}
+
 // Function to load dignitary roles from database
 async function loadDignitaryRolesFromDB() {
     try {
@@ -22,7 +39,8 @@ async function loadDignitaryRolesFromDB() {
         if (settings.dignitary_roles && settings.dignitary_roles.value) {
             const loadedRoles = JSON.parse(settings.dignitary_roles.value);
             dignitaryRoles.length = 0;
-            loadedRoles.forEach(role => dignitaryRoles.push(role));
+            loadedRoles.forEach(addDignitaryRole);
+            DIGNITARY_ROLE_ORDER.flat().forEach(addDignitaryRole);
             console.log('✅ Dignitary roles loaded from DB:', dignitaryRoles);
             return true;
         } else {
@@ -36,10 +54,30 @@ async function loadDignitaryRolesFromDB() {
 }
 
 // Helper function for case-insensitive role matching
+function normalizeRole(role) {
+    return (role || '').trim().toLowerCase();
+}
+
 function isDignitary(role) {
     if (!role) return false;
-    const roleLower = role.toLowerCase();
-    return dignitaryRoles.some(r => r.toLowerCase() === roleLower);
+    const roleLower = normalizeRole(role);
+    return dignitaryRoles.some(r => normalizeRole(r) === roleLower);
+}
+
+function getDignitaryRank(role) {
+    const roleLower = normalizeRole(role);
+    const index = DIGNITARY_ROLE_ORDER.findIndex(group =>
+        group.some(alias => normalizeRole(alias) === roleLower)
+    );
+    return index === -1 ? DIGNITARY_ROLE_ORDER.length : index;
+}
+
+function sortDignitaries(members) {
+    return [...members].sort((a, b) => {
+        const rankDiff = getDignitaryRank(a.role) - getDignitaryRank(b.role);
+        if (rankDiff !== 0) return rankDiff;
+        return (a.name || '').localeCompare(b.name || '');
+    });
 }
 
 
@@ -218,13 +256,13 @@ function applyFilters() {
     
     // Apply view mode filter - USING CASE-INSENSITIVE MATCHING
     if (currentViewMode === 'dignitaries') {
-        displayMembers = displayMembers.filter(member => isDignitary(member.role));
+        displayMembers = sortDignitaries(displayMembers.filter(member => isDignitary(member.role)));
     }
     
     // Apply limits only for homepage initial view
     if (currentViewMode === 'dignitaries' && currentSearchTerm === '' && currentAreaFilter === 'all') {
-        if (displayMembers.length > 6) {
-            displayMembers = displayMembers.slice(0, 6);
+        if (displayMembers.length > MAX_LEADERS_ON_HOMEPAGE) {
+            displayMembers = displayMembers.slice(0, MAX_LEADERS_ON_HOMEPAGE);
             isLimited = true;
             totalAvailable = allMembersFiltered.filter(m => isDignitary(m.role)).length;
         }
@@ -257,7 +295,7 @@ function displayMembersList(members) {
     }
     
     // CASE-INSENSITIVE role matching for dignitaries
-    const dignitaries = members.filter(m => isDignitary(m.role));
+    const dignitaries = sortDignitaries(members.filter(m => isDignitary(m.role)));
     const regularMembers = members.filter(m => !isDignitary(m.role));
     
     let html = '';
@@ -397,7 +435,7 @@ function updateResultCount(displayCount, isLimited, totalCount) {
 window.loadAllMembers = function() {
     let displayMembers;
     if (currentViewMode === 'dignitaries') {
-        displayMembers = allMembersFiltered.filter(m => isDignitary(m.role));
+        displayMembers = sortDignitaries(allMembersFiltered.filter(m => isDignitary(m.role)));
     } else {
         displayMembers = [...allMembersFiltered];
     }
