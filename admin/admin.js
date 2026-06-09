@@ -1119,6 +1119,60 @@ if (upiSettingsForm) {
     });
 }
 
+// Push Notification Form Submit
+const pushNotificationForm = document.getElementById('pushNotificationForm');
+if (pushNotificationForm) {
+    pushNotificationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!token) return;
+
+        const title = document.getElementById('pushTitle')?.value.trim();
+        const body = document.getElementById('pushBody')?.value.trim();
+        const url = document.getElementById('pushUrl')?.value.trim() || '/';
+        const messageEl = document.getElementById('pushMessage');
+
+        if (!title || !body) {
+            alert('Please enter notification title and message.');
+            return;
+        }
+
+        if (messageEl) {
+            messageEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            messageEl.style.color = '#0d6efd';
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/push/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title, body, url })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to send notification.');
+            }
+
+            if (messageEl) {
+                const skippedText = data.skipped ? ' Push is not configured on the server yet.' : '';
+                messageEl.innerHTML = `<i class="fas fa-check-circle me-1"></i> Sent to ${data.sent || 0} device(s).${skippedText}`;
+                messageEl.style.color = '#198754';
+            }
+            pushNotificationForm.reset();
+        } catch (error) {
+            if (messageEl) {
+                messageEl.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> ${error.message}`;
+                messageEl.style.color = '#dc3545';
+            } else {
+                alert(error.message);
+            }
+        }
+    });
+}
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

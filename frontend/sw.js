@@ -1,5 +1,5 @@
 // frontend/sw.js
-const CACHE_NAME = 'darandha-eidgah-v1';
+const CACHE_NAME = 'darandha-eidgah-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -78,5 +78,53 @@ self.addEventListener('fetch', event => {
           return response;
         });
       })
+  );
+});
+
+self.addEventListener('push', event => {
+  let data = {
+    title: 'Darandha Eidgah Committee',
+    body: 'New update from Darandha Eidgah Committee.',
+    url: '/',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: 'darandha-update'
+  };
+
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch (error) {
+      data.body = event.data.text();
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      tag: data.tag,
+      data: { url: data.url || '/' },
+      requireInteraction: false
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (const client of windowClients) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });

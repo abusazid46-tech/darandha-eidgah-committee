@@ -5,6 +5,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const webpush = require('web-push');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -12,6 +13,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'darandha_eidgah_secret_key_2024';
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:info@darandhaeidgah.org';
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
 
 // Middleware
 app.use(cors({
@@ -122,12 +130,78 @@ const adminSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+const pushSubscriptionSchema = new mongoose.Schema({
+    endpoint: { type: String, unique: true, required: true },
+    keys: {
+        p256dh: { type: String, required: true },
+        auth: { type: String, required: true }
+    },
+    userAgent: String,
+    lastError: String,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 // ========== MODELS ==========
 const Member = mongoose.model('Member', memberSchema);
 const Event = mongoose.model('Event', eventSchema);
 const Setting = mongoose.model('Setting', settingSchema);
 const Donation = mongoose.model('Donation', donationSchema);
 const Admin = mongoose.model('Admin', adminSchema);
+const PushSubscription = mongoose.model('PushSubscription', pushSubscriptionSchema);
+
+// ========== PUSH NOTIFICATION HELPERS ==========
+function isPushConfigured() {
+    return Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+}
+
+async function sendPushNotification({ title, body, url = '/', tag = 'darandha-update' }) {
+    if (!isPushConfigured()) {
+        console.warn('Push notification skipped: VAPID keys are not configured.');
+        return { sent: 0, failed: 0, skipped: true };
+    }
+
+    const payload = JSON.stringify({
+        title: title || 'Darandha Eidgah Committee',
+        body: body || 'New update from Darandha Eidgah Committee.',
+        url,
+        tag,
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png'
+    });
+
+    const subscriptions = await PushSubscription.find();
+    let sent = 0;
+    let failed = 0;
+
+    await Promise.all(subscriptions.map(async (subscriptionDoc) => {
+        const subscription = {
+            endpoint: subscriptionDoc.endpoint,
+            keys: subscriptionDoc.keys
+        };
+
+        try {
+            await webpush.sendNotification(subscription, payload);
+            sent++;
+            if (subscriptionDoc.lastError) {
+                subscriptionDoc.lastError = '';
+                subscriptionDoc.updatedAt = new Date();
+                await subscriptionDoc.save();
+            }
+        } catch (error) {
+            failed++;
+            if (error.statusCode === 404 || error.statusCode === 410) {
+                await PushSubscription.deleteOne({ _id: subscriptionDoc._id });
+                return;
+            }
+            subscriptionDoc.lastError = error.message;
+            subscriptionDoc.updatedAt = new Date();
+            await subscriptionDoc.save();
+        }
+    }));
+
+    return { sent, failed, total: subscriptions.length };
+}
 
 // ========== MULTER SETUP ==========
 const storage = multer.diskStorage({
@@ -263,6 +337,81 @@ app.get('/api/health', (req, res) => {
         message: 'Darandha Eidgah API is running',
         timestamp: new Date().toISOString()
     });
+});
+
+// ========== PUSH NOTIFICATIONS ==========
+app.get('/api/push/public-key', (req, res) => {
+    res.json({
+        enabled: isPushConfigured(),
+        publicKey: VAPID_PUBLIC_KEY || null
+    });
+});
+
+app.post('/api/push/subscribe', async (req, res) => {
+    try {
+        if (!isPushConfigured()) {
+            return res.status(503).json({ error: 'Push notifications are not configured yet.' });
+        }
+
+        const { endpoint, keys } = req.body || {};
+        if (!endpoint || !keys?.p256dh || !keys?.auth) {
+            return res.status(400).json({ error: 'Invalid push subscription.' });
+        }
+
+        await PushSubscription.findOneAndUpdate(
+            { endpoint },
+            {
+                endpoint,
+                keys: {
+                    p256dh: keys.p256dh,
+                    auth: keys.auth
+                },
+                userAgent: req.get('user-agent') || '',
+                lastError: '',
+                updatedAt: new Date()
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        res.status(201).json({ success: true, message: 'Push subscription saved.' });
+    } catch (error) {
+        console.error('Push subscribe error:', error);
+        res.status(500).json({ error: 'Failed to save push subscription.' });
+    }
+});
+
+app.delete('/api/push/subscribe', async (req, res) => {
+    try {
+        const { endpoint } = req.body || {};
+        if (!endpoint) return res.status(400).json({ error: 'Endpoint is required.' });
+
+        await PushSubscription.deleteOne({ endpoint });
+        res.json({ success: true, message: 'Push subscription removed.' });
+    } catch (error) {
+        console.error('Push unsubscribe error:', error);
+        res.status(500).json({ error: 'Failed to remove push subscription.' });
+    }
+});
+
+app.post('/api/push/send', authMiddleware, async (req, res) => {
+    try {
+        const { title, body, url } = req.body || {};
+        if (!title || !body) {
+            return res.status(400).json({ error: 'Title and message are required.' });
+        }
+
+        const result = await sendPushNotification({
+            title,
+            body,
+            url: url || '/',
+            tag: 'admin-announcement'
+        });
+
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Push send error:', error);
+        res.status(500).json({ error: 'Failed to send push notification.' });
+    }
 });
 
 // ========== AUTHENTICATION ==========
@@ -474,6 +623,12 @@ app.post('/api/events', authMiddleware, upload.single('image'), async (req, res)
         const event = new Event(eventData);
         await event.save();
         await autoUpdateEventCategories();
+        await sendPushNotification({
+            title: 'New Event Announcement',
+            body: event.title,
+            url: '/events.html',
+            tag: `event-${event._id}`
+        });
         res.status(201).json(event);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create event: ' + error.message });

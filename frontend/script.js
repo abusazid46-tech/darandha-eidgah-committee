@@ -660,6 +660,122 @@ function escapeHtml(text) {
 
 // ========== PWA INSTALLATION ==========
 let deferredPrompt;
+let serviceWorkerRegistration = null;
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return null;
+    if (serviceWorkerRegistration) return serviceWorkerRegistration;
+
+    try {
+        serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js');
+        return serviceWorkerRegistration;
+    } catch (error) {
+        console.error('Service worker registration failed:', error);
+        return null;
+    }
+}
+
+async function getPushPublicKey() {
+    const res = await fetch(`${API_URL}/push/public-key`);
+    const data = await res.json();
+    if (!res.ok || !data.enabled || !data.publicKey) {
+        throw new Error(data.error || 'Push notifications are not configured yet.');
+    }
+    return data.publicKey;
+}
+
+async function subscribeToPushNotifications() {
+    const btn = document.getElementById('enableNotificationsBtn');
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enabling...';
+
+    try {
+        if (!('Notification' in window) || !('PushManager' in window)) {
+            throw new Error('Push notifications are not supported on this browser.');
+        }
+
+        const registration = await registerServiceWorker();
+        if (!registration) throw new Error('Service worker is not available.');
+
+        const publicKey = await getPushPublicKey();
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            throw new Error('Notification permission was not granted.');
+        }
+
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
+        }
+
+        const saveRes = await fetch(`${API_URL}/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+        });
+
+        if (!saveRes.ok) {
+            const error = await saveRes.json().catch(() => ({}));
+            throw new Error(error.error || 'Could not save notification subscription.');
+        }
+
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Notifications Enabled';
+        setTimeout(() => { btn.style.display = 'none'; }, 1600);
+    } catch (error) {
+        console.error('Push subscription error:', error);
+        alert(error.message || 'Could not enable notifications.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-bell me-2"></i>Enable Notifications';
+    }
+}
+
+async function initPushNotifications() {
+    const btn = document.getElementById('enableNotificationsBtn');
+    if (!btn || !('Notification' in window) || !('PushManager' in window)) return;
+
+    const registration = await registerServiceWorker();
+    if (!registration) return;
+
+    try {
+        await getPushPublicKey();
+    } catch (error) {
+        console.warn('Push notifications are unavailable:', error.message);
+        return;
+    }
+
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+        fetch(`${API_URL}/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(existingSubscription)
+        }).catch(error => console.warn('Could not refresh push subscription:', error));
+        btn.style.display = 'none';
+        return;
+    }
+
+    if (Notification.permission !== 'denied') {
+        btn.style.display = 'inline-flex';
+        btn.addEventListener('click', subscribeToPushNotifications);
+    }
+}
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -696,6 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMembers();
     loadEvents();
     loadDonationProgress();
+    initPushNotifications();
     
     // Set initial button states (Leaders active by default)
     const dignitariesBtn = document.getElementById('viewDignitariesBtn');
