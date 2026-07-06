@@ -1,5 +1,5 @@
 // admin/admin.js
-const API_URL = 'https://darandha-eidgah-committee-1.onrender.com/api';
+const API_URL = 'https://darandha-eidgah-committee-xzyd.onrender.com/api';
 let token = localStorage.getItem('adminToken');
 let autoRefreshInterval = null;
 let selectedMembers = new Set();
@@ -20,7 +20,7 @@ let currentEventFilter = 'all';
 function getEventImageUrl(imagePath) {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `https://darandha-eidgah-committee-1.onrender.com${imagePath}`;
+        return `https://darandha-eidgah-committee-xzyd.onrender.com${imagePath}`;
 }
 
 // Helper functions for address handling
