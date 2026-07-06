@@ -1,6 +1,6 @@
 
 // frontend/script.js
-const API_URL = 'https://darandha-eidgah-committee-1.onrender.com/api';
+const API_URL = 'https://darandha-eidgah-committee-xzyd.onrender.com/api';
 let currentLanguage = 'as';
 let currentAreaFilter = 'all';
 let currentSearchTerm = '';
