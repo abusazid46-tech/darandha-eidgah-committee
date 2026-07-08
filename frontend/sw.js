@@ -1,5 +1,5 @@
 // frontend/sw.js
-const CACHE_NAME = 'darandha-eidgah-v2';
+const CACHE_NAME = 'darandha-eidgah-v3';
 const urlsToCache = [
   '/',
   '/index.html',
